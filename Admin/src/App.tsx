@@ -2,9 +2,11 @@ import { useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Pages/Dashboard'
 import Configuration from './components/Pages/Site_Configuration/Configuration'
+import Social from './components/Pages/Site_Configuration/Social'
+import News from './components/Pages/News'
 import './App.css'
 
-export type Page = 'dashboard' | 'news' | 'categories' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration'
+export type Page = 'dashboard' | 'news' | 'categories' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social'
 
 function App() {
   const [activePage, setActivePage] = useState<Page>('dashboard')
@@ -14,6 +16,8 @@ function App() {
     switch (activePage) {
       case 'dashboard': return <Dashboard />
       case 'configuration': return <Configuration />
+      case 'social': return <Social />
+      case 'news': return <News />
       default: return (
         <div className="coming-soon">
           <div className="coming-soon-icon">🚧</div>

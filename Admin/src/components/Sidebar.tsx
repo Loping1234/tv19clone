@@ -43,7 +43,7 @@ const NAV_ITEMS: NavItem[] = [
         icon: <Settings size={20} />,
         subItems: [
             { id: 'configuration', label: 'Configuration', icon: <Sliders size={20} /> },
-            { id: 'settings', label: 'Social Settings', icon: <Globe size={20} /> },
+            { id: 'social', label: 'Social Settings', icon: <Globe size={20} /> },
         ]
     },
     {
@@ -51,10 +51,12 @@ const NAV_ITEMS: NavItem[] = [
         label: 'Static',
         icon: <File size={20} />,
         subItems: [
-            { id: 'settings', label: 'Static Pages', icon: <FileText size={20} /> },
+            { id: 'settings', label: 'Email Templates', icon: <Mail size={20} /> },
+            { id: 'settings', label: 'Pages', icon: <FileText size={20} /> },
         ]
+
     },
-    { id: 'settings', label: 'Email Template', icon: <Mail size={20} /> },
+    //{ id: 'settings', label: 'Pages', icon: <Page size={20} /> },
     { id: 'settings', label: 'Users', icon: <Users size={20} /> },
     { id: 'categories', label: 'Categories', icon: <Tag size={20} /> },
     { id: 'settings', label: 'SubHeadings', icon: <List size={20} /> },
@@ -138,7 +140,7 @@ export default function Sidebar({ setActivePage, collapsed }: Props) {
 
                             {!collapsed && hasSubItems && isExpanded && (
                                 <div className="sub-menu">
-                                    {item.subItems.map((sub, sIdx) => (
+                                    {item.subItems?.map((sub, sIdx) => (
                                         <button
                                             key={`${sub.label}-${sIdx}`}
                                             className={`nav-item sub-item ${activeLabel === sub.label ? 'active' : ''}`}
