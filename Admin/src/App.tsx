@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Pages/Dashboard'
-import Configuration from './components/Pages/Configuration'
+import Configuration from './components/Pages/Site_Configuration/Configuration'
 import './App.css'
 
 export type Page = 'dashboard' | 'news' | 'categories' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration'

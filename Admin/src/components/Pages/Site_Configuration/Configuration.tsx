@@ -209,17 +209,9 @@ export default function Configuration() {
                             <Upload size={14} /> Upload
                         </button>
                     </div>
-                    {config.siteIconUrl ? (
+                    {config.siteIconUrl && (
                         <div className="image-preview icon-preview">
                             <img src={`${API_BASE}${config.siteIconUrl}`} alt="Site icon" />
-                        </div>
-                    ) : (
-                        <div className="image-preview icon-preview">
-                            <div className="logo-placeholder">
-                                <span className="ph-tv">TV</span>
-                                <span className="ph-19">19</span>
-                                <span className="ph-news">NEWS</span>
-                            </div>
                         </div>
                     )}
                 </div>
