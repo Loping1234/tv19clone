@@ -1,0 +1,130 @@
+.breaking-news-container {
+  background: linear-gradient(90deg, #000000 0%, #000000 100%);
+  overflow: hidden;
+  position: fixed;
+  width: 91.4%;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.breaking-news-wrapper {
+  display: flex;
+  align-items: center;
+  height: 40px;
+}
+
+.breaking-label {
+  background: #e8380d;
+  color: #fff;
+  padding: 0 20px;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: bold;
+  font-size: 13px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+  position: relative;
+  z-index: 2;
+  flex-shrink: 0;
+}
+
+.breaking-icon {
+  font-size: 16px;
+  animation: pulse 1s ease-in-out infinite;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.2);
+  }
+}
+
+.breaking-content {
+  flex: 1;
+  overflow: hidden;
+  position: relative;
+  background: transparent;
+}
+
+.breaking-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  padding-left: 100%;
+  animation: scroll-left var(--ticker-duration, 6s) linear infinite;
+  color: #fff;
+  font-size: 14px;
+  align-items: center;
+  gap: 40px;
+}
+
+/* Pause animation on hover */
+.breaking-ticker:hover {
+  animation-play-state: paused;
+}
+
+@keyframes scroll-left {
+  0% {
+    transform: translateX(0);
+  }
+
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.breaking-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 40px;
+}
+
+.breaking-bullet {
+  color: #ffeb3b;
+  font-size: 8px;
+}
+
+.breaking-link {
+  color: #fff;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.breaking-link:hover {
+  color: #ffeb3b;
+  text-decoration: underline;
+}
+
+.breaking-ticker.loading {
+  animation: none;
+  padding-left: 20px;
+  font-style: italic;
+  opacity: 0.9;
+}
+
+.breaking-news-container.error {
+  background: linear-gradient(90deg, #f44336 0%, #e53935 100%);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .breaking-label {
+    font-size: 11px;
+    padding: 0 12px;
+  }
+
+  .breaking-ticker {
+    font-size: 13px;
+  }
+
+  .breaking-news-wrapper {
+    height: 36px;
+  }
+}

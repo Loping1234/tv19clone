@@ -1,0 +1,190 @@
+/* =====================================================
+   TRENDING STORIES — 4-column card layout (TV19 style)
+   ===================================================== */
+
+.ts-page {
+    width: 100%;
+    padding: 0;
+    background: transparent;
+}
+
+.ts-section {
+    padding: 0 16px 24px;
+}
+
+/* ── Section header ── */
+.ts-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 16px;
+    border-bottom: 1px solid #e8e8e8;
+    padding-bottom: 6px;
+}
+
+.ts-heading {
+    font-size: 19px;
+    font-weight: 800;
+    color: #1a1a1a;
+    margin: 0;
+    padding-bottom: 6px;
+    border-bottom: 3px solid #e8380d;
+    display: inline-block;
+    letter-spacing: 0.4px;
+    position: relative;
+    bottom: -7px;
+    /* Overlap border-bottom of header row */
+}
+
+.ts-more {
+    font-size: 13px;
+    font-weight: 600;
+    color: #e8380d;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    transition: color 0.2s;
+}
+
+.ts-more:hover {
+    color: #c72e09;
+}
+
+/* ── 4-column grid ── */
+.ts-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 18px;
+    align-items: start;
+}
+
+/* ── Individual Card ── */
+.ts-card {
+    text-decoration: none;
+    color: inherit;
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid #e8e8e8;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+    transition: box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+.ts-card:hover {
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: translateY(-3px);
+}
+
+/* ── Card image ── */
+.ts-card__img {
+    width: 100%;
+    height: 160px;
+    overflow: hidden;
+    background: #e8e8e8;
+    flex-shrink: 0;
+}
+
+.ts-card__img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    transition: transform 0.3s ease;
+}
+
+.ts-card:hover .ts-card__img img {
+    transform: scale(1.04);
+}
+
+.ts-card__img-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #e0e0e0 0%, #bdbdbd 100%);
+}
+
+/* ── Card body ── */
+.ts-card__body {
+    padding: 12px 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+}
+
+/* Numbered badge: "#1 INDUSTRY" */
+.ts-card__badge {
+    font-size: 10px;
+    font-weight: 700;
+    color: #e8380d;
+    text-transform: uppercase;
+    letter-spacing: 0.4px;
+}
+
+.ts-card__title {
+    font-size: 13.5px;
+    font-weight: 700;
+    color: #111;
+    line-height: 1.4;
+    margin: 0;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.ts-card__views {
+    font-size: 11px;
+    color: #888;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    margin-top: auto;
+}
+
+.ts-card__views i {
+    font-size: 12px;
+}
+
+/* ── Loading ── */
+.ts-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 200px;
+    color: #666;
+    width: 100%;
+}
+
+.ts-spinner {
+    width: 34px;
+    height: 34px;
+    border: 3px solid #e0e0e0;
+    border-top-color: #e8380d;
+    border-radius: 50%;
+    animation: tsSpin 0.8s linear infinite;
+    margin-bottom: 12px;
+}
+
+@keyframes tsSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* ── Responsive ── */
+@media (max-width: 1024px) {
+    .ts-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 600px) {
+    .ts-grid {
+        grid-template-columns: 1fr;
+    }
+}

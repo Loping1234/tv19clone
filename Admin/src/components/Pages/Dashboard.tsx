@@ -2,17 +2,6 @@ import { useState, useEffect, useCallback } from 'react'
 
 const API = 'http://localhost:5000'
 
-// Known RSS feed counts per category (from server/index.js)
-const FEED_COUNTS: Record<string, number> = {
-    top: 2, india: 3, business: 3, finance: 2, markets: 2,
-    entertainment: 2, health: 3, science: 3, sports: 3,
-    technology: 3, world: 3, politics: 3, environment: 3,
-    lifestyle: 2, education: 2, crime: 1, astrology: 1,
-    opinion: 2, arts: 2, weather: 2, 'green-future': 2,
-    trending: 3, rajasthan: 2, manufacturing: 2,
-}
-const TOTAL_RSS_FEEDS = Object.values(FEED_COUNTS).reduce((a, b) => a + b, 0)
-
 interface Article {
     title: string
     source: string
@@ -28,6 +17,10 @@ interface Stats {
     totalFeeds: number
     loading: boolean
     lastRefresh: Date | null
+}
+
+interface CategoryCounts {
+    [key: string]: number
 }
 
 interface TopArticle {
@@ -58,10 +51,11 @@ function timeAgo(dateStr: string) {
 export default function Dashboard() {
     const [stats, setStats] = useState<Stats>({
         totalArticles: 0, todayArticles: 0,
-        totalCategories: 0, totalFeeds: TOTAL_RSS_FEEDS,
+        totalCategories: 0, totalFeeds: 0,
         loading: true, lastRefresh: null,
     })
     const [topArticles, setTopArticles] = useState<TopArticle[]>([])
+    const [categoryCounts, setCategoryCounts] = useState<CategoryCounts>({})
     const [clock, setClock] = useState(new Date())
     const [error, setError] = useState<string | null>(null)
 
@@ -75,28 +69,32 @@ export default function Dashboard() {
         setStats(s => ({ ...s, loading: true }))
         setError(null)
         try {
-            const [newsRes, catRes] = await Promise.all([
+            const [newsRes, catRes, countsRes] = await Promise.all([
                 fetch(`${API}/api/news?category=top&size=50`),
                 fetch(`${API}/api/categories`),
+                fetch(`${API}/api/categories/counts`),
             ])
 
-            if (!newsRes.ok || !catRes.ok) throw new Error('Server error')
+            if (!newsRes.ok || !catRes.ok || !countsRes.ok) throw new Error('Server error')
 
             const newsData = await newsRes.json() as { totalResults: number; articles: Article[] }
             const catData = await catRes.json() as { categories: string[] }
+            const countsData = await countsRes.json() as { categoryCounts: CategoryCounts; totalArticles: number }
 
             const today = newsData.articles.filter(a => isToday(a.publishedAt)).length
 
+            setCategoryCounts(countsData.categoryCounts)
+
             setStats({
-                totalArticles: newsData.totalResults,
+                totalArticles: countsData.totalArticles,
                 todayArticles: today,
                 totalCategories: catData.categories.length,
-                totalFeeds: TOTAL_RSS_FEEDS,
+                totalFeeds: Object.keys(countsData.categoryCounts).length,
                 loading: false,
                 lastRefresh: new Date(),
             })
             setTopArticles(newsData.articles.slice(0, 10))
-        } catch (e) {
+        } catch {
             setError('Could not reach the TV19 server. Make sure it is running on port 5000.')
             setStats(s => ({ ...s, loading: false }))
         }
@@ -221,12 +219,16 @@ export default function Dashboard() {
                     <h2 className="section-title">📡 Feed Sources per Category</h2>
                 </div>
                 <div className="feed-grid">
-                    {Object.entries(FEED_COUNTS).map(([cat, count]) => (
-                        <div key={cat} className="feed-pill">
-                            <span className="feed-cat">{cat}</span>
-                            <span className="feed-count">{count}</span>
-                        </div>
-                    ))}
+                    {Object.entries(categoryCounts).length === 0 && !stats.loading ? (
+                        <p className="empty-msg">No category data available yet.</p>
+                    ) : (
+                        Object.entries(categoryCounts).map(([cat, count]) => (
+                            <div key={cat} className="feed-pill">
+                                <span className="feed-cat">{cat}</span>
+                                <span className="feed-count">{count}</span>
+                            </div>
+                        ))
+                    )}
                 </div>
             </div>
         </div>
