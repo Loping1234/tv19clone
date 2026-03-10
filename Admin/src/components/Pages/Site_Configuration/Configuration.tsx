@@ -3,6 +3,10 @@ import { Upload, Save, CheckCircle, AlertCircle } from 'react-feather'
 
 const API_BASE = 'http://localhost:5000'
 
+function getToken() {
+    return localStorage.getItem('adminToken') || ''
+}
+
 interface ConfigData {
     siteName: string
     siteEmail: string
@@ -74,7 +78,10 @@ export default function Configuration() {
         try {
             const res = await fetch(`${API_BASE}/api/config`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({
                     siteName: config.siteName,
                     siteEmail: config.siteEmail,
@@ -102,6 +109,7 @@ export default function Configuration() {
         try {
             const res = await fetch(`${API_BASE}/api/config/${endpoint}`, {
                 method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` },
                 body: formData,
             })
             if (!res.ok) throw new Error('Upload failed')

@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react'
+import { useState, useEffect, type ReactNode } from 'react'
 import type { Page } from '../App'
 import {
     Home,          // Dashboard
@@ -28,6 +28,8 @@ import {
     ChevronRight,  // Submenu arrow right
 } from 'react-feather';
 
+const API_BASE = 'http://localhost:5000'
+
 interface NavItem {
     id: Page;
     label: string;
@@ -51,13 +53,14 @@ const NAV_ITEMS: NavItem[] = [
         label: 'Static',
         icon: <File size={20} />,
         subItems: [
-            { id: 'settings', label: 'Email Templates', icon: <Mail size={20} /> },
+            { id: 'email-templates', label: 'Email Templates', icon: <Mail size={20} /> },
             { id: 'settings', label: 'Pages', icon: <FileText size={20} /> },
         ]
 
     },
     //{ id: 'settings', label: 'Pages', icon: <Page size={20} /> },
     { id: 'settings', label: 'Users', icon: <Users size={20} /> },
+    { id: 'reset-password', label: 'Reset Password', icon: <User size={20} /> },
     { id: 'categories', label: 'Categories', icon: <Tag size={20} /> },
     { id: 'settings', label: 'SubHeadings', icon: <List size={20} /> },
     { id: 'news', label: 'News', icon: <AlignLeft size={20} /> },
@@ -86,6 +89,19 @@ export default function Sidebar({ setActivePage, collapsed }: Props) {
     const [expandedMenus, setExpandedMenus] = useState<string[]>([])
     // Track by label (unique) instead of page id (shared) so only the clicked item turns red
     const [activeLabel, setActiveLabel] = useState<string>('Dashboard')
+    const [faviconUrl, setFaviconUrl] = useState<string>('')
+    const [siteIconUrl, setSiteIconUrl] = useState<string>('')
+
+    // Fetch site config for logo images
+    useEffect(() => {
+        fetch(`${API_BASE}/api/config`)
+            .then(res => res.ok ? res.json() : Promise.reject('Failed'))
+            .then(data => {
+                setFaviconUrl(data.faviconUrl || '')
+                setSiteIconUrl(data.siteIconUrl || '')
+            })
+            .catch(err => console.error('Failed to load site config for sidebar:', err))
+    }, [])
 
     const toggleMenu = (label: string) => {
         setExpandedMenus(prev =>
@@ -103,15 +119,35 @@ export default function Sidebar({ setActivePage, collapsed }: Props) {
         setActivePage(sub.id)
     }
 
+    // Determine which logo to show
+    const showSiteIcon = !collapsed && siteIconUrl
+    const showFavicon = collapsed && faviconUrl
+
     return (
         <aside className={`sidebar ${collapsed ? 'collapsed' : ''}`}>
             {/* Logo */}
             <div className="sidebar-logo">
-                <div className="logo-mark">
-                    <span className="logo-tv">TV</span>
-                    <span className="logo-19">19</span>
-                </div>
-                {!collapsed && <span className="logo-text">NEWS <em>Admin</em></span>}
+                {showSiteIcon ? (
+                    <img
+                        src={`${API_BASE}${siteIconUrl}`}
+                        alt="Site Icon"
+                        className="sidebar-logo-img site-icon-img"
+                    />
+                ) : showFavicon ? (
+                    <img
+                        src={`${API_BASE}${faviconUrl}`}
+                        alt="Favicon"
+                        className="sidebar-logo-img favicon-img"
+                    />
+                ) : (
+                    <>
+                        <div className="logo-mark">
+                            <span className="logo-tv">TV</span>
+                            <span className="logo-19">19</span>
+                        </div>
+                        {!collapsed && <span className="logo-text">NEWS <em>Admin</em></span>}
+                    </>
+                )}
             </div>
 
             {/* Nav */}

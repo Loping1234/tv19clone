@@ -2,6 +2,10 @@ import { useState, useEffect, useCallback } from 'react'
 
 const API = 'http://localhost:5000'
 
+function getToken() {
+    return localStorage.getItem('adminToken') || ''
+}
+
 interface RssFeed {
     _id: string
     category: string
@@ -21,6 +25,9 @@ export default function RssFeeds() {
     const [isAdding, setIsAdding] = useState(false)
     const [categories, setCategories] = useState<string[]>([])
     const [selectedFeeds, setSelectedFeeds] = useState<string[]>([])
+    const [refreshing, setRefreshing] = useState(false)
+    const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null)
+    const [cachedArticleCount, setCachedArticleCount] = useState<number | null>(null)
 
     const fetchFeeds = useCallback(async () => {
         setLoading(true)
@@ -46,7 +53,46 @@ export default function RssFeeds() {
 
     useEffect(() => {
         fetchFeeds()
+        fetchMeta()
     }, [fetchFeeds])
+
+    // Fetch last fetched time and cached article count
+    const fetchMeta = async () => {
+        try {
+            const [configRes, countsRes] = await Promise.all([
+                fetch(`${API}/api/config`),
+                fetch(`${API}/api/categories/counts`)
+            ])
+            if (configRes.ok) {
+                const configData = await configRes.json()
+                setLastFetchedAt(configData.lastRssFetchAt || null)
+            }
+            if (countsRes.ok) {
+                const countsData = await countsRes.json()
+                setCachedArticleCount(countsData.totalArticles || 0)
+            }
+        } catch {
+            // Non-critical, just skip
+        }
+    }
+
+    const handleRefreshFeeds = async () => {
+        setRefreshing(true)
+        try {
+            const res = await fetch(`${API}/api/admin/refresh-feeds`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            })
+            if (!res.ok) throw new Error('Refresh failed')
+            const data = await res.json()
+            alert(`✅ ${data.message} (${data.totalProcessed} articles processed)`)
+            fetchMeta() // Update timestamp and count
+        } catch {
+            alert('❌ Failed to refresh feeds. Check server logs.')
+        } finally {
+            setRefreshing(false)
+        }
+    }
 
     // Filter feeds by search term
     const filtered = feeds.filter(f =>
@@ -74,7 +120,10 @@ export default function RssFeeds() {
 
             const res = await fetch(url, {
                 method,
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify(editingFeed)
             })
             if (!res.ok) {
@@ -95,7 +144,10 @@ export default function RssFeeds() {
         if (!window.confirm('Are you sure you want to delete this feed?')) return
 
         try {
-            const res = await fetch(`${API}/api/rss-feeds/${id}`, { method: 'DELETE' })
+            const res = await fetch(`${API}/api/rss-feeds/${id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            })
             if (!res.ok) throw new Error('Delete failed')
             fetchFeeds()
         } catch {
@@ -111,7 +163,12 @@ export default function RssFeeds() {
         if (!window.confirm(`Are you sure you want to delete ${selectedFeeds.length} feeds?`)) return
 
         try {
-            await Promise.all(selectedFeeds.map(id => fetch(`${API}/api/rss-feeds/${id}`, { method: 'DELETE' })))
+            await Promise.all(selectedFeeds.map(id =>
+                fetch(`${API}/api/rss-feeds/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Authorization': `Bearer ${getToken()}` }
+                })
+            ))
             setSelectedFeeds([])
             fetchFeeds()
         } catch {
@@ -249,6 +306,24 @@ export default function RssFeeds() {
                         <button className="rss-btn rss-btn-add" onClick={openAddForm}>
                             <span className="rss-btn-icon">➕</span> Add Feed
                         </button>
+                        <button
+                            className="rss-btn rss-btn-refresh"
+                            onClick={handleRefreshFeeds}
+                            disabled={refreshing}
+                        >
+                            <span className="rss-btn-icon">{refreshing ? '⏳' : '🔄'}</span>
+                            {refreshing ? 'Refreshing...' : 'Refresh Now'}
+                        </button>
+                    </div>
+
+                    {/* RSS Cache Status */}
+                    <div className="rss-cache-status">
+                        <span>
+                            📦 Cached Articles: <strong>{cachedArticleCount !== null ? cachedArticleCount : '—'}</strong>
+                        </span>
+                        <span>
+                            🕐 Last Fetched: <strong>{lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : 'Never'}</strong>
+                        </span>
                     </div>
 
                     {/* Controls */}

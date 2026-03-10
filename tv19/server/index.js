@@ -1,3 +1,4 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
 import Parser from "rss-parser";
@@ -5,10 +6,29 @@ import { fileURLToPath } from "url";
 import path from "path";
 import multer from "multer";
 import cron from "node-cron";
+import jwt from "jsonwebtoken";
 import connectDB from "./db.js";
 import { getConfig, updateConfig } from "./models/SiteConfig.js";
+import AdminProfile, { getProfile, updateProfile } from "./models/AdminProfile.js";
 import News from "./models/News.js";
 import RssFeed from "./models/RssFeed.js";
+import nodemailer from "nodemailer";
+import crypto from "crypto";
+
+const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key_here";
+const EMAIL_USER = process.env.EMAIL_USER;
+const EMAIL_PASS = process.env.EMAIL_PASS;
+const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
+const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+
+// Nodemailer Transporter
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: EMAIL_USER,
+    pass: EMAIL_PASS,
+  },
+});
 // import View from "./models/View.js"; // You'll need to create this model if it doesn't exist
 
 const __filename = fileURLToPath(import.meta.url);
@@ -27,6 +47,152 @@ const parser = new Parser({
 
 app.use(cors());
 app.use(express.json());
+
+// Auth Middleware
+const authenticateToken = (req, res, next) => {
+  const authHeader = req.headers['authorization'];
+  const token = authHeader && authHeader.split(' ')[1];
+
+  if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
+
+  jwt.verify(token, JWT_SECRET, (err, user) => {
+    if (err) return res.status(403).json({ error: "Invalid or expired token." });
+    req.user = user;
+    next();
+  });
+};
+
+// ============================================================
+//  Auth Routes
+// ============================================================
+
+// POST /api/admin/signup - Only for initial setup or if you want multiple admins
+app.post("/api/admin/signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    // Check if an admin already exists (optional: allow multiple if needed)
+    const existingAdmin = await AdminProfile.findOne({ email });
+    if (existingAdmin) return res.status(400).json({ error: "Admin with this email already exists" });
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    const admin = new AdminProfile({ name, email, password, verificationToken });
+    await admin.save();
+
+    // Send Verification Email
+    const verificationLink = `${BACKEND_URL}/api/admin/verify/${verificationToken}`;
+
+    const mailOptions = {
+      from: EMAIL_USER,
+      to: email,
+      subject: "Verify Your TV19 Admin Account",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #e8380d; text-align: center;">Welcome to TV19 NEWS</h2>
+          <p>Hello ${name},</p>
+          <p>Thank you for signing up as an administrator. Please click the button below to verify your email address and activate your account:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationLink}" style="background-color: #e8380d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Email Address</a>
+          </div>
+          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p><a href="${verificationLink}">${verificationLink}</a></p>
+          <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
+          <p style="font-size: 12px; color: #777; text-align: center;">If you didn't create this account, you can safely ignore this email.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: "Signup successful. Please check your email to verify your account." });
+  } catch (err) {
+    console.error("Signup error:", err.message);
+    res.status(500).json({ error: "Failed to create admin" });
+  }
+});
+
+// GET /api/admin/verify/:token
+app.get("/api/admin/verify/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const admin = await AdminProfile.findOne({ verificationToken: token });
+
+    if (!admin) {
+      return res.status(404).send("<h1>Verification failed</h1><p>Invalid or expired token.</p>");
+    }
+
+    admin.isVerified = true;
+    admin.verificationToken = undefined;
+    await admin.save();
+
+    // Redirect to login page on frontend
+    res.redirect(`${FRONTEND_URL}?verified=true`);
+  } catch (err) {
+    console.error("Verification error:", err.message);
+    res.status(500).send("<h1>Server Error</h1><p>Failed to verify account.</p>");
+  }
+});
+
+// POST /api/admin/login
+app.post("/api/admin/login", async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const admin = await AdminProfile.findOne({ email });
+
+    if (!admin || !(await admin.comparePassword(password))) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    if (!admin.isVerified) {
+      return res.status(403).json({ error: "Please verify your email before logging in." });
+    }
+
+    const token = jwt.sign({ id: admin._id, email: admin.email }, JWT_SECRET, { expiresIn: '24h' });
+    res.json({ token, admin: { name: admin.name, email: admin.email, imageUrl: admin.imageUrl } });
+  } catch (err) {
+    console.error("Login error:", err.message);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// GET /api/admin/me - Verify token and get current admin
+app.get("/api/admin/me", authenticateToken, async (req, res) => {
+  try {
+    const admin = await AdminProfile.findById(req.user.id).select('-password');
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+    res.json(admin);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch admin info" });
+  }
+});
+
+// PUT /api/admin/reset-password
+app.put("/api/admin/reset-password", authenticateToken, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "Both current and new passwords are required" });
+    }
+
+    const admin = await AdminProfile.findById(req.user.id);
+    if (!admin) return res.status(404).json({ error: "Admin not found" });
+
+    // Verify current password
+    if (!(await admin.comparePassword(currentPassword))) {
+      return res.status(401).json({ error: "Incorrect current password" });
+    }
+
+    // Update with new password (pre-save hook will hash it)
+    admin.password = newPassword;
+    await admin.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    console.error("Reset password error:", err.message);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
 
 // Serve uploaded files statically
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
@@ -348,7 +514,7 @@ app.get("/api/rss-feeds/:id", async (req, res) => {
 });
 
 // PUT /api/rss-feeds/:id
-app.put("/api/rss-feeds/:id", async (req, res) => {
+app.put("/api/rss-feeds/:id", authenticateToken, async (req, res) => {
   try {
     const { url, category, subheading, status } = req.body;
     const feed = await RssFeed.findByIdAndUpdate(
@@ -364,7 +530,7 @@ app.put("/api/rss-feeds/:id", async (req, res) => {
 });
 
 // POST /api/rss-feeds
-app.post("/api/rss-feeds", async (req, res) => {
+app.post("/api/rss-feeds", authenticateToken, async (req, res) => {
   try {
     const { url, category, subheading, status } = req.body;
     const feed = new RssFeed({ url, category, subheading, status });
@@ -376,7 +542,7 @@ app.post("/api/rss-feeds", async (req, res) => {
 });
 
 // DELETE /api/rss-feeds/:id
-app.delete("/api/rss-feeds/:id", async (req, res) => {
+app.delete("/api/rss-feeds/:id", authenticateToken, async (req, res) => {
   try {
     const feed = await RssFeed.findByIdAndDelete(req.params.id);
     if (!feed) return res.status(404).json({ error: "Feed not found" });
@@ -422,7 +588,7 @@ app.get("/api/config", async (_req, res) => {
 });
 
 // PUT /api/config — update text fields
-app.put("/api/config", async (req, res) => {
+app.put("/api/config", authenticateToken, async (req, res) => {
   try {
     const allowed = ["siteName", "siteEmail", "officeAddress", "recaptchaSiteKey", "recaptchaSecretKey"];
     const data = {};
@@ -438,7 +604,7 @@ app.put("/api/config", async (req, res) => {
 });
 
 // POST /api/config/upload-favicon — upload favicon image
-app.post("/api/config/upload-favicon", upload.single("favicon"), async (req, res) => {
+app.post("/api/config/upload-favicon", authenticateToken, upload.single("favicon"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const faviconUrl = `/uploads/${req.file.filename}`;
@@ -451,7 +617,7 @@ app.post("/api/config/upload-favicon", upload.single("favicon"), async (req, res
 });
 
 // POST /api/config/upload-icon — upload site icon
-app.post("/api/config/upload-icon", upload.single("icon"), async (req, res) => {
+app.post("/api/config/upload-icon", authenticateToken, upload.single("icon"), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const siteIconUrl = `/uploads/${req.file.filename}`;
@@ -463,9 +629,66 @@ app.post("/api/config/upload-icon", upload.single("icon"), async (req, res) => {
   }
 });
 
+// ============================================================
+//  Admin Profile API
+// ============================================================
+
+// GET /api/admin/profile — fetch admin profile
+app.get("/api/admin/profile", authenticateToken, async (_req, res) => {
+  try {
+    const profile = await getProfile();
+    res.json(profile);
+  } catch (err) {
+    console.error("Profile fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+// PUT /api/admin/profile — update profile text fields (name only for now)
+app.put("/api/admin/profile", authenticateToken, async (req, res) => {
+  try {
+    const { name } = req.body;
+    const data = {};
+    if (name !== undefined) data.name = name;
+    const profile = await updateProfile(data);
+    res.json(profile);
+  } catch (err) {
+    console.error("Profile update error:", err.message);
+    res.status(500).json({ error: "Failed to update profile" });
+  }
+});
+
+// POST /api/admin/profile/upload-image — upload profile image
+app.post("/api/admin/profile/upload-image", authenticateToken, upload.single("profileImage"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const profile = await updateProfile({ imageUrl });
+    res.json({ imageUrl: profile.imageUrl, message: "Profile image uploaded" });
+  } catch (err) {
+    console.error("Profile image upload error:", err.message);
+    res.status(500).json({ error: "Failed to upload profile image" });
+  }
+});
+
+// POST /api/admin/refresh-feeds — manually trigger RSS fetch from admin panel
+app.post("/api/admin/refresh-feeds", authenticateToken, async (_req, res) => {
+  try {
+    const result = await refreshAllFeeds();
+    if (result.success) {
+      res.json({ message: "RSS feeds refreshed successfully", totalProcessed: result.totalProcessed });
+    } else {
+      res.status(500).json({ error: result.error || "Refresh failed" });
+    }
+  } catch (err) {
+    console.error("Manual refresh error:", err.message);
+    res.status(500).json({ error: "Failed to refresh feeds" });
+  }
+});
+
 //
 
-app.get("/api/admin/views", async (req, res) => {
+app.get("/api/admin/views", authenticateToken, async (req, res) => {
   try {
     const views = await View.find();
     res.json(views);
@@ -475,7 +698,7 @@ app.get("/api/admin/views", async (req, res) => {
   }
 });
 
-app.put("/api/admin/views/:id", async (req, res) => {
+app.put("/api/admin/views/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { views } = req.body;
@@ -487,7 +710,7 @@ app.put("/api/admin/views/:id", async (req, res) => {
   }
 });
 
-app.delete("/api/admin/views/:id", async (req, res) => {
+app.delete("/api/admin/views/:id", authenticateToken, async (req, res) => {
   try {
     const { id } = req.params;
     const view = await View.findByIdAndDelete(id);
@@ -499,7 +722,7 @@ app.delete("/api/admin/views/:id", async (req, res) => {
 });
 
 // Admin News API
-app.get("/api/admin/news", async (req, res) => {
+app.get("/api/admin/news", authenticateToken, async (req, res) => {
   try {
     const news = await News.find().sort({ publishedAt: -1 });
     res.json(news);
@@ -608,13 +831,13 @@ function extractImage(item) {
   return null;
 }
 
-// Background Job: Fetch all feeds and save to MongoDB every 30 minutes
-cron.schedule('*/30 * * * *', async () => {
-  console.log('🔄 Starting scheduled RSS fetch job...');
+// Reusable function: Fetch all active RSS feeds and save/overwrite to MongoDB
+async function refreshAllFeeds() {
+  console.log('🔄 Starting RSS fetch job...');
   try {
-    let totalUpserted = 0;
+    let totalProcessed = 0;
 
-    // Read active feeds from MongoDB instead of hardcoded RSS_FEEDS
+    // Read active feeds from MongoDB
     const feeds = await RssFeed.find({ status: true });
     const feedCategories = {};
     for (const feed of feeds) {
@@ -622,25 +845,20 @@ cron.schedule('*/30 * * * *', async () => {
       feedCategories[feed.category].push(feed.url);
     }
 
-    // Loop through all defined active categories
+    // Loop through ALL active categories
     for (const [category, feedUrls] of Object.entries(feedCategories)) {
-      // Don't auto-fetch the "search" generic URLs, just the defined RSS endpoints
-      if (category === 'rajasthan' || category === 'manufacturing' || category === 'crime' || category === 'green-future') {
-        continue; // skip the ones that rely purely on google search for now to avoid rate limits
-      }
-
       console.log(`Fetching category: ${category}...`);
       let articles = await fetchFeeds(feedUrls, category);
 
-      // Attempt to ensure they all have images locally before saving
+      // Attempt to ensure they all have images before saving
       await enrichArticlesWithImages(articles);
 
       for (const article of articles) {
-        // Upsert into DB based on unique URL
+        // Upsert into DB — $set overwrites existing articles with fresh data
         await News.findOneAndUpdate(
           { url: article.url },
           {
-            $setOnInsert: {
+            $set: {
               title: article.title,
               description: article.description,
               image: article.image,
@@ -648,18 +866,31 @@ cron.schedule('*/30 * * * *', async () => {
               category: category,
               publishedAt: article.publishedAt,
               content: article.content,
-              status: true // New articles default to active (visible)
+            },
+            $setOnInsert: {
+              status: true // Only set status to true for NEW articles
             }
           },
           { upsert: true, new: true }
         );
-        totalUpserted++;
+        totalProcessed++;
       }
     }
-    console.log(`✅ Scheduled RSS fetch complete. Processed ${totalUpserted} articles.`);
+
+    // Update last fetch timestamp in SiteConfig
+    await updateConfig({ lastRssFetchAt: new Date() });
+
+    console.log(`✅ RSS fetch complete. Processed ${totalProcessed} articles.`);
+    return { success: true, totalProcessed };
   } catch (error) {
-    console.error('❌ Error during scheduled RSS fetch:', error);
+    console.error('❌ Error during RSS fetch:', error);
+    return { success: false, error: error.message };
   }
+}
+
+// Background Job: Fetch all feeds every 30 minutes
+cron.schedule('*/30 * * * *', () => {
+  refreshAllFeeds();
 });
 
 const PORT = process.env.PORT || 5000;
@@ -687,4 +918,8 @@ connectDB().then(async () => {
   app.listen(PORT, () => {
     console.log(`📡 News RSS proxy running on http://localhost:${PORT}`);
   });
+
+  // Run initial RSS fetch on startup so MongoDB has fresh data immediately
+  console.log('🚀 Running initial RSS fetch on startup...');
+  refreshAllFeeds();
 });

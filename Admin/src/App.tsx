@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Pages/Dashboard'
 import Configuration from './components/Pages/Site_Configuration/Configuration'
@@ -6,14 +6,67 @@ import Social from './components/Pages/Site_Configuration/Social'
 import News from './components/Pages/News'
 import RssFeeds from './components/Pages/RssFeeds'
 import Profile from './components/Pages/Profile'
+import Login from './components/Pages/Login'
+import Categories from './components/Pages/Categories'
+import ResetPassword from './components/Pages/ResetPassword'
+import EmailTemplates from './components/Pages/EmailTemplates'
 import './App.css'
 
-export type Page = 'dashboard' | 'news' | 'categories' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
+export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
 
 function App() {
+  const [token, setToken] = useState<string | null>(localStorage.getItem('adminToken'))
   const [activePage, setActivePage] = useState<Page>('dashboard')
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
+  const [adminName, setAdminName] = useState('Admin')
+  const [adminImage, setAdminImage] = useState('')
+
+  const API_BASE = 'http://localhost:5000'
+
+  // Handle login — store token
+  const handleLogin = (newToken: string) => {
+    localStorage.setItem('adminToken', newToken)
+    setToken(newToken)
+  }
+
+  // Handle logout — clear token
+  const handleLogout = () => {
+    localStorage.removeItem('adminToken')
+    setToken(null)
+    setAdminName('Admin')
+    setAdminImage('')
+    setActivePage('dashboard')
+  }
+
+  // Verify token and fetch admin profile on mount / page change
+  useEffect(() => {
+    if (!token) return
+
+    fetch(`${API_BASE}/api/admin/me`, {
+      headers: { 'Authorization': `Bearer ${token}` }
+    })
+      .then(res => {
+        if (res.status === 401 || res.status === 403) {
+          // Token expired or invalid — log out
+          handleLogout()
+          return null
+        }
+        return res.ok ? res.json() : null
+      })
+      .then(data => {
+        if (data) {
+          setAdminName(data.name || 'Admin')
+          setAdminImage(data.imageUrl || '')
+        }
+      })
+      .catch(err => console.error('Failed to verify admin:', err))
+  }, [token, activePage])
+
+  // If not authenticated, show login page
+  if (!token) {
+    return <Login onLogin={handleLogin} />
+  }
 
   const renderPage = () => {
     switch (activePage) {
@@ -21,8 +74,11 @@ function App() {
       case 'configuration': return <Configuration />
       case 'social': return <Social />
       case 'news': return <News />
+      case 'categories': return <Categories />
+      case 'email-templates': return <EmailTemplates />
       case 'rss-feeds': return <RssFeeds />
       case 'profile': return <Profile />
+      case 'reset-password': return <ResetPassword />
       default: return (
         <div className="coming-soon">
           <div className="coming-soon-icon">🚧</div>
@@ -57,9 +113,13 @@ function App() {
             <div className="admin-badge-container">
               <div className="admin-badge" onClick={() => setDropdownOpen(!dropdownOpen)}>
                 <div className="admin-avatar">
-                  <img src="https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg" alt="Admin" />
+                  {adminImage ? (
+                    <img src={`${API_BASE}${adminImage}`} alt="Admin" />
+                  ) : (
+                    <img src="https://img.freepik.com/free-photo/young-bearded-man-with-striped-shirt_273609-5677.jpg" alt="Admin" />
+                  )}
                 </div>
-                <span>Admin</span>
+                <span>{adminName}</span>
                 <span className={`caret ${dropdownOpen ? 'rotated' : ''}`}>▾</span>
               </div>
 
@@ -72,7 +132,7 @@ function App() {
                     <span className="dropdown-icon">🔒</span> Reset Password
                   </button>
                   <div className="dropdown-divider"></div>
-                  <button className="dropdown-item logout-text" onClick={() => console.log('logout')}>
+                  <button className="dropdown-item logout-text" onClick={handleLogout}>
                     <span className="dropdown-icon logout-icon">↪️</span> Logout
                   </button>
                 </div>

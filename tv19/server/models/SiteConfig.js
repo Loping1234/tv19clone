@@ -9,6 +9,7 @@ const siteConfigSchema = new mongoose.Schema(
         recaptchaSecretKey: { type: String, default: "" },
         faviconUrl: { type: String, default: "" },
         siteIconUrl: { type: String, default: "" },
+        lastRssFetchAt: { type: Date, default: null },
     },
     { timestamps: true }
 );
