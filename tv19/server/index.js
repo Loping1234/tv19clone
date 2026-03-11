@@ -208,6 +208,32 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
 
+// ============================================================
+//  News & Category Counts
+// ============================================================
+
+// GET /api/counts/categories — returns real-time article counts per category from MongoDB
+app.get("/api/counts/categories", async (_req, res) => {
+  try {
+    const counts = await News.aggregate([
+      { $match: { status: true } },
+      { $group: { _id: "$category", count: { $sum: 1 } } },
+      { $sort: { _id: 1 } },
+    ]);
+    const result = {};
+    for (const item of counts) {
+      if (item._id) result[item._id] = item.count;
+    }
+    res.json({
+      categoryCounts: result,
+      totalArticles: Object.values(result).reduce((a, b) => a + b, 0)
+    });
+  } catch (err) {
+    console.error("Category counts error:", err.message);
+    res.status(500).json({ error: "Failed to fetch category counts" });
+  }
+});
+
 // Global error handlers to prevent silent exits
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err);
@@ -392,6 +418,7 @@ app.get("/api/news", async (req, res) => {
   try {
     const categoryQuery = (req.query.category || "top").toString().toLowerCase();
     const size = parseInt(req.query.size) || 20;
+    const skip = parseInt(req.query.skip) || 0;
     const imagesOnly = req.query.imagesOnly === "true";
 
     // Build the query
@@ -410,9 +437,12 @@ app.get("/api/news", async (req, res) => {
     // Fetch from MongoDB
     const articles = await News.find(dbQuery)
       .sort({ publishedAt: -1 }) // newest first
+      .skip(skip)
       .limit(size);
 
-    res.json({ totalResults: articles.length, articles });
+    const totalResults = await News.countDocuments(dbQuery);
+
+    res.json({ totalResults, articles });
   } catch (err) {
     console.error("News fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch news from database" });
@@ -474,9 +504,24 @@ app.get("/api/news/state", async (req, res) => {
       { content: { $regex: stateName, $options: "i" } },
     ];
 
-    const articles = await News.find(dbQuery)
+    let articles = await News.find(dbQuery)
       .sort({ publishedAt: -1 })
       .limit(size);
+
+    // Fallback 1: If searching by stateName text fails, try matching the category directly
+    if (articles.length === 0) {
+      const fallbackQuery = { status: true, category: stateName.toLowerCase() };
+      articles = await News.find(fallbackQuery)
+        .sort({ publishedAt: -1 })
+        .limit(size);
+    }
+
+    // Fallback 2: If still empty, just get the latest 10 articles from ANY category to avoid an empty UI
+    if (articles.length === 0) {
+      articles = await News.find({ status: true })
+        .sort({ publishedAt: -1 })
+        .limit(10);
+    }
 
     res.json({ totalResults: articles.length, articles });
   } catch (err) {
@@ -485,8 +530,8 @@ app.get("/api/news/state", async (req, res) => {
   }
 });
 
-// GET /api/categories — returns list of all supported categories
-app.get("/api/categories", (_req, res) => {
+// GET /api/news/categories — returns list of all supported categories
+app.get("/api/news/categories", (_req, res) => {
   res.json({ categories: Object.keys(RSS_FEEDS) });
 });
 
@@ -552,25 +597,6 @@ app.delete("/api/rss-feeds/:id", authenticateToken, async (req, res) => {
   }
 });
 
-// GET /api/categories/counts — returns real-time article counts per category from MongoDB
-app.get("/api/categories/counts", async (_req, res) => {
-  try {
-    const counts = await News.aggregate([
-      { $match: { status: true } },
-      { $group: { _id: "$category", count: { $sum: 1 } } },
-      { $sort: { _id: 1 } },
-    ]);
-    // Convert array to object: { top: 12, india: 8, ... }
-    const result = {};
-    for (const item of counts) {
-      if (item._id) result[item._id] = item.count;
-    }
-    res.json({ categoryCounts: result, totalArticles: Object.values(result).reduce((a, b) => a + b, 0) });
-  } catch (err) {
-    console.error("Category counts error:", err.message);
-    res.status(500).json({ error: "Failed to fetch category counts" });
-  }
-});
 
 // ============================================================
 //  Site Configuration API (MongoDB)
@@ -871,7 +897,7 @@ async function refreshAllFeeds() {
               status: true // Only set status to true for NEW articles
             }
           },
-          { upsert: true, new: true }
+          { upsert: true, returnDocument: 'after' }
         );
         totalProcessed++;
       }

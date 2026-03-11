@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import '../../../css/HOME/CategoryPage.css';
-import { getNews, type Article, type NewsCategory } from '../../../../services/newsService';
+import { getNews, getCategoryCounts, type Article, type NewsCategory } from '../../../../services/newsService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 /* ── All available categories for the sidebar ── */
@@ -50,8 +50,12 @@ const CategoryPage: React.FC = () => {
     const { categorySlug } = useParams<{ categorySlug: string }>();
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
+    const [loadingMore, setLoadingMore] = useState(false);
     const [categoryCounts, setCategoryCounts] = useState<Record<string, number>>({});
-
+    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
+    
+    const observerTarget = useRef<HTMLDivElement>(null);
     const currentSlug = (categorySlug || 'top') as NewsCategory;
 
     /* ── Label for the current category ── */
@@ -63,51 +67,77 @@ const CategoryPage: React.FC = () => {
     };
 
     /* ── Fetch news for this category ── */
-    const fetchCategoryNews = useCallback(async () => {
+    const fetchCategoryNews = useCallback(async (pageNum: number) => {
         try {
-            setLoading(true);
-            const response = await getNews(currentSlug, 50, false);
-            // Deduplicate by title
-            const unique = response.articles.filter(
-                (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
-            );
-            // Sort descending by publishedAt (most recent first)
-            unique.sort(
-                (a, b) =>
-                    new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
-            );
-            setArticles(unique);
+            if (pageNum === 0) setLoading(true);
+            else setLoadingMore(true);
+
+            // Fetch in chunks of 20
+            const response = await getNews(currentSlug, 20, false, pageNum * 20);
+            
+            if (response.articles.length < 20) {
+                setHasMore(false);
+            } else {
+                setHasMore(true);
+            }
+
+            if (pageNum === 0) {
+                setArticles(response.articles);
+            } else {
+                setArticles(prev => {
+                    const combined = [...prev, ...response.articles];
+                    // Deduplicate by URL
+                    return combined.filter((a, i, arr) => 
+                        arr.findIndex((b) => b.url === a.url) === i
+                    );
+                });
+            }
         } catch (err) {
             console.error('Error fetching category news:', err);
+            setHasMore(false);
         } finally {
             setLoading(false);
+            setLoadingMore(false);
         }
     }, [currentSlug]);
 
     /* ── Fetch counts for every category in sidebar ── */
     const fetchCategoryCounts = useCallback(async () => {
-        const counts: Record<string, number> = {};
-        // Fetch a small sample for each to get totalResults
-        await Promise.all(
-            ALL_CATEGORIES.map(async (cat) => {
-                try {
-                    const res = await getNews(cat.slug, 3, false);
-                    counts[cat.slug] = res.totalResults || res.articles.length;
-                } catch {
-                    counts[cat.slug] = 0;
-                }
-            })
-        );
-        setCategoryCounts(counts);
+        try {
+            const res = await getCategoryCounts();
+            setCategoryCounts(res.categoryCounts);
+        } catch (err) {
+            console.error('Error fetching category counts:', err);
+        }
     }, []);
 
+    // Initial load and category change
     useEffect(() => {
-        fetchCategoryNews();
-    }, [fetchCategoryNews]);
-
-    useEffect(() => {
+        setPage(0);
+        setHasMore(true);
+        fetchCategoryNews(0);
         fetchCategoryCounts();
-    }, [fetchCategoryCounts]);
+    }, [currentSlug, fetchCategoryNews, fetchCategoryCounts]);
+
+    // Intersection Observer for Infinite Scroll
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            entries => {
+                if (entries[0].isIntersecting && hasMore && !loading && !loadingMore) {
+                    const nextPage = page + 1;
+                    setPage(nextPage);
+                    fetchCategoryNews(nextPage);
+                }
+            },
+            { threshold: 1.0 }
+        );
+
+        if (observerTarget.current) {
+            observer.observe(observerTarget.current);
+        }
+
+        return () => observer.disconnect();
+    }, [hasMore, loading, loadingMore, fetchCategoryNews]);
 
     /* ── Scroll to top on category change ── */
     useEffect(() => {
@@ -144,7 +174,6 @@ const CategoryPage: React.FC = () => {
 
     return (
         <div className="category-page">
-            {/* Breadcrumb */}
             <div className="category-breadcrumb">
                 <Link to="/">Home</Link>
                 <span className="breadcrumb-sep">
@@ -154,9 +183,7 @@ const CategoryPage: React.FC = () => {
             </div>
 
             <div className="category-layout">
-                {/* ====== Left: News Feed ====== */}
                 <div className="category-feed">
-                    {/* Header */}
                     <div className="category-feed-header">
                         <h1 className="category-feed-title">
                             {getCategoryLabel(currentSlug)}
@@ -168,7 +195,6 @@ const CategoryPage: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Horizontal menu bar */}
                     <div className="category-menu-bar">
                         {MENU_CATEGORIES.map((item) =>
                             item.slug === '' ? (
@@ -191,7 +217,6 @@ const CategoryPage: React.FC = () => {
                         )}
                     </div>
 
-                    {/* Articles */}
                     {loading ? (
                         <div className="category-loading">
                             <div className="category-spinner" />
@@ -203,56 +228,72 @@ const CategoryPage: React.FC = () => {
                             <p>No articles found for this category.</p>
                         </div>
                     ) : (
-                        articles.map((article, index) => (
-                            <a
-                                key={index}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="category-article"
-                            >
-                                <div className="category-article-thumb">
-                                    <img
-                                        src={
-                                            article.image ||
-                                            'https://via.placeholder.com/220x140?text=TV19'
-                                        }
-                                        alt={article.title}
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src =
-                                                'https://via.placeholder.com/220x140?text=TV19';
-                                        }}
-                                    />
-                                </div>
-                                <div className="category-article-body">
-                                    <div className="category-article-badge">
-                                        <span className="badge-tag">
-                                            {article.source || getCategoryLabel(currentSlug)}
-                                        </span>
-                                        <span className="badge-time">
-                                            {timeAgo(article.publishedAt)}
-                                        </span>
+                        <>
+                            {articles.map((article, index) => (
+                                <a
+                                    key={index}
+                                    href={article.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="category-article"
+                                >
+                                    <div className="category-article-thumb">
+                                        <img
+                                            src={
+                                                article.image ||
+                                                'https://via.placeholder.com/220x140?text=TV19'
+                                            }
+                                            alt={article.title}
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src =
+                                                    'https://via.placeholder.com/220x140?text=TV19';
+                                            }}
+                                        />
                                     </div>
-                                    <h2 className="category-article-title">{article.title}</h2>
-                                    {article.description && (
-                                        <p className="category-article-desc">
-                                            {article.description}
-                                        </p>
-                                    )}
-                                    <div className="category-article-meta">
-                                        <span className="meta-source">{article.source}</span>
-                                        <span className="meta-dot">•</span>
-                                        <span>{formatDate(article.publishedAt)}</span>
+                                    <div className="category-article-body">
+                                        <div className="category-article-badge">
+                                            <span className="badge-tag">
+                                                {article.source || getCategoryLabel(currentSlug)}
+                                            </span>
+                                            <span className="badge-time">
+                                                {timeAgo(article.publishedAt)}
+                                            </span>
+                                        </div>
+                                        <h2 className="category-article-title">{article.title}</h2>
+                                        {article.description && (
+                                            <p className="category-article-desc">
+                                                {article.description}
+                                            </p>
+                                        )}
+                                        <div className="category-article-meta">
+                                            <span className="meta-source">{article.source}</span>
+                                            <span className="meta-dot">•</span>
+                                            <span>{formatDate(article.publishedAt)}</span>
+                                        </div>
                                     </div>
-                                </div>
-                            </a>
-                        ))
+                                </a>
+                            ))}
+                            
+                            {/* Infinite Scroll Load More target */}
+                            <div ref={observerTarget} className="infinite-scroll-loading">
+                                {loadingMore && (
+                                    <div className="category-loading row-loading">
+                                        <div className="category-spinner small" />
+                                        <p>Loading more stories…</p>
+                                    </div>
+                                )}
+                                {!hasMore && articles.length > 0 && (
+                                    <div className="end-of-news">
+                                        <div className="divider" />
+                                        <p>You've reached the end of today's news.</p>
+                                    </div>
+                                )}
+                            </div>
+                        </>
                     )}
                 </div>
 
-                {/* ====== Right: Sidebar ====== */}
                 <aside className="category-sidebar">
-                    {/* Categories widget */}
                     <div className="sidebar-categories">
                         <div className="sidebar-categories-header">
                             <h4>
@@ -278,7 +319,6 @@ const CategoryPage: React.FC = () => {
                         </ul>
                     </div>
 
-                    {/* Popular Searches */}
                     <div className="sidebar-popular">
                         <h4>
                             <i className="fas fa-fire"></i> Popular Searches

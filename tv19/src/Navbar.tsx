@@ -205,8 +205,8 @@ const Navbar: React.FC<BreakingNewsProps> = ({
 
         {/* Right-side links + social + search */}
         <div className='header-right'>
-          <a href='#aboutUs' className='header-link'>ABOUT US</a>
-          <a href='#contactUs' className='header-link'>CONTACT US</a>
+          <Link to='/about' className='header-link'>ABOUT US</Link>
+          <Link to='/contact' className='header-link'>CONTACT US</Link>
           <a href='#career' className='header-link'>CAREER</a>
           <a href='#community' className='header-link'>COMMUNITY</a>
           <div className="social-icons">

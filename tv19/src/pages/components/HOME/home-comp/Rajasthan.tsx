@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Rajasthan.css';
-import { getRajasthan, type Article } from '../../../../services/newsService';
+import { getStateNews, type Article } from '../../../../services/newsService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Rajasthan: React.FC = () => {
@@ -10,7 +10,7 @@ const Rajasthan: React.FC = () => {
     const fetchRajasthan = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getRajasthan('rajasthan');
+            const response = await getStateNews('Rajasthan', 10);
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
             );

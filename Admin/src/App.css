@@ -10,8 +10,8 @@
 }
 
 :root {
-  --sidebar-width: 240px;
-  --sidebar-collapsed-width: 64px;
+  --sidebar-width: 210px;
+  --sidebar-collapsed-width: 60px;
   --topbar-height: 60px;
   --bg-main: #f0f2f5;
   --bg-card: #ffffff;
@@ -239,20 +239,20 @@ body {
 
 .logo-tv {
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
   letter-spacing: -0.5px;
 }
 
 .logo-19 {
   color: #ffe066;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 900;
 }
 
 .logo-text {
   color: var(--text-primary);
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
   letter-spacing: 0.5px;
@@ -261,7 +261,7 @@ body {
 .logo-text em {
   font-style: normal;
   color: var(--accent);
-  font-size: 11px;
+  font-size: 10px;
   display: block;
   font-weight: 400;
   letter-spacing: 1px;
@@ -304,13 +304,13 @@ body {
 .nav-item {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 12px;
   width: 100%;
-  padding: 12px 16px;
+  padding: 10px 14px;
   border: none;
   background: none;
   color: #555555;
-  font-size: 15px;
+  font-size: 13.5px;
   font-weight: 500;
   cursor: pointer;
   text-align: left;
@@ -334,8 +334,8 @@ body {
 }
 
 .nav-icon {
-  font-size: 17px;
-  width: 24px;
+  font-size: 16px;
+  width: 20px;
   text-align: center;
   flex-shrink: 0;
   color: #555555;
@@ -353,9 +353,9 @@ body {
 }
 
 .sub-item {
-  padding-left: 48px;
+  padding-left: 42px;
   /* Indent sub items */
-  font-size: 14px;
+  font-size: 13px;
   color: #666666;
 }
 
@@ -605,6 +605,11 @@ body {
   align-items: center;
   justify-content: space-between;
   margin-bottom: 18px;
+}
+
+/* Hide CKEditor 4 LTS License Warning */
+.cke_notification_warning {
+  display: none !important;
 }
 
 .section-title {
@@ -3117,4 +3122,375 @@ input:not(:checked)+.cat-slider .cat-switch-text {
    ============================================================ */
 .email-tpl-card {
   margin-top: 10px;
+}
+
+/* ============================================================
+   View Template Styles
+   ============================================================ */
+.view-template-page {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.vt-header-info {
+  background: transparent;
+  padding: 24px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 14px;
+  color: #333;
+}
+
+.vt-row {
+  display: flex;
+  gap: 4px;
+}
+
+.vt-label {
+  font-weight: 500;
+  color: #333;
+}
+
+.vt-value {
+  color: #555;
+  font-weight: 400;
+}
+
+.vt-content-wrapper {
+  display: flex;
+  justify-content: center;
+  padding: 20px 0;
+}
+
+.vt-email-card {
+  width: 100%;
+  max-width: 600px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  font-family: Arial, sans-serif;
+}
+
+.vt-email-header {
+  text-align: center;
+  padding: 24px 20px;
+}
+
+.vt-email-header h2 {
+  font-size: 24px;
+  font-weight: 800;
+  color: #333;
+  margin: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vt-email-header h2 span {
+  display: inline-flex;
+  background: #ffaa1d;
+  color: #fff;
+  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+}
+
+.vt-email-banner {
+  background: linear-gradient(135deg, #ff5252 0%, #ffab40 100%);
+  color: #fff;
+  padding: 30px 40px;
+  text-align: left;
+}
+
+.vt-email-banner h3 {
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 12px 0;
+  line-height: 1.3;
+}
+
+.vt-email-banner p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.6;
+  opacity: 0.95;
+}
+
+.vt-email-body {
+  padding: 30px 40px;
+  color: #444;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.vt-email-body p {
+  margin-top: 0;
+  margin-bottom: 16px;
+}
+
+.vt-response-box {
+  background: #fffdf2;
+  border: 1px solid #ffe0b2;
+  padding: 16px 20px;
+  border-radius: 4px;
+  margin: 24px 0;
+}
+
+.vt-text-red {
+  color: #ff5252;
+}
+
+.vt-response-box h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0 0 8px 0;
+  text-transform: uppercase;
+}
+
+.vt-response-box p {
+  margin: 0;
+  font-size: 13px;
+}
+
+.vt-section-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #222;
+  margin: 24px 0 16px 0;
+  border-bottom: 1px solid #eee;
+  padding-bottom: 8px;
+}
+
+.vt-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0;
+  border: 1px solid #eee;
+  margin-bottom: 24px;
+}
+
+.vt-grid-col {
+  padding: 16px;
+}
+
+.vt-col-right {
+  border-left: 1px solid #eee;
+}
+
+.vt-grid-col h5 {
+  font-size: 13px;
+  font-weight: 600;
+  color: #ff5252;
+  margin: 0 0 12px 0;
+}
+
+.vt-detail-item {
+  margin-bottom: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.vt-detail-item:last-child {
+  margin-bottom: 0;
+}
+
+.vt-detail-label {
+  font-size: 13px;
+  color: #666;
+  margin-bottom: 2px;
+}
+
+.vt-detail-value {
+  font-size: 13px;
+  color: #333;
+}
+
+.vt-requirements-box {
+  background: #fdfdfd;
+  border: 1px solid #eee;
+  padding: 16px;
+  margin-bottom: 24px;
+}
+
+.vt-requirements-box h5 {
+  font-size: 14px;
+  font-weight: 700;
+  color: #333;
+  margin: 0 0 8px 0;
+}
+
+.vt-requirements-box p {
+  margin: 0;
+  color: #555;
+  font-size: 13px;
+  font-style: italic;
+}
+
+.vt-next-steps {
+  margin-bottom: 30px;
+}
+
+.vt-next-steps h5 {
+  font-size: 15px;
+  font-weight: 700;
+  color: #222;
+  margin: 0 0 12px 0;
+}
+
+.vt-next-steps ol {
+  margin: 0;
+  padding-left: 20px;
+  color: #444;
+}
+
+.vt-next-steps li {
+  margin-bottom: 6px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.vt-email-footer {
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+  font-size: 13px;
+  color: #555;
+  line-height: 1.6;
+}
+
+.vt-email-footer p {
+  margin-bottom: 12px;
+}
+
+.vt-email-footer p:last-child {
+  margin-bottom: 0;
+}
+
+.vt-bottom-actions {
+  display: flex;
+  justify-content: center;
+  padding: 30px 0;
+}
+
+.vt-back-btn {
+  background: linear-gradient(90deg, #ff5252, #ffab40);
+  color: white;
+  border: none;
+  padding: 10px 30px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 82, 82, 0.3);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.vt-back-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+/* ============================================================
+   Edit Template Styles (Manage Template)
+   ============================================================ */
+.edit-template-page {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.et-card {
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #eaeaea;
+  padding: 24px;
+  margin-top: 10px;
+}
+
+.et-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 24px;
+}
+
+.et-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.et-form-group label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+.et-input {
+  padding: 10px 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  color: #333;
+  outline: none;
+  transition: border-color 0.2s;
+  background-color: #fcfcfc;
+}
+
+.et-input:focus {
+  border-color: #aaa;
+}
+
+.et-editor-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 30px;
+}
+
+.et-editor-section label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #555;
+}
+
+/* CKEditor 4 Integration */
+.et-editor-loading {
+  padding: 40px;
+  text-align: center;
+  color: #888;
+  font-size: 14px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  background: #fafafa;
+}
+
+.et-actions {
+  display: flex;
+  justify-content: center;
+  padding: 10px 0;
+}
+
+.et-submit-btn {
+  background: linear-gradient(90deg, #ff5252, #ffab40);
+  color: white;
+  border: none;
+  padding: 10px 40px;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(255, 82, 82, 0.3);
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.et-submit-btn:hover {
+  opacity: 0.9;
+  transform: translateY(-1px);
 }

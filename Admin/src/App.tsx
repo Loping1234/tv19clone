@@ -10,9 +10,10 @@ import Login from './components/Pages/Login'
 import Categories from './components/Pages/Categories'
 import ResetPassword from './components/Pages/ResetPassword'
 import EmailTemplates from './components/Pages/EmailTemplates'
+import StaticPages from './components/Pages/StaticPages'
 import './App.css'
 
-export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
+export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
 
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('adminToken'))
@@ -76,6 +77,7 @@ function App() {
       case 'news': return <News />
       case 'categories': return <Categories />
       case 'email-templates': return <EmailTemplates />
+      case 'pages': return <StaticPages />
       case 'rss-feeds': return <RssFeeds />
       case 'profile': return <Profile />
       case 'reset-password': return <ResetPassword />

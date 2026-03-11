@@ -38,44 +38,44 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: <Home size={20} /> },
+    { id: 'dashboard', label: 'Dashboard', icon: <Home size={16} /> },
     {
         id: 'settings',
         label: 'Site Configuration',
-        icon: <Settings size={20} />,
+        icon: <Settings size={16} />,
         subItems: [
-            { id: 'configuration', label: 'Configuration', icon: <Sliders size={20} /> },
-            { id: 'social', label: 'Social Settings', icon: <Globe size={20} /> },
+            { id: 'configuration', label: 'Configuration', icon: <Sliders size={16} /> },
+            { id: 'social', label: 'Social Settings', icon: <Globe size={16} /> },
         ]
     },
     {
         id: 'settings',
-        label: 'Static',
-        icon: <File size={20} />,
+        label: 'Pages',
+        icon: <FileText size={16} />,
         subItems: [
-            { id: 'email-templates', label: 'Email Templates', icon: <Mail size={20} /> },
-            { id: 'settings', label: 'Pages', icon: <FileText size={20} /> },
+            { id: 'email-templates', label: 'Email Templates', icon: <Mail size={16} /> },
+            { id: 'pages', label: 'Web Pages', icon: <File size={16} /> },
         ]
 
     },
-    //{ id: 'settings', label: 'Pages', icon: <Page size={20} /> },
-    { id: 'settings', label: 'Users', icon: <Users size={20} /> },
-    { id: 'reset-password', label: 'Reset Password', icon: <User size={20} /> },
-    { id: 'categories', label: 'Categories', icon: <Tag size={20} /> },
-    { id: 'settings', label: 'SubHeadings', icon: <List size={20} /> },
-    { id: 'news', label: 'News', icon: <AlignLeft size={20} /> },
-    { id: 'authors', label: 'Author', icon: <User size={20} /> },
-    { id: 'comments', label: 'Comments', icon: <MessageSquare size={20} /> },
-    { id: 'ads', label: 'Ads', icon: <Monitor size={20} /> },
-    { id: 'rss-feeds', label: 'RSS Feed', icon: <Rss size={20} /> },
-    { id: 'subscribers', label: 'Subscribers', icon: <Bell size={20} /> },
-    { id: 'settings', label: 'Polls', icon: <BarChart2 size={20} /> },
-    { id: 'settings', label: 'Quiz', icon: <HelpCircle size={20} /> },
-    { id: 'settings', label: 'Ad Inquiry', icon: <DollarSign size={20} /> },
-    { id: 'settings', label: 'Jobs', icon: <Briefcase size={20} /> },
-    { id: 'settings', label: 'Job Applicants', icon: <UserCheck size={20} /> },
-    { id: 'settings', label: 'Community Posts', icon: <MessageCircle size={20} /> },
-    { id: 'settings', label: 'SEO Pages', icon: <Search size={20} /> },
+    //{ id: 'settings', label: 'Pages', icon: <Page size={16} /> },
+    { id: 'settings', label: 'Users', icon: <Users size={16} /> },
+    { id: 'reset-password', label: 'Reset Password', icon: <User size={16} /> },
+    { id: 'categories', label: 'Categories', icon: <Tag size={16} /> },
+    { id: 'settings', label: 'SubHeadings', icon: <List size={16} /> },
+    { id: 'news', label: 'News', icon: <AlignLeft size={16} /> },
+    { id: 'authors', label: 'Author', icon: <User size={16} /> },
+    { id: 'comments', label: 'Comments', icon: <MessageSquare size={16} /> },
+    { id: 'ads', label: 'Ads', icon: <Monitor size={16} /> },
+    { id: 'rss-feeds', label: 'RSS Feed', icon: <Rss size={16} /> },
+    { id: 'subscribers', label: 'Subscribers', icon: <Bell size={16} /> },
+    { id: 'settings', label: 'Polls', icon: <BarChart2 size={16} /> },
+    { id: 'settings', label: 'Quiz', icon: <HelpCircle size={16} /> },
+    { id: 'settings', label: 'Ad Inquiry', icon: <DollarSign size={16} /> },
+    { id: 'settings', label: 'Jobs', icon: <Briefcase size={16} /> },
+    { id: 'settings', label: 'Job Applicants', icon: <UserCheck size={16} /> },
+    { id: 'settings', label: 'Community Posts', icon: <MessageCircle size={16} /> },
+    { id: 'settings', label: 'SEO Pages', icon: <Search size={16} /> },
 ]
 
 interface Props {

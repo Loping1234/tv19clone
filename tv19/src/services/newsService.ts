@@ -51,21 +51,25 @@ export type NewsCategory =
  */
 
 export const getNews = async (
-  category: NewsCategory = "top",
-  pageSize: number = 20,
-  imagesOnly: boolean = true
+  category: string = "top",
+  size: number = 20,
+  imagesOnly: boolean = false,
+  skip: number = 0
 ): Promise<NewsResponse> => {
-  const response = await axios
-    .get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        ...(imagesOnly ? { imagesOnly: "true" } : {}),
+  try {
+    const response = await axios.get<NewsResponse>(BASE_URL, {
+      params: { 
+        category, 
+        size, 
+        imagesOnly: imagesOnly ? "true" : undefined, 
+        skip 
       },
-    })
-    .catch(handleApiError);
-
-  return response.data;
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
 };
 
 export const getTopHeadlines = async (
@@ -321,6 +325,7 @@ export const getGreenFuture = async (
   }
 };
 
+
 /**
  * Search news articles by keyword query.
  * Hits our Express backend /api/news/search endpoint.
@@ -463,6 +468,23 @@ export const getTrending = async (
         imagesOnly: imagesOnly ? "true" : undefined,
       },
     });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+// --- Category Counts ---
+
+export interface CategoryCountsResponse {
+  categoryCounts: Record<string, number>;
+  totalArticles: number;
+}
+
+export const getCategoryCounts = async (): Promise<CategoryCountsResponse> => {
+  try {
+    const response = await axios.get<CategoryCountsResponse>('/api/counts/categories');
     return response.data;
   } catch (error) {
     handleApiError(error);

@@ -1,0 +1,361 @@
+/* ===================================================
+   About Us Page (Full Design)
+   =================================================== */
+
+.about-page-wrapper {
+  background-color: #ffffff;
+  min-height: 100vh;
+  padding-bottom: 0;
+  font-family: 'Inter', sans-serif;
+  color: #333;
+  top: 100px;
+  position: relative;
+}
+
+/* ── 1. Hero Section ── */
+.about-hero-section {
+  background: linear-gradient(135deg, #16223d, #1a2a47);
+  color: #fff;
+  padding: 80px 20px 100px;
+  text-align: center;
+}
+
+.about-hero-content {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.about-hero-title {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+}
+
+.about-hero-desc {
+  font-size: 0.95rem;
+  line-height: 1.8;
+  color: #c0c8db;
+  font-weight: 400;
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+
+/* ── 2. Split Content: Image + Text ── */
+.about-split-section {
+  max-width: 1100px;
+  margin: 80px auto;
+  padding: 0 20px;
+}
+
+.about-split-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: flex-start;
+}
+
+.about-split-image {
+  position: relative;
+}
+
+.news-image-placeholder {
+  width: 100%;
+  aspect-ratio: 4/3;
+  background-color: #e5e7eb;
+  background-image: url('https://images.unsplash.com/photo-1585829365295-ab7cd400c167?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80');
+  background-size: cover;
+  background-position: center;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+  position: relative;
+}
+
+.news-image-placeholder::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 60px;
+  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+}
+
+.live-badge {
+  position: absolute;
+  bottom: 16px;
+  left: 16px;
+  background: #ff5722;
+  color: #fff;
+  padding: 6px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(255, 87, 34, 0.3);
+}
+
+.live-dot {
+  width: 8px;
+  height: 8px;
+  background-color: #fff;
+  border-radius: 50%;
+  animation: blink 1.5s infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
+}
+
+.about-split-text h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 12px;
+  line-height: 1.2;
+}
+
+.highlight-orange {
+  color: #ff5722;
+}
+
+.sub-heading-orange {
+  color: #ff5722 !important;
+  font-size: 1.05rem;
+  font-weight: 600;
+  font-style: italic;
+  margin-bottom: 24px;
+}
+
+.about-split-text p {
+  font-size: 0.95rem;
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+
+.about-quote-box {
+  padding: 20px 24px;
+  border-left: 4px solid #ff5722;
+  background: #fdf2f0;
+  margin: 30px 0;
+  font-size: 1.05rem;
+  color: #333;
+  font-style: italic;
+  font-weight: 500;
+  line-height: 1.6;
+}
+
+.about-features-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-top: 30px;
+}
+
+.feature-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.check-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  background-color: #fdf2f0;
+  color: #ff5722;
+  border-radius: 50%;
+  font-size: 0.75rem;
+}
+
+
+/* ── 3. Vision & Mission Cards ── */
+.about-vision-mission-section {
+  background-color: #1e222d;
+  padding: 80px 20px;
+}
+
+.vision-mission-container {
+  max-width: 1000px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+}
+
+.vm-card {
+  background: #272c39;
+  border-radius: 12px;
+  padding: 40px;
+  color: #fff;
+  transition: transform 0.3s ease;
+}
+
+.vm-card:hover {
+  transform: translateY(-5px);
+}
+
+.vm-icon-wrapper {
+  width: 50px;
+  height: 50px;
+  background-color: #ff5722;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  color: #fff;
+}
+
+.vm-card h3 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.vm-card p {
+  font-size: 0.95rem;
+  line-height: 1.7;
+  color: #cbd5e1;
+}
+
+
+/* ── 4. Leadership Section ── */
+.about-leadership-section {
+  padding: 80px 20px 100px;
+  background-color: #f8f9fa;
+  text-align: center;
+}
+
+.leadership-header {
+  max-width: 600px;
+  margin: 0 auto 60px;
+}
+
+.leadership-header h2 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin-bottom: 16px;
+}
+
+.highlight-green {
+  color: #059669; /* Or standard dark, depending on user exact match */
+}
+
+.underline-orange {
+  width: 60px;
+  height: 4px;
+  background: #ff5722;
+  margin: 0 auto 24px;
+  border-radius: 2px;
+}
+
+.leadership-header p {
+  font-size: 0.95rem;
+  color: #666;
+  line-height: 1.6;
+}
+
+.leadership-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 30px;
+}
+
+/* For 7 items, we want the first row to hold 4, second to hold 3, or maybe rows of 3. We'll use auto-fill for simplicity */
+.leadership-grid {
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+.leader-card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+  text-align: center;
+  transition: transform 0.3s ease;
+  border: 1px solid #eee;
+}
+
+.leader-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.leader-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  margin: 0 auto 20px;
+  background-color: #eaeaea;
+  background-size: cover;
+  background-position: center;
+}
+
+/* Temporary Placeholders for photos */
+.placeholder-1 { background-image: url('https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?fit=crop&w=200&h=200'); }
+.placeholder-2 { background-image: url('https://images.unsplash.com/photo-1544005313-94ddf0286df2?fit=crop&w=200&h=200'); }
+.placeholder-3 { background-image: url('https://images.unsplash.com/photo-1500648767791-00dcc994a43e?fit=crop&w=200&h=200'); }
+.placeholder-4 { background-image: url('https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?fit=crop&w=200&h=200'); }
+.placeholder-5 { background-image: url('https://images.unsplash.com/photo-1557862921-37829c790f19?fit=crop&w=200&h=200'); }
+.placeholder-6 { background-image: url('https://images.unsplash.com/photo-1560250097-0b93528c311a?fit=crop&w=200&h=200'); }
+
+.blur-placeholder {
+  background: linear-gradient(135deg, #ff9800, #ff5722);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #fff;
+  font-weight: 900;
+  font-family: 'Arial Black', sans-serif;
+}
+
+.leader-card h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin-bottom: 4px;
+}
+
+.leader-role {
+  display: block;
+  font-size: 0.8rem;
+  color: #ff5722;
+  font-weight: 600;
+  margin-bottom: 16px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.leader-card p {
+  font-size: 0.8rem;
+  color: #666;
+  line-height: 1.5;
+}
+
+
+/* Responsive */
+@media (max-width: 900px) {
+  .about-split-container {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  
+  .vision-mission-container {
+    grid-template-columns: 1fr;
+  }
+}
