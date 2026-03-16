@@ -350,6 +350,116 @@ const RSS_FEEDS = {
     "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
     "https://economictimes.indiatimes.com/industry/indl-goods/svs/rssfeeds/13352651.cms",
   ],
+  // Rajasthan City-Specific Feeds
+"ajmer": [
+  "https://news.google.com/rss/search?q=Ajmer+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"alwar": [
+  "https://news.google.com/rss/search?q=Alwar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bagru": [
+  "https://news.google.com/rss/search?q=Bagru+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"banswara": [
+  "https://news.google.com/rss/search?q=Banswara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"barmer": [
+  "https://news.google.com/rss/search?q=Barmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bassi": [
+  "https://news.google.com/rss/search?q=Bassi+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"beawer": [
+  "https://news.google.com/rss/search?q=Beawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bharatpur": [
+  "https://news.google.com/rss/search?q=Bharatpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bhilwara": [
+  "https://news.google.com/rss/search?q=Bhilwara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bhiwadi": [
+  "https://news.google.com/rss/search?q=Bhiwadi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"bikaner": [
+  "https://news.google.com/rss/search?q=Bikaner+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"chittorgarh": [
+  "https://news.google.com/rss/search?q=Chittorgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"churu": [
+  "https://news.google.com/rss/search?q=Churu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"dausa": [
+  "https://news.google.com/rss/search?q=Dausa+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"dholpur": [
+  "https://news.google.com/rss/search?q=Dholpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"dungarpur": [
+  "https://news.google.com/rss/search?q=Dungarpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"hanumangarh": [
+  "https://news.google.com/rss/search?q=Hanumangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"jaipur": [
+  "https://news.google.com/rss/search?q=Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+],
+"jaisalmer": [
+  "https://news.google.com/rss/search?q=Jaisalmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"jalore": [
+  "https://news.google.com/rss/search?q=Jalore+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"jhalawar": [
+  "https://news.google.com/rss/search?q=Jhalawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"jhunjhunu": [
+  "https://news.google.com/rss/search?q=Jhunjhunu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"jodhpur": [
+  "https://news.google.com/rss/search?q=Jodhpur+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"karauli": [
+  "https://news.google.com/rss/search?q=Karauli+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"kishangarh": [
+  "https://news.google.com/rss/search?q=Kishangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"kota": [
+  "https://news.google.com/rss/search?q=Kota+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"nagaur": [
+  "https://news.google.com/rss/search?q=Nagaur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"pali": [
+  "https://news.google.com/rss/search?q=Pali+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"pratapgarh": [
+  "https://news.google.com/rss/search?q=Pratapgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"rajsamand": [
+  "https://news.google.com/rss/search?q=Rajsamand+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"sawai madhopur": [
+  "https://news.google.com/rss/search?q=Sawai+Madhopur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"sikar": [
+  "https://news.google.com/rss/search?q=Sikar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"sirohi": [
+  "https://news.google.com/rss/search?q=Sirohi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"sri ganganagar": [
+  "https://news.google.com/rss/search?q=Sri+Ganganagar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"tonk": [
+  "https://news.google.com/rss/search?q=Tonk+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+"udaipur": [
+  "https://news.google.com/rss/search?q=Udaipur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
 };
 
 // Images that are known to be generic/broken and should be skipped
@@ -421,22 +531,18 @@ app.get("/api/news", async (req, res) => {
     const skip = parseInt(req.query.skip) || 0;
     const imagesOnly = req.query.imagesOnly === "true";
 
-    // Build the query
-    const dbQuery = { status: true }; // Only show actively toggled articles
+    const dbQuery = { status: true };
 
-    // Handle 'top' logic vs specific category
     if (categoryQuery !== "top" && categoryQuery !== "trending") {
       dbQuery.category = categoryQuery;
     }
 
-    // Require image if specified
     if (imagesOnly) {
-      dbQuery.image = { $ne: null, $ne: "" };
+      dbQuery.image = { $nin: [null, ""] };
     }
 
-    // Fetch from MongoDB
     const articles = await News.find(dbQuery)
-      .sort({ publishedAt: -1 }) // newest first
+      .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(size);
 
@@ -446,6 +552,83 @@ app.get("/api/news", async (req, res) => {
   } catch (err) {
     console.error("News fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch news from database" });
+  }
+});
+
+// GET /api/news/state?state=Rajasthan&size=15
+app.get("/api/news/state", async (req, res) => {
+  try {
+    const stateName = (req.query.state || "Rajasthan").toString().trim();
+    const size = parseInt(req.query.size) || 15;
+    const categoryKey = stateName.toLowerCase();
+
+    // Tier 1: Look in MongoDB for articles under this city's category
+    let articles = await News.find({ 
+      status: true, 
+      category: categoryKey 
+    })
+      .sort({ publishedAt: -1 })
+      .limit(size);
+
+    // Tier 2: Live fetch from Google News RSS for this city
+    if (articles.length === 0) {
+      const liveUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`;
+      try {
+        const feed = await parser.parseURL(liveUrl);
+        const mapped = feed.items.map((item) => mapItem(item, feed.title));
+        await enrichArticlesWithImages(mapped);
+
+        // Save these to MongoDB for future requests
+        for (const article of mapped) {
+          await News.findOneAndUpdate(
+            { url: article.url },
+            {
+              $set: {
+                title: article.title,
+                description: article.description,
+                image: article.image,
+                source: article.source,
+                category: categoryKey,
+                publishedAt: article.publishedAt,
+                content: article.content,
+              },
+              $setOnInsert: { status: true }
+            },
+            { upsert: true }
+          );
+        }
+
+        articles = await News.find({ 
+          status: true, 
+          category: categoryKey 
+        })
+          .sort({ publishedAt: -1 })
+          .limit(size);
+
+      } catch (feedErr) {
+        console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
+      }
+    }
+
+    // Tier 3: Strict text search — only if city name appears in the article
+    if (articles.length === 0) {
+      articles = await News.find({
+        status: true,
+        $or: [
+          { title: { $regex: stateName, $options: "i" } },
+          { description: { $regex: stateName, $options: "i" } },
+        ]
+      })
+        .sort({ publishedAt: -1 })
+        .limit(size);
+    }
+
+    // NO generic fallback — return empty array if truly nothing found
+    res.json({ totalResults: articles.length, articles });
+
+  } catch (err) {
+    console.error("State fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch state news from database" });
   }
 });
 
@@ -482,51 +665,6 @@ app.get("/api/news/search", async (req, res) => {
   } catch (err) {
     console.error("RSS search error:", err.message);
     res.status(500).json({ error: "Failed to search news database" });
-  }
-});
-
-// GET /api/news/state?state=Rajasthan&size=15
-// Fetches state news from MongoDB
-app.get("/api/news/state", async (req, res) => {
-  try {
-    const stateName = (req.query.state || "Rajasthan").toString().trim();
-    const size = parseInt(req.query.size) || 15;
-
-    if (!stateName) {
-      return res.status(400).json({ error: "Query parameter 'state' is required" });
-    }
-
-    const dbQuery = { status: true };
-    // Search for state name in text fields
-    dbQuery.$or = [
-      { title: { $regex: stateName, $options: "i" } },
-      { description: { $regex: stateName, $options: "i" } },
-      { content: { $regex: stateName, $options: "i" } },
-    ];
-
-    let articles = await News.find(dbQuery)
-      .sort({ publishedAt: -1 })
-      .limit(size);
-
-    // Fallback 1: If searching by stateName text fails, try matching the category directly
-    if (articles.length === 0) {
-      const fallbackQuery = { status: true, category: stateName.toLowerCase() };
-      articles = await News.find(fallbackQuery)
-        .sort({ publishedAt: -1 })
-        .limit(size);
-    }
-
-    // Fallback 2: If still empty, just get the latest 10 articles from ANY category to avoid an empty UI
-    if (articles.length === 0) {
-      articles = await News.find({ status: true })
-        .sort({ publishedAt: -1 })
-        .limit(10);
-    }
-
-    res.json({ totalResults: articles.length, articles });
-  } catch (err) {
-    console.error("State fetch error:", err.message);
-    res.status(500).json({ error: "Failed to fetch state news from database" });
   }
 });
 
@@ -923,19 +1061,26 @@ const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB, then start the server
 connectDB().then(async () => {
-  // Seed initial RSS Feeds if empty
+  // Seed initial RSS Feeds if empty or when new feed URLs are added
   try {
     const count = await RssFeed.countDocuments();
-    if (count === 0) {
-      console.log('🌱 Seeding initial RSS Feeds to MongoDB...');
-      const feedsToInsert = [];
+    const expectedCount = Object.values(RSS_FEEDS).reduce((sum, urls) => sum + urls.length, 0);
+
+    if (count < expectedCount) {
+      console.log('🌱 New feeds detected, re-seeding RSS Feeds...');
+
+      // Insert only feeds that do not already exist
       for (const [category, urls] of Object.entries(RSS_FEEDS)) {
         for (const url of urls) {
-          feedsToInsert.push({ category, url, status: true });
+          await RssFeed.findOneAndUpdate(
+            { url },
+            { url, category, status: true },
+            { upsert: true }
+          );
         }
       }
-      await RssFeed.insertMany(feedsToInsert);
-      console.log(`✅ Seeded ${feedsToInsert.length} RSS feeds to MongoDB.`);
+
+      console.log('✅ RSS feeds synced.');
     }
   } catch (e) {
     console.error('❌ Failed to seed RSS feeds:', e);

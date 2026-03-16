@@ -66,41 +66,29 @@ export default function StatePage() {
   const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
 
   const fetchRegionNews = useCallback(async (region: string) => {
-    setLoading(true);
-    setError(null);
-    setFallbackNotice(null);
+  setLoading(true);
+  setError(null);
+  setFallbackNotice(null);
 
-    try {
-      const query = region === 'All Stories' ? 'Rajasthan' : region;
-      const response = await getStateNews(query, 30);
-      const unique = dedupeByTitle(response.articles);
+  try {
+    const query = region === 'All Stories' ? 'Rajasthan' : region;
+    const response = await getStateNews(query, 30);
+    const unique = dedupeByTitle(response.articles);
+    setArticles(unique);
 
-      if (region === 'All Stories' || unique.length > 0) {
-        setArticles(unique);
-        return;
-      }
-
-      const fallbackResponse = await getStateNews('Rajasthan', 30);
-      const fallbackUnique = dedupeByTitle(fallbackResponse.articles);
-      const regionToken = region.toLowerCase();
-
-      const prioritized = fallbackUnique.filter((article) =>
-        [article.title, article.description, article.content, article.source]
-          .filter(Boolean)
-          .some((text) => text!.toLowerCase().includes(regionToken))
-      );
-
-      const merged = [...prioritized, ...fallbackUnique.filter((item) => !prioritized.includes(item))];
-      setArticles(merged);
-      setFallbackNotice(`Showing Rajasthan feed with prioritized ${region} matches.`);
-    } catch (err) {
-      console.error('State region fetch failed:', err);
-      setError('Could not load regional news right now. Please try again.');
-      setArticles([]);
-    } finally {
-      setLoading(false);
+    // Show notice only if no articles found
+    if (unique.length === 0) {
+      setError(`No stories found for ${region}. Try another region.`);
     }
-  }, []);
+
+  } catch (err) {
+    console.error('State region fetch failed:', err);
+    setError('Could not load regional news right now. Please try again.');
+    setArticles([]);
+  } finally {
+    setLoading(false);
+  }
+}, []);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
