@@ -58,6 +58,19 @@ function dedupeByTitle(items: Article[]) {
   return items.filter((article, index, arr) => arr.findIndex((a) => a.title === article.title) === index);
 }
 
+function sortArticlesForCover(items: Article[]) {
+  return [...items].sort((left, right) => {
+    const leftHasImage = Boolean(left.image);
+    const rightHasImage = Boolean(right.image);
+
+    if (leftHasImage !== rightHasImage) {
+      return Number(rightHasImage) - Number(leftHasImage);
+    }
+
+    return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
+  });
+}
+
 export default function StatePage() {
   const [activeRegion, setActiveRegion] = useState<string>('All Stories');
   const [articles, setArticles] = useState<Article[]>([]);
@@ -73,7 +86,7 @@ export default function StatePage() {
   try {
     const query = region === 'All Stories' ? 'Rajasthan' : region;
     const response = await getStateNews(query, 30);
-    const unique = dedupeByTitle(response.articles);
+    const unique = sortArticlesForCover(dedupeByTitle(response.articles));
     setArticles(unique);
 
     // Show notice only if no articles found

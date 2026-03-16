@@ -562,24 +562,51 @@ app.get("/api/news/state", async (req, res) => {
     const size = parseInt(req.query.size) || 15;
     const categoryKey = stateName.toLowerCase();
 
+    if (!stateName) {
+      return res.status(400).json({ error: "Query parameter 'state' is required" });
+    }
+
     // Tier 1: Look in MongoDB for articles under this city's category
     let articles = await News.find({ 
       status: true, 
       category: categoryKey 
     })
       .sort({ publishedAt: -1 })
-      .limit(size);
+      .limit(size * 3);
+
+    if (articles.length > 0) {
+      const missingImages = articles.filter((article) => !article.image);
+
+      if (missingImages.length > 0) {
+        await enrichArticlesWithImages(missingImages);
+        await Promise.all(
+          missingImages
+            .filter((article) => article.image)
+            .map((article) =>
+              News.findOneAndUpdate(
+                { url: article.url },
+                { $set: { image: article.image } }
+              )
+            )
+        );
+      }
+
+      articles = sortArticlesForCover(articles).slice(0, size);
+    }
 
     // Tier 2: Live fetch from Google News RSS for this city
     if (articles.length === 0) {
-      const liveUrl = `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`;
+      const liveUrls = RSS_FEEDS[categoryKey] || [
+        `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`
+      ];
+
       try {
-        const feed = await parser.parseURL(liveUrl);
-        const mapped = feed.items.map((item) => mapItem(item, feed.title));
+        const mapped = deduplicateByTitle(await fetchFeeds(liveUrls, categoryKey));
         await enrichArticlesWithImages(mapped);
+        const prioritizedMapped = sortArticlesForCover(mapped).slice(0, size * 3);
 
         // Save these to MongoDB for future requests
-        for (const article of mapped) {
+        for (const article of prioritizedMapped) {
           await News.findOneAndUpdate(
             { url: article.url },
             {
@@ -603,7 +630,9 @@ app.get("/api/news/state", async (req, res) => {
           category: categoryKey 
         })
           .sort({ publishedAt: -1 })
-          .limit(size);
+          .limit(size * 3);
+
+        articles = sortArticlesForCover(articles).slice(0, size);
 
       } catch (feedErr) {
         console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
@@ -620,7 +649,17 @@ app.get("/api/news/state", async (req, res) => {
         ]
       })
         .sort({ publishedAt: -1 })
-        .limit(size);
+        .limit(size * 3);
+
+      if (articles.length > 0) {
+        const missingImages = articles.filter((article) => !article.image);
+
+        if (missingImages.length > 0) {
+          await enrichArticlesWithImages(missingImages);
+        }
+
+        articles = sortArticlesForCover(articles).slice(0, size);
+      }
     }
 
     // NO generic fallback — return empty array if truly nothing found
@@ -905,6 +944,19 @@ function deduplicateByTitle(articles) {
     if (!key || seen.has(key)) return false;
     seen.add(key);
     return true;
+  });
+}
+
+function sortArticlesForCover(articles) {
+  return [...articles].sort((left, right) => {
+    const leftHasImage = Boolean(left.image);
+    const rightHasImage = Boolean(right.image);
+
+    if (leftHasImage !== rightHasImage) {
+      return Number(rightHasImage) - Number(leftHasImage);
+    }
+
+    return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
   });
 }
 
