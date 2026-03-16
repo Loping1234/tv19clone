@@ -35,7 +35,7 @@ export default function RssFeeds() {
         try {
             const [feedsRes, catRes] = await Promise.all([
                 fetch(`${API}/api/rss-feeds`),
-                fetch(`${API}/api/categories`)
+                fetch(`${API}/api/news/categories`)
             ])
             if (!feedsRes.ok || !catRes.ok) throw new Error('Server error')
 
@@ -61,7 +61,7 @@ export default function RssFeeds() {
         try {
             const [configRes, countsRes] = await Promise.all([
                 fetch(`${API}/api/config`),
-                fetch(`${API}/api/categories/counts`)
+                fetch(`${API}/api/counts/categories`)
             ])
             if (configRes.ok) {
                 const configData = await configRes.json()

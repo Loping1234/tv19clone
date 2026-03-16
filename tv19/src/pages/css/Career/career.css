@@ -1,0 +1,42 @@
+.career-page {
+  width: 100%;
+  margin-top: var(--nav-offset, 220px);
+  background: #f5f6fa;
+}
+
+.career-empty-state {
+  min-height: 440px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 56px 16px 88px;
+}
+
+.career-empty-state__inner {
+  width: 100%;
+  max-width: 1100px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.career-empty-message {
+  margin: 0;
+  max-width: 760px;
+  text-align: center;
+  color: #73819c;
+  font-size: clamp(1.5rem, 2.1vw, 2.15rem);
+  font-weight: 700;
+  line-height: 1.35;
+}
+
+@media (max-width: 768px) {
+  .career-empty-state {
+    min-height: 360px;
+    padding: 40px 16px 64px;
+  }
+
+  .career-empty-message {
+    font-size: 1.3rem;
+  }
+}

@@ -207,7 +207,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
         <div className='header-right'>
           <Link to='/about' className='header-link'>ABOUT US</Link>
           <Link to='/contact' className='header-link'>CONTACT US</Link>
-          <a href='#career' className='header-link'>CAREER</a>
+          <Link to='/career' className='header-link'>CAREER</Link>
           <a href='#community' className='header-link'>COMMUNITY</a>
           <div className="social-icons">
             <a href="#facebook" className="social-icon"><UilFacebook /></a>
@@ -240,10 +240,13 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           <li className="dropdown">
             <a href="#more" className="navbar-link dropdown-toggle">More ▾</a>
             <ul className="dropdown-menu">
-              <li><a href="#health" className="navbar-link">Health</a></li>
-              <li><a href="#science" className="navbar-link">Science</a></li>
-              <li><a href="#travel" className="navbar-link">Travel</a></li>
+              <li><a href="#arts" className="navbar-link">Arts</a></li>
+              <li><a href="#astrology" className="navbar-link">Astrology</a></li>
+              <li><a href="#crime" className="navbar-link">Crime</a></li>
+              <li><a href="#finance" className="navbar-link">Finance</a></li>
               <li><a href="#opinion" className="navbar-link">Opinion</a></li>
+              <li><a href="#weather" className="navbar-link">Weather</a></li>
+              <li><a href="#green-future" className="navbar-link">Green Future</a></li>
             </ul>
           </li>
         </ul>

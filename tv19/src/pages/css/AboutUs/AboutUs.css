@@ -8,10 +8,9 @@
   padding-bottom: 0;
   font-family: 'Inter', sans-serif;
   color: #333;
-  top: 100px;
-  position: relative;
+  width: 100%;
+  margin-top: 300px;
 }
-
 /* ── 1. Hero Section ── */
 .about-hero-section {
   background: linear-gradient(135deg, #16223d, #1a2a47);
@@ -71,6 +70,19 @@
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
   position: relative;
+  transition: transform 0.3s ease;
+}
+
+.about-split-image:hover .news-image-placeholder {
+  transform: scale(1.03);
+}
+
+.live-badge {
+  transition: transform 0.2s ease;
+}
+
+.live-badge:hover {
+  transform: scale(1.05);
 }
 
 .news-image-placeholder::after {

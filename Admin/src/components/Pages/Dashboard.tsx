@@ -71,8 +71,8 @@ export default function Dashboard() {
         try {
             const [newsRes, catRes, countsRes] = await Promise.all([
                 fetch(`${API}/api/news?category=top&size=50`),
-                fetch(`${API}/api/categories`),
-                fetch(`${API}/api/categories/counts`),
+                fetch(`${API}/api/news/categories`),
+                fetch(`${API}/api/counts/categories`),
             ])
 
             if (!newsRes.ok || !catRes.ok || !countsRes.ok) throw new Error('Server error')

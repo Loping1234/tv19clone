@@ -9,6 +9,8 @@ import ContactUs from './pages/components/ContactUs/ContactUs.tsx'
 import Footer from './pages/components/Footer/Footer.tsx'
 import AboutUs from './pages/components/AboutUs/AboutUs.tsx'
 import Disclaimer from './pages/components/Disclaimer/Disclaimer.tsx'
+import Career from './pages/components/Career/career.tsx'
+import StatePage from './pages/components/STATE/StatePage.tsx'
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
 
 // Fetch site config and apply favicon + title on startup
@@ -26,6 +28,8 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/state" element={<StatePage />} />
+        <Route path="/career" element={<Career />} />
       </Routes>
       <Footer />
     </BrowserRouter>
