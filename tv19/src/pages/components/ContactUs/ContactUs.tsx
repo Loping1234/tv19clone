@@ -1,4 +1,3 @@
-import React from 'react';
 import '../../css/ContactUs/ContactUs.css';
 import { UilStore, UilPhoneAlt, UilEnvelope, UilFacebook, UilTwitter, UilInstagram, UilYoutube, UilLinkedin, UilWhatsapp, UilMessage } from '@iconscout/react-unicons';
 

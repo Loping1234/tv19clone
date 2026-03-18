@@ -333,7 +333,7 @@ const RSS_FEEDS = {
     "https://www.downtoearth.org.in/rss/climate-change",
   ],
   // Categories that map to Google News RSS searches
-  "green-future": [
+  green_future: [
     "https://news.google.com/rss/search?q=green+energy+sustainability+india&hl=en-IN&gl=IN&ceid=IN:en",
     "https://www.downtoearth.org.in/rss/all",
   ],
@@ -344,12 +344,236 @@ const RSS_FEEDS = {
   ],
   rajasthan: [
     "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms", // TOI Jaipur
+    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+    "https://www.bhaskar.com/rss-feed/1061/",   
+    "https://www.patrika.com/rss/rajasthan-news.xml",
   ],
   manufacturing: [
     "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
     "https://economictimes.indiatimes.com/industry/indl-goods/svs/rssfeeds/13352651.cms",
   ],
+  // Replace/add these in your RSS_FEEDS object in server/index.js
+
+// ── RAJASTHAN (already exists, update it) ──
+"rajasthan": [
+  "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+  "https://www.bhaskar.com/rss-feed/1061/",
+  "https://www.patrika.com/rss/rajasthan-news.xml",
+],
+
+// ── UTTAR PRADESH ──
+"uttar pradesh": [
+  "https://news.google.com/rss/search?q=Uttar+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1080/",
+  "https://www.patrika.com/rss/uttar-pradesh-news.xml",
+],
+
+// ── MAHARASHTRA ──
+"maharashtra": [
+  "https://news.google.com/rss/search?q=Maharashtra+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
+  "https://www.patrika.com/rss/maharashtra-news.xml",
+],
+
+// ── MADHYA PRADESH ──
+"madhya pradesh": [
+  "https://news.google.com/rss/search?q=Madhya+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1071/",
+  "https://www.patrika.com/rss/madhya-pradesh-news.xml",
+],
+
+// ── GUJARAT ──
+"gujarat": [
+  "https://news.google.com/rss/search?q=Gujarat+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1063/",
+  "https://www.patrika.com/rss/gujarat-news.xml",
+],
+
+// ── BIHAR ──
+"bihar": [
+  "https://news.google.com/rss/search?q=Bihar+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1055/",
+  "https://www.patrika.com/rss/bihar-news.xml",
+],
+
+// ── WEST BENGAL ──
+"west bengal": [
+  "https://news.google.com/rss/search?q=West+Bengal+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── KARNATAKA ──
+"karnataka": [
+  "https://news.google.com/rss/search?q=Karnataka+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
+  "https://www.patrika.com/rss/karnataka-news.xml",
+],
+
+// ── TAMIL NADU ──
+"tamil nadu": [
+  "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── ANDHRA PRADESH ──
+"andhra pradesh": [
+  "https://news.google.com/rss/search?q=Andhra+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── TELANGANA ──
+"telangana": [
+  "https://news.google.com/rss/search?q=Telangana+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── KERALA ──
+"kerala": [
+  "https://news.google.com/rss/search?q=Kerala+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── PUNJAB ──
+"punjab": [
+  "https://news.google.com/rss/search?q=Punjab+news+India&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1079/",
+  "https://www.patrika.com/rss/punjab-news.xml",
+],
+
+// ── HARYANA ──
+"haryana": [
+  "https://news.google.com/rss/search?q=Haryana+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1064/",
+  "https://www.patrika.com/rss/haryana-news.xml",
+],
+
+// ── JHARKHAND ──
+"jharkhand": [
+  "https://news.google.com/rss/search?q=Jharkhand+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1068/",
+  "https://www.patrika.com/rss/jharkhand-news.xml",
+],
+
+// ── ODISHA ──
+"odisha": [
+  "https://news.google.com/rss/search?q=Odisha+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── CHHATTISGARH ──
+"chhattisgarh": [
+  "https://news.google.com/rss/search?q=Chhattisgarh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1058/",
+  "https://www.patrika.com/rss/chhattisgarh-news.xml",
+],
+
+// ── UTTARAKHAND ──
+"uttarakhand": [
+  "https://news.google.com/rss/search?q=Uttarakhand+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1082/",
+  "https://www.patrika.com/rss/uttarakhand-news.xml",
+],
+
+// ── HIMACHAL PRADESH ──
+"himachal pradesh": [
+  "https://news.google.com/rss/search?q=Himachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1066/",
+  "https://www.patrika.com/rss/himachal-pradesh-news.xml",
+],
+
+// ── ASSAM ──
+"assam": [
+  "https://news.google.com/rss/search?q=Assam+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── GOA ──
+"goa": [
+  "https://news.google.com/rss/search?q=Goa+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
+],
+
+// ── MANIPUR ──
+"manipur": [
+  "https://news.google.com/rss/search?q=Manipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── MEGHALAYA ──
+"meghalaya": [
+  "https://news.google.com/rss/search?q=Meghalaya+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── MIZORAM ──
+"mizoram": [
+  "https://news.google.com/rss/search?q=Mizoram+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── NAGALAND ──
+"nagaland": [
+  "https://news.google.com/rss/search?q=Nagaland+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── TRIPURA ──
+"tripura": [
+  "https://news.google.com/rss/search?q=Tripura+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── ARUNACHAL PRADESH ──
+"arunachal pradesh": [
+  "https://news.google.com/rss/search?q=Arunachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── SIKKIM ──
+"sikkim": [
+  "https://news.google.com/rss/search?q=Sikkim+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ══ UNION TERRITORIES ══
+
+// ── DELHI ──
+"delhi": [
+  "https://news.google.com/rss/search?q=Delhi+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+  "https://www.bhaskar.com/rss-feed/1060/",
+],
+
+// ── JAMMU & KASHMIR ──
+"jammu kashmir": [
+  "https://news.google.com/rss/search?q=Jammu+Kashmir+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.patrika.com/rss/jammu-kashmir-news.xml",
+],
+
+// ── LADAKH ──
+"ladakh": [
+  "https://news.google.com/rss/search?q=Ladakh+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── PUDUCHERRY ──
+"puducherry": [
+  "https://news.google.com/rss/search?q=Puducherry+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── CHANDIGARH ──
+"chandigarh": [
+  "https://news.google.com/rss/search?q=Chandigarh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://www.bhaskar.com/rss-feed/1057/",
+],
+
+// ── ANDAMAN & NICOBAR ──
+"andaman nicobar": [
+  "https://news.google.com/rss/search?q=Andaman+Nicobar+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── LAKSHADWEEP ──
+"lakshadweep": [
+  "https://news.google.com/rss/search?q=Lakshadweep+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
+
+// ── DADRA & NAGAR HAVELI / DAMAN & DIU ──
+"dadra daman diu": [
+  "https://news.google.com/rss/search?q=Dadra+Nagar+Haveli+Daman+Diu+news&hl=en-IN&gl=IN&ceid=IN:en",
+],
   // Rajasthan City-Specific Feeds
 "ajmer": [
   "https://news.google.com/rss/search?q=Ajmer+news&hl=en-IN&gl=IN&ceid=IN:en",
@@ -668,6 +892,40 @@ app.get("/api/news/state", async (req, res) => {
   } catch (err) {
     console.error("State fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch state news from database" });
+  }
+});
+
+// GET /api/news/scrape-image?url=...&brokenImage=...
+// Attempts to rescrape an article's webpage if the original image fails on frontend
+app.get("/api/news/scrape-image", async (req, res) => {
+  try {
+    const articleUrl = (req.query.url || "").toString().trim();
+    const brokenImage = (req.query.brokenImage || "").toString().trim();
+
+    if (!articleUrl) {
+      return res.status(400).json({ error: "Query parameter 'url' is required" });
+    }
+
+    // 1. Try to fetch og:image or twitter:image
+    const scrapedImage = await fetchOgImage(articleUrl);
+    
+    // 2. We could also parse regular <img> tags, but fetchOgImage returns the primary meta tags.
+    if (scrapedImage && scrapedImage !== brokenImage && !GENERIC_IMAGE_PATTERNS.some(pat => scrapedImage.includes(pat))) {
+      
+      // Update the database with the working image so it fixes it for future users
+      await News.updateMany(
+        { url: articleUrl },
+        { $set: { image: scrapedImage } }
+      );
+      
+      return res.json({ imageUrl: scrapedImage });
+    }
+
+    // No valid fallback found
+    return res.status(404).json({ error: "No valid fallback image found on the article page" });
+  } catch (err) {
+    console.error("Scrape fallback image error:", err.message);
+    res.status(500).json({ error: "Failed to scrape fallback image" });
   }
 });
 

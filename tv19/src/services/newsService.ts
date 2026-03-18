@@ -492,6 +492,19 @@ export const getCategoryCounts = async (): Promise<CategoryCountsResponse> => {
   }
 };
 
+// --- Custom Fallback ---
+export const scrapeFallbackImage = async (url: string, brokenImage: string): Promise<string | null> => {
+  try {
+    const response = await axios.get<{ imageUrl: string }>(`${BASE_URL}/scrape-image`, {
+      params: { url, brokenImage },
+    });
+    return response.data.imageUrl;
+  } catch (error) {
+    // We ignore errors here since it's a silent fallback mechanism
+    return null;
+  }
+};
+
 // --- Helpers ---
 
 function handleApiError(error: unknown): never {

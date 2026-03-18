@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
+import { FiUsers, FiFileText, FiMessageCircle, FiLayers, FiShield, FiSpeaker } from 'react-icons/fi'
+import { BsArrowRightCircleFill } from 'react-icons/bs'
 
 const API = 'http://localhost:5000'
 
@@ -19,34 +21,18 @@ interface Stats {
     lastRefresh: Date | null
 }
 
-interface CategoryCounts {
-    [key: string]: number
-}
+
 
 interface TopArticle {
     title: string
     source: string
     url: string
     publishedAt: string
+    image?: string
+    urlToImage?: string
 }
 
-function isToday(dateStr: string) {
-    const d = new Date(dateStr)
-    const now = new Date()
-    return d.getDate() === now.getDate() &&
-        d.getMonth() === now.getMonth() &&
-        d.getFullYear() === now.getFullYear()
-}
 
-function timeAgo(dateStr: string) {
-    const diff = Date.now() - new Date(dateStr).getTime()
-    const mins = Math.floor(diff / 60000)
-    if (mins < 1) return 'Just now'
-    if (mins < 60) return `${mins}m ago`
-    const hrs = Math.floor(mins / 60)
-    if (hrs < 24) return `${hrs}h ago`
-    return `${Math.floor(hrs / 24)}d ago`
-}
 
 export default function Dashboard() {
     const [stats, setStats] = useState<Stats>({
@@ -55,15 +41,8 @@ export default function Dashboard() {
         loading: true, lastRefresh: null,
     })
     const [topArticles, setTopArticles] = useState<TopArticle[]>([])
-    const [categoryCounts, setCategoryCounts] = useState<CategoryCounts>({})
-    const [clock, setClock] = useState(new Date())
-    const [error, setError] = useState<string | null>(null)
 
-    // Live clock - every second
-    useEffect(() => {
-        const t = setInterval(() => setClock(new Date()), 1000)
-        return () => clearInterval(t)
-    }, [])
+    const [error, setError] = useState<string | null>(null)
 
     const fetchStats = useCallback(async () => {
         setStats(s => ({ ...s, loading: true }))
@@ -79,15 +58,11 @@ export default function Dashboard() {
 
             const newsData = await newsRes.json() as { totalResults: number; articles: Article[] }
             const catData = await catRes.json() as { categories: string[] }
-            const countsData = await countsRes.json() as { categoryCounts: CategoryCounts; totalArticles: number }
-
-            const today = newsData.articles.filter(a => isToday(a.publishedAt)).length
-
-            setCategoryCounts(countsData.categoryCounts)
+            const countsData = await countsRes.json() as { categoryCounts: Record<string, number>; totalArticles: number }
 
             setStats({
                 totalArticles: countsData.totalArticles,
-                todayArticles: today,
+                todayArticles: 0,
                 totalCategories: catData.categories.length,
                 totalFeeds: Object.keys(countsData.categoryCounts).length,
                 loading: false,
@@ -106,30 +81,15 @@ export default function Dashboard() {
         return () => clearInterval(interval)
     }, [fetchStats])
 
-    const fmt = (d: Date) =>
-        d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })
-
-    const fmtDate = (d: Date) =>
-        d.toLocaleDateString('en-IN', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })
-
     return (
         <div className="dashboard">
             {/* Header */}
             <div className="dash-header">
-                <div>
-                    <h1 className="dash-title">DASHBOARD</h1>
-                    <p className="dash-subtext">{fmtDate(clock)}</p>
-                </div>
-                <div className="dash-clock-block">
-                    <div className="dash-clock">{fmt(clock)}</div>
-                    {stats.lastRefresh && (
-                        <div className="dash-refreshed">
-                            Last refreshed: {stats.lastRefresh.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                    )}
-                    <button className="refresh-btn" onClick={fetchStats} disabled={stats.loading}>
-                        {stats.loading ? '⟳ Loading…' : '⟳ Refresh'}
-                    </button>
+                <h1 className="dash-title">DASHBOARD</h1>
+                <div className="breadcrumb">
+                    <span>Dashboard</span>
+                    <span className="bc-sep">›</span>
+                    <span className="bc-active">Dashboard</span>
                 </div>
             </div>
 
@@ -139,95 +99,106 @@ export default function Dashboard() {
                 </div>
             )}
 
-            {/* Stat Cards */}
-            <div className="stat-cards">
-                <StatCard
-                    icon="📰"
-                    label="Total Articles"
-                    value={stats.totalArticles}
-                    sub="Fetched from RSS feeds"
-                    gradient="orange"
-                    loading={stats.loading}
+            {/* Stat Cards - New Design */}
+            <div className="stat-cards top-grid">
+                <div className="top-card card-large">
+                    <div className="card-left">
+                        <FiUsers className="card-icon" />
+                    </div>
+                    <div className="card-right">
+                        <div className="card-title">Users</div>
+                        <div className="card-value red-text">12</div>
+
+                        <div className="user-stats">
+                            <div className="u-stat">
+                                <div className="u-label">Today</div>
+                                <div className="u-val">0</div>
+                            </div>
+                            <div className="u-stat">
+                                <div className="u-label">This Week</div>
+                                <div className="u-val">0</div>
+                            </div>
+                            <div className="u-stat">
+                                <div className="u-label">Total</div>
+                                <div className="u-val">12</div>
+                            </div>
+                        </div>
+
+                        <a href="#" className="card-arrow-link">
+                            <BsArrowRightCircleFill className="card-arrow" />
+                        </a>
+                    </div>
+                </div>
+
+                <TopCard
+                    title="News"
+                    value={stats.loading ? 0 : stats.totalArticles}
+                    icon={<FiFileText />}
+                    link="#"
                 />
-                <StatCard
-                    icon="📅"
-                    label="Today's Articles"
-                    value={stats.todayArticles}
-                    sub="Published today"
-                    gradient="red"
-                    loading={stats.loading}
+                <TopCard
+                    title="Comments"
+                    value={17}
+                    icon={<FiMessageCircle />}
+                    link="#"
                 />
-                <StatCard
-                    icon="🗂️"
-                    label="Categories"
-                    value={stats.totalCategories}
-                    sub="Active feed categories"
-                    gradient="purple"
-                    loading={stats.loading}
+                <TopCard
+                    title="Subheadings"
+                    value={stats.loading ? 0 : stats.totalCategories}
+                    icon={<FiFileText />}
+                    link="#"
                 />
-                <StatCard
-                    icon="📡"
-                    label="RSS Feeds"
-                    value={stats.totalFeeds}
-                    sub="Total configured feeds"
-                    gradient="teal"
-                    loading={stats.loading}
+                <TopCard
+                    title="Categories"
+                    value={17}
+                    icon={<FiLayers />}
+                    link="#"
+                />
+                <TopCard
+                    title="Author"
+                    value={5}
+                    icon={<FiShield />}
+                    link="#"
+                />
+                <TopCard
+                    title="Ads"
+                    value={10}
+                    icon={<FiSpeaker />}
+                    link="#"
                 />
             </div>
 
-            {/* Most Recent Articles Table */}
-            <div className="section-card">
-                <div className="section-header">
-                    <h2 className="section-title">⚡ Latest Articles</h2>
-                    <span className="section-badge">{topArticles.length} items</span>
-                </div>
-                <div className="articles-table-wrap">
+            {/* Most Read Articles List */}
+            <div className="bottom-section">
+                <h2 className="section-title-alt">MOST READ ARTICLES</h2>
+                <div className="articles-vertical-list">
                     {topArticles.length === 0 && !stats.loading ? (
                         <p className="empty-msg">No articles loaded yet. Start the backend server.</p>
                     ) : (
-                        <table className="articles-table">
-                            <thead>
-                                <tr>
-                                    <th>#</th>
-                                    <th>Title</th>
-                                    <th>Source</th>
-                                    <th>Published</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {topArticles.map((a, i) => (
-                                    <tr key={i}>
-                                        <td className="row-num">{i + 1}</td>
-                                        <td>
-                                            <a href={a.url} target="_blank" rel="noopener noreferrer" className="article-link">
-                                                {a.title}
-                                            </a>
-                                        </td>
-                                        <td><span className="source-chip">{a.source}</span></td>
-                                        <td className="time-cell">{timeAgo(a.publishedAt)}</td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    )}
-                </div>
-            </div>
-
-            {/* Category Feed Grid */}
-            <div className="section-card">
-                <div className="section-header">
-                    <h2 className="section-title">📡 Feed Sources per Category</h2>
-                </div>
-                <div className="feed-grid">
-                    {Object.entries(categoryCounts).length === 0 && !stats.loading ? (
-                        <p className="empty-msg">No category data available yet.</p>
-                    ) : (
-                        Object.entries(categoryCounts).map(([cat, count]) => (
-                            <div key={cat} className="feed-pill">
-                                <span className="feed-cat">{cat}</span>
-                                <span className="feed-count">{count}</span>
-                            </div>
-                        ))
+                        topArticles.slice(0, 10).map((a, i) => {
+                            // Mocking views and clicks based on the requested screenshot
+                            const views = Math.floor(Math.random() * 8) + 2;
+                            const clicks = Math.floor(views * (Math.random() * 0.6 + 0.2));
+                            const imageUrl = a.image || a.urlToImage;
+                            
+                            return (
+                                <a href={a.url} target="_blank" rel="noopener noreferrer" className="article-row-card" key={i}>
+                                    <div className="article-row-img-wrap">
+                                        {imageUrl ? (
+                                            <img src={imageUrl} alt="" className="article-row-img" />
+                                        ) : (
+                                            <div className="article-row-img placeholder-img"></div>
+                                        )}
+                                    </div>
+                                    <div className="article-row-content">
+                                        <div className="article-row-title">{a.title}</div>
+                                        <div className="article-row-meta">
+                                            Views: <span className="meta-highlight">{views}</span> | Clicks: <span className="meta-highlight">{clicks}</span>
+                                        </div>
+                                    </div>
+                                </a>
+                            )
+                        })
                     )}
                 </div>
             </div>
@@ -235,22 +206,23 @@ export default function Dashboard() {
     )
 }
 
-function StatCard({
-    icon, label, value, sub, gradient, loading
+function TopCard({
+    title, value, icon, link
 }: {
-    icon: string; label: string; value: number; sub: string; gradient: string; loading: boolean
+    title: string; value: number; icon: React.ReactNode; link: string
 }) {
     return (
-        <div className={`stat-card grad-${gradient}`}>
-            <div className="stat-icon">{icon}</div>
-            <div className="stat-body">
-                <div className="stat-label">{label}</div>
-                <div className="stat-value">
-                    {loading ? <span className="skeleton-num" /> : value.toLocaleString()}
-                </div>
-                <div className="stat-sub">{sub}</div>
+        <div className="top-card">
+            <div className="card-left">
+                <div className="card-icon">{icon}</div>
             </div>
-            <div className="stat-arrow">→</div>
+            <div className="card-right">
+                <div className="card-title">{title}</div>
+                <div className="card-value red-text">{value.toLocaleString()}</div>
+                <a href={link || '#'} className="card-arrow-link">
+                    <BsArrowRightCircleFill className="card-arrow" />
+                </a>
+            </div>
         </div>
     )
 }
