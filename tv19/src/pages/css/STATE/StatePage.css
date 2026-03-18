@@ -267,6 +267,20 @@
   object-fit: cover;
 }
 
+.state-story-item__thumb-placeholder {
+  background: linear-gradient(135deg, #e8380d22, #1a233244);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.state-story-item__thumb-placeholder::after {
+  content: 'TV19';
+  font-size: 13px;
+  font-weight: 800;
+  color: #e8380d88;
+  letter-spacing: 2px;
+}
+
 .state-story-item__content {
   display: flex;
   flex-direction: column;

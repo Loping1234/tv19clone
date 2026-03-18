@@ -343,10 +343,9 @@ const RSS_FEEDS = {
     "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
   ],
   rajasthan: [
-    "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-    "https://www.bhaskar.com/rss-feed/1061/",   
-    "https://www.patrika.com/rss/rajasthan-news.xml",
+  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+  "https://www.thehindu.com/news/national/other-states/feeder/default.rss",
+  "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   manufacturing: [
     "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
@@ -1239,23 +1238,36 @@ async function enrichArticlesWithImages(articles) {
 }
 
 // Scrape og:image (or twitter:image fallback) from an article URL
-async function fetchOgImage(url, timeoutMs = 4000) {
+async function fetchOgImage(url, timeoutMs = 6000) {
   try {
+    // Follow Google News redirects by doing a HEAD request first
+    let resolvedUrl = url;
+    if (url.includes('news.google.com')) {
+      try {
+        const headResp = await fetch(url, {
+          method: 'GET',
+          redirect: 'follow',
+          signal: AbortSignal.timeout(3000),
+          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+        });
+        resolvedUrl = headResp.url; // Get the final redirected URL
+      } catch {
+        return null; // Google News redirect failed, skip
+      }
+    }
+
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const resp = await fetch(url, {
+    const resp = await fetch(resolvedUrl, {
       signal: controller.signal,
       headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
         Accept: "text/html,application/xhtml+xml",
       },
     });
     clearTimeout(timer);
-
     if (!resp.ok) return null;
 
-    // Only read first 50 KB — meta tags are always in <head>
     const reader = resp.body.getReader();
     let html = "";
     let done = false;
@@ -1264,9 +1276,8 @@ async function fetchOgImage(url, timeoutMs = 4000) {
       done = readerDone;
       if (value) html += new TextDecoder().decode(value);
     }
-    reader.cancel().catch(() => { });
+    reader.cancel().catch(() => {});
 
-    // Try og:image first, then twitter:image as fallback
     const match =
       html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
       html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
