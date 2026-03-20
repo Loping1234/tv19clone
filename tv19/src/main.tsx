@@ -11,6 +11,10 @@ import AboutUs from './pages/components/AboutUs/AboutUs.tsx'
 import Disclaimer from './pages/components/Disclaimer/Disclaimer.tsx'
 import Career from './pages/components/Career/career.tsx'
 import StatePage from './pages/components/STATE/StatePage.tsx'
+import WorldPage from './pages/components/WORLD/WorldPage.tsx'
+import EntertainmentPage from './pages/components/ENTERTAINMENT/EntertainmentPage.tsx'
+import SportsPage from './pages/components/SPORTS/SportsPage.tsx'
+
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
 
 // Fetch site config and apply favicon + title on startup
@@ -29,6 +33,9 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/about" element={<AboutUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/state" element={<StatePage />} />
+        <Route path="/world" element={<WorldPage />} />
+        <Route path="/entertainment" element={<EntertainmentPage />} />
+        <Route path="/sports" element={<SportsPage />} />
         <Route path="/career" element={<Career />} />
       </Routes>
       <Footer />

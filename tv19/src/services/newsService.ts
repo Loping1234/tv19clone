@@ -178,17 +178,18 @@ export const getLifestyle = async (
 };    
 
 export const getSports = async (
-  category: NewsCategory = "sports",
+  category: NewsCategory | string = "sports",
   _country?: string,
   pageSize: number = 20,
-  imagesOnly: boolean = true
+  _imagesOnly: boolean = true,
+  skip: number = 0
 ): Promise<NewsResponse> => {
   try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
       params: {
-        category,
+        state: category,
         size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
+        skip,
       },
     });
     return response.data;
@@ -282,26 +283,6 @@ export const getPolitics = async (
   }
 };
 
-export const getWorld = async (
-  category: NewsCategory = "world",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
 
 
 export const getGreenFuture = async (
@@ -354,13 +335,37 @@ export const searchNews = async (
  */
 export const getStateNews = async (
   stateName: string = "Rajasthan",
-  pageSize: number = 15
+  pageSize: number = 15,
+  skip: number = 0
 ): Promise<NewsResponse> => {
   try {
     const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
       params: {
         state: stateName,
         size: pageSize,
+        skip,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const getWorld = async (
+  category: NewsCategory | string = "world",
+  _country?: string,
+  pageSize: number = 20,
+  _imagesOnly: boolean = true,
+  skip: number = 0
+): Promise<NewsResponse> => {
+  try {
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
+      params: {
+        state: category,
+        size: pageSize,
+        skip,
       },
     });
     return response.data;
@@ -413,17 +418,18 @@ export const getTechnology = async (
 };
 
 export const getEntertainment = async (
-  category: NewsCategory = "entertainment",
+  category: NewsCategory | string = "entertainment",
   _country?: string,
   pageSize: number = 20,
-  imagesOnly: boolean = true
+  _imagesOnly: boolean = true,
+  skip: number = 0
 ): Promise<NewsResponse> => {
   try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
       params: {
-        category,
+        state: category,
         size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
+        skip,
       },
     });
     return response.data;

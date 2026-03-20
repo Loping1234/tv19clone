@@ -683,6 +683,67 @@ const RSS_FEEDS = {
 "udaipur": [
   "https://news.google.com/rss/search?q=Udaipur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
 ],
+
+// ── AFRICA ──
+"africa": [
+  "https://news.google.com/rss/search?q=Africa+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
+],
+
+// ── AMERICA ──
+"america": [
+  "https://news.google.com/rss/search?q=America+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+  "https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml",
+],
+
+// ── ASIA PACIFIC ──
+"asia pacific": [
+  "https://news.google.com/rss/search?q=Asia+Pacific+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
+],
+
+// ── EUROPE ──
+"europe": [
+  "https://news.google.com/rss/search?q=Europe+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/europe/rss.xml",
+  "https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml",
+],
+
+// ── MIDDLE EAST ──
+"middle east": [
+  "https://news.google.com/rss/search?q=Middle+East+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
+  "https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml",
+],
+
+// ── NEW YORK ──
+"new york": [
+  "https://news.google.com/rss/search?q=New+York+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://rss.nytimes.com/services/xml/rss/nyt/NYRegion.xml",
+  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+],
+
+// ── PAKISTAN ──
+"pakistan": [
+  "https://news.google.com/rss/search?q=Pakistan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/south_asia/rss.xml",
+  "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
+],
+
+// ── UK ──
+"uk": [
+  "https://news.google.com/rss/search?q=UK+United+Kingdom+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/uk/rss.xml",
+  "https://www.theguardian.com/uk/rss",
+],
+
+// ── US ──
+"us": [
+  "https://news.google.com/rss/search?q=United+States+news&hl=en-IN&gl=IN&ceid=IN:en",
+  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+  "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+],
 };
 
 // Images that are known to be generic/broken and should be skipped
@@ -778,11 +839,12 @@ app.get("/api/news", async (req, res) => {
   }
 });
 
-// GET /api/news/state?state=Rajasthan&size=15
+// GET /api/news/state?state=Rajasthan&size=15&skip=0
 app.get("/api/news/state", async (req, res) => {
   try {
     const stateName = (req.query.state || "Rajasthan").toString().trim();
     const size = parseInt(req.query.size) || 15;
+    const skip = parseInt(req.query.skip) || 0;
     const categoryKey = stateName.toLowerCase();
 
     if (!stateName) {
@@ -795,7 +857,8 @@ app.get("/api/news/state", async (req, res) => {
       category: categoryKey 
     })
       .sort({ publishedAt: -1 })
-      .limit(size * 3);
+      .skip(skip)
+      .limit(size);
 
     if (articles.length > 0) {
       const missingImages = articles.filter((article) => !article.image);
@@ -814,11 +877,11 @@ app.get("/api/news/state", async (req, res) => {
         );
       }
 
-      articles = sortArticlesForCover(articles).slice(0, size);
+      articles = sortArticlesForCover(articles);
     }
 
-    // Tier 2: Live fetch from Google News RSS for this city
-    if (articles.length === 0) {
+    // Tier 2: Live fetch from Google News RSS for this city (strictly FIRST page load)
+    if (articles.length === 0 && skip === 0) {
       const liveUrls = RSS_FEEDS[categoryKey] || [
         `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`
       ];
@@ -828,7 +891,7 @@ app.get("/api/news/state", async (req, res) => {
         await enrichArticlesWithImages(mapped);
         const prioritizedMapped = sortArticlesForCover(mapped).slice(0, size * 3);
 
-        // Save these to MongoDB for future requests
+        // Save these to MongoDB for future requests as draft (status: false)
         for (const article of prioritizedMapped) {
           await News.findOneAndUpdate(
             { url: article.url },
@@ -842,7 +905,7 @@ app.get("/api/news/state", async (req, res) => {
                 publishedAt: article.publishedAt,
                 content: article.content,
               },
-              $setOnInsert: { status: true }
+              $setOnInsert: { status: false }
             },
             { upsert: true }
           );
@@ -853,17 +916,17 @@ app.get("/api/news/state", async (req, res) => {
           category: categoryKey 
         })
           .sort({ publishedAt: -1 })
-          .limit(size * 3);
+          .limit(size);
 
-        articles = sortArticlesForCover(articles).slice(0, size);
+        articles = sortArticlesForCover(articles);
 
       } catch (feedErr) {
         console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
       }
     }
 
-    // Tier 3: Strict text search — only if city name appears in the article
-    if (articles.length === 0) {
+    // Tier 3: Strict text search — fallback
+    if (articles.length === 0 && skip === 0) {
       articles = await News.find({
         status: true,
         $or: [
@@ -872,20 +935,18 @@ app.get("/api/news/state", async (req, res) => {
         ]
       })
         .sort({ publishedAt: -1 })
-        .limit(size * 3);
+        .limit(size);
 
       if (articles.length > 0) {
         const missingImages = articles.filter((article) => !article.image);
-
         if (missingImages.length > 0) {
           await enrichArticlesWithImages(missingImages);
         }
-
-        articles = sortArticlesForCover(articles).slice(0, size);
+        articles = sortArticlesForCover(articles);
       }
     }
 
-    // NO generic fallback — return empty array if truly nothing found
+    // Return the subset of articles found
     res.json({ totalResults: articles.length, articles });
 
   } catch (err) {
@@ -1353,7 +1414,7 @@ async function refreshAllFeeds() {
               content: article.content,
             },
             $setOnInsert: {
-              status: true // Only set status to true for NEW articles
+              status: false // Draft status for NEW articles, requires admin approval
             }
           },
           { upsert: true, returnDocument: 'after' }

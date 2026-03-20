@@ -1,0 +1,191 @@
+/* ---- Categories Page Edit / View Styles ---- */
+
+.categories-page {
+    /* Base styles */
+}
+
+/* Edit Form */
+.cat-edit-form {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    padding: 10px 0;
+}
+
+.cat-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.cat-form-label {
+    font-size: 11px;
+    font-weight: 500;
+    color: #1a1a2e; /* dark text */
+}
+
+.cat-form-input,
+.cat-form-textarea {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 2px;
+    font-size: 13px;
+    color: #333;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.cat-form-input:focus,
+.cat-form-textarea:focus {
+    border-color: #ff7e5f;
+}
+
+.cat-form-textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+/* Status Radio */
+.cat-form-status {
+    display: flex;
+    gap: 20px;
+    margin-top: 5px;
+}
+
+.cat-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: #333;
+    cursor: pointer;
+}
+
+.cat-radio-label input[type="radio"] {
+    accent-color: #ff6b35; /* Orange accent */
+    width: 14px;
+    height: 14px;
+    cursor: pointer;
+}
+
+/* Actions */
+.cat-form-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 10px;
+}
+
+.cat-btn-update {
+    background: linear-gradient(to right, #ff6b4a 0%, #ffae4a 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: opacity 0.2s;
+}
+
+.cat-btn-update:hover {
+    opacity: 0.9;
+}
+
+.cat-btn-back-text {
+    background: none;
+    border: none;
+    color: #888;
+    font-size: 13px;
+    cursor: pointer;
+}
+
+.cat-btn-back-text:hover {
+    color: #333;
+}
+
+/* -------------------------------- */
+/* Details View (Category Information) */
+/* -------------------------------- */
+
+.cat-details-card {
+    background: #fff;
+    border: 1px solid #f0f2f5;
+    border-radius: 4px;
+    padding: 24px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.02);
+}
+
+.cat-details-card-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #000;
+    margin-bottom: 24px;
+    text-transform: uppercase;
+}
+
+.cat-detail-row {
+    display: flex;
+    margin-bottom: 20px;
+    font-size: 13px;
+}
+
+.cat-detail-label {
+    width: 200px;
+    font-weight: 600;
+    color: #111;
+    flex-shrink: 0;
+}
+
+.cat-detail-value {
+    flex: 1;
+    color: #333;
+}
+
+/* Status Badge */
+.cat-badge-active {
+    background-color: #2196F3; /* Wait, it was green in the image. */
+    background-color: #10a35b;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.cat-badge-inactive {
+    background-color: #e53935;
+    color: white;
+    padding: 4px 12px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+/* Details View Actions */
+.cat-detail-actions {
+    margin-top: 30px;
+}
+
+.cat-btn-back-orange {
+    background: linear-gradient(to right, #ff6b4a 0%, #ffae4a 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    font-size: 13px;
+    font-weight: 600;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    transition: opacity 0.2s;
+}
+
+.cat-btn-back-orange:hover {
+    opacity: 0.9;
+}

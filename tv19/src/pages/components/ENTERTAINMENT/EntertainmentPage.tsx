@@ -1,48 +1,42 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import '../../../pages/css/STATE/StatePage.css';
-import { getStateNews, scrapeFallbackImage, type Article } from '../../../services/newsService';
+import '../../../pages/css/ENTERTAINMENT/EntertainmentPage.css';
+import { getEntertainment, scrapeFallbackImage, type Article } from '../../../services/newsService';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
 const REGIONS = [
   'All Stories',
-  'Ajmer',
-  'Alwar',
-  'Bagru',
-  'Banswara',
-  'Barmer',
-  'Bassi',
-  'Beawer',
-  'Bharatpur',
-  'Bhilwara',
-  'Bhiwadi',
-  'Bikaner',
-  'Chittorgarh',
-  'Churu',
-  'Dausa',
-  'Dholpur',
-  'Dungarpur',
-  'Hanumangarh',
-  'Jaipur',
-  'Jaisalmer',
-  'Jalore',
-  'Jhalawar',
-  'Jhunjhunu',
-  'Jhunjunu',
-  'Jodhpur',
-  'Karauli',
-  'Kishangarh',
-  'Kota',
-  'Nagaur',
-  'Pali',
-  'Pratapgarh',
-  'Rajsamand',
-  'Sawai Madhopur',
-  'Sikar',
-  'Sirohi',
-  'Sri Ganganagar',
-  'Tonk',
-  'Udaipur',
+  'Bollywood',
+  'Hollywood',
+  'Tollywood',
+  'Kollywood',
+  'Mollywood',
+  'OTT',
+  'Reviews',
+  'Gossip',
+  'TV'
 ] as const;
+
+const RELATED_SECTIONS = [
+  { name: 'Arts', count: '102' },
+  { name: 'Astrology', count: '275' },
+  { name: 'Breaking', count: '47' },
+  { name: 'Business', count: '509' },
+  { name: 'Crime', count: '16' },
+  { name: 'Education', count: '195' },
+  { name: 'Finance', count: '548' },
+  { name: 'Green Future', count: '44' },
+  { name: 'India', count: '1095' },
+  { name: 'Lifestyle', count: '2907' },
+  { name: 'Opinion', count: '19' },
+  { name: 'Politics', count: '19' },
+  { name: 'Sports', count: '1091' },
+  { name: 'State', count: '4758' },
+  { name: 'Technology', count: '106' },
+  { name: 'Top', count: '10' },
+  { name: 'Trending', count: '10' },
+  { name: 'Weather', count: '55' },
+  { name: 'World', count: '1169' }
+];
 
 function timeAgo(dateStr: string) {
   const diff = Date.now() - new Date(dateStr).getTime();
@@ -54,6 +48,7 @@ function timeAgo(dateStr: string) {
   const days = Math.floor(hours / 24);
   return `${days} days ago`;
 }
+
 function dedupeByTitle(items: Article[]) {
   return items.filter((article, index, arr) => arr.findIndex((a) => a.title === article.title) === index);
 }
@@ -62,14 +57,16 @@ function sortArticlesForCover(items: Article[]) {
   return [...items].sort((left, right) => {
     const leftHasImage = Boolean(left.image);
     const rightHasImage = Boolean(right.image);
+
     if (leftHasImage !== rightHasImage) {
       return Number(rightHasImage) - Number(leftHasImage);
     }
+
     return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
   });
 }
 
-export default function StatePage() {
+export default function EntertainmentPage() {
   const [activeRegion, setActiveRegion] = useState<string>('All Stories');
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
@@ -78,7 +75,7 @@ export default function StatePage() {
   const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  // Infinite Scroll States
+  // Infinite Scroll state
   const skipRef = useRef(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -120,38 +117,37 @@ export default function StatePage() {
     }
 
     try {
-      const query = region === 'All Stories' ? 'Rajasthan' : region;
-      const currentSkip = isLoadMore ? skipRef.current + 30 : 0;
-      const response = await getStateNews(query, 30, currentSkip);
+      const query = region === 'All Stories' ? 'entertainment' : region;
+      const currentSkip = isLoadMore ? skipRef.current + 20 : 0;
+      
+      // User requested explicitly 20 items step and full scope of recently fetched news.
+      const response = await getEntertainment(query as any, undefined, 20, false, currentSkip);
       const newUnique = dedupeByTitle(response.articles);
 
       if (isLoadMore) {
         setArticles(prev => {
-          // On load more, we just append to the end. Re-sorting the whole array 
-          // might mess up the existing UI flow, so we only dedupe.
           const combined = dedupeByTitle([...prev, ...newUnique]);
           return combined;
         });
         skipRef.current = currentSkip;
-        if (newUnique.length < 30) {
+        if (newUnique.length < 20) {
           setHasMore(false);
         }
       } else {
         const sortedUnique = sortArticlesForCover(newUnique);
         setArticles(sortedUnique);
         skipRef.current = 0;
-        setHasMore(sortedUnique.length >= 30);
+        setHasMore(sortedUnique.length >= 20);
         
-        // Show notice only if no articles found
         if (sortedUnique.length === 0) {
-          setError(`No stories found for ${region}. Try another region.`);
+          setError(`No stories found for ${region}. Try another category.`);
         }
       }
 
     } catch (err) {
-      console.error('State region fetch failed:', err);
+      console.error('entertainment region fetch failed:', err);
       if (!isLoadMore) {
-        setError('Could not load regional news right now. Please try again.');
+        setError('Could not load entertainment news right now. Please try again.');
         setArticles([]);
       }
     } finally {
@@ -194,62 +190,63 @@ export default function StatePage() {
   }, [activeRegion, fetchRegionNews]);
 
   const heroArticle = useMemo(() => articles[0], [articles]);
-  const trendingArticles = useMemo(() => articles.slice(11, 16), [articles]);
-  const mainListArticles = useMemo(() => articles.slice(1, 11).concat(articles.slice(16)), [articles]);
+  const trendingArticles = useMemo(() => articles.slice(1, 6), [articles]);
+  const mainListArticles = useMemo(() => articles.slice(6), [articles]);
 
   return (
-    <main className="state-region-page">
-      <section className="state-region-shell">
-        <div className="state-subnav-wrapper">
-          <button className="state-nav-btn prev" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
-          <div className="state-subnav" role="tablist" aria-label="Rajasthan regions" ref={scrollRef}>
+    <main className="entertainment-region-page">
+      <section className="entertainment-region-shell">
+        <div className="entertainment-subnav-wrapper">
+          <button className="entertainment-nav-btn prev" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
+          <div className="entertainment-subnav" role="tablist" aria-label="Entertainment regions" ref={scrollRef}>
             {REGIONS.map((region) => (
               <button
                 key={region}
                 type="button"
                 role="tab"
                 aria-selected={activeRegion === region}
-                className={`state-subnav__item ${activeRegion === region ? 'active' : ''}`}
+                className={`entertainment-subnav__item ${activeRegion === region ? 'active' : ''}`}
                 onClick={() => setActiveRegion(region)}
               >
                 {region}
               </button>
             ))}
           </div>
-          <button className="state-nav-btn next" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
+          <button className="entertainment-nav-btn next" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
         </div>
 
-        <div className="state-content-grid">
-          <section className="state-main-column" aria-live="polite">
+        <div className="entertainment-content-grid">
+          <section className="entertainment-main-column" aria-live="polite">
             {loading ? (
-              <div className="state-loader">
-                <div className="state-loader__spinner" />
+              <div className="entertainment-loader">
+                <div className="entertainment-loader__spinner" />
                 <p>Loading {activeRegion} stories...</p>
               </div>
             ) : error ? (
-              <div className="state-empty">{error}</div>
+              <div className="entertainment-empty">{error}</div>
             ) : articles.length === 0 ? (
-              <div className="state-empty">
-                No stories found for {activeRegion}. Try another region.
+              <div className="entertainment-empty">
+                No stories found for {activeRegion}. Try another section.
               </div>
             ) : (
               <>
                 {fallbackNotice && (
-                  <div className="state-fallback-note">{fallbackNotice}</div>
+                  <div className="entertainment-fallback-note">{fallbackNotice}</div>
                 )}
 
                 {heroArticle && (
-                  <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="state-hero-card">
-                    <div className="state-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
+                  <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="entertainment-hero-card">
+                    <div className="entertainment-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                       {heroArticle.image && !failedImages.has(heroArticle.image) ? (
-                        <img src={heroArticle.image} alt={heroArticle.title} className="state-hero-card__image" onError={() => handleImageError(heroArticle)} />
+                        <img src={heroArticle.image} alt={heroArticle.title} className="entertainment-hero-card__image" onError={() => handleImageError(heroArticle)} />
                       ) : (
-                        <div className="state-hero-card__placeholder" />
+                        <div className="entertainment-hero-card__placeholder" />
                       )}
-                      <div className="state-hero-card__overlay">
-                        <h1 className="state-hero-card__title">{heroArticle.title}</h1>
-                        {heroArticle.description && <p className="state-hero-card__desc">{heroArticle.description}</p>}
-                        <div className="state-story-item__meta">
+                      
+                      <div className="entertainment-hero-card__overlay">
+                        <h1 className="entertainment-hero-card__title">{heroArticle.title}</h1>
+                        {heroArticle.description && <p className="entertainment-hero-card__desc">{heroArticle.description}</p>}
+                        <div className="entertainment-story-item__meta">
                           <span><UilClock className="meta-icon" />{timeAgo(heroArticle.publishedAt)}</span>
                           <span><UilEye className="meta-icon" />0 Views</span>
                           <span><UilCommentAlt className="meta-icon" />0 Comments</span>
@@ -259,20 +256,20 @@ export default function StatePage() {
                   </a>
                 )}
 
-                <div className="state-story-list">
+                <div className="entertainment-story-list">
                   {mainListArticles.map((article, index) => (
-                    <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="state-story-item">
-                      <div className="state-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
+                    <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="entertainment-story-item">
+                      <div className="entertainment-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                         {article.image && !failedImages.has(article.image) ? (
-                          <img src={article.image} alt={article.title} className="state-story-item__thumb" onError={() => handleImageError(article)} />
+                          <img src={article.image} alt={article.title} className="entertainment-story-item__thumb" onError={() => handleImageError(article)} />
                         ) : (
-                          <div className="state-story-item__thumb-placeholder" />
+                          <div className="entertainment-story-item__thumb-placeholder" />
                         )}
                       </div>
-                      <div className="state-story-item__content">
-                        <h2 className="state-story-item__title">{article.title}</h2>
-                        {article.description && <p className="state-story-item__desc">{article.description}</p>}
-                        <div className="state-story-item__meta">
+                      <div className="entertainment-story-item__content">
+                        <h2 className="entertainment-story-item__title">{article.title}</h2>
+                        {article.description && <p className="entertainment-story-item__desc">{article.description}</p>}
+                        <div className="entertainment-story-item__meta">
                           <span><UilClock className="meta-icon" />{timeAgo(article.publishedAt)}</span>
                           <span><UilEye className="meta-icon" />0 Views</span>
                           <span><UilCommentAlt className="meta-icon" />0 Comments</span>
@@ -286,7 +283,7 @@ export default function StatePage() {
                 <div ref={observerTarget} className="infinite-scroll-loading" style={{ margin: '30px 0', textAlign: 'center' }}>
                   {loadingMore && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                      <div className="state-loader__spinner" style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
+                      <div className="entertainment-loader__spinner" style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
                       <p style={{ color: '#666', fontSize: '14px' }}>Loading more stories...</p>
                     </div>
                   )}
@@ -301,13 +298,13 @@ export default function StatePage() {
           </section>
 
           {articles.length > 0 && (
-            <aside className="state-sidebar">
-              <section className="state-sidebar-section">
-                <h3 className="state-sidebar-section__header">Trending in State</h3>
+            <aside className="entertainment-sidebar">
+              <section className="entertainment-sidebar-section">
+                <h3 className="entertainment-sidebar-section__header">Trending in Entertainment</h3>
                 <div className="trending-list">
                   {trendingArticles.map((article, idx) => (
                     idx === 0 ? (
-                      <a key={idx} href={article.url} className="trending-item-top" target="_blank" rel="noopener noreferrer">
+                      <a key={`trend-top-${idx}`} href={article.url} className="trending-item-top" target="_blank" rel="noopener noreferrer">
                         <div className="trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                           {article.image && !failedImages.has(article.image) && (
                             <img src={article.image} className="trending-item-top__image" onError={() => handleImageError(article)} />
@@ -315,12 +312,12 @@ export default function StatePage() {
                         </div>
                         <span className="trending-rank">#{idx + 1} Trending</span>
                         <h4 className="trending-item-top__title">{article.title}</h4>
-                        <div className="state-story-item__meta">
+                        <div className="entertainment-story-item__meta">
                           <span><UilEye className="meta-icon" />0 Views</span>
                         </div>
                       </a>
                     ) : (
-                      <a key={idx} href={article.url} className="trending-item-small" target="_blank" rel="noopener noreferrer">
+                      <a key={`trend-sm-${idx}`} href={article.url} className="trending-item-small" target="_blank" rel="noopener noreferrer">
                         <div className="trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                           {article.image && !failedImages.has(article.image) && (
                             <img src={article.image} className="trending-item-small__image" onError={() => handleImageError(article)} />
@@ -338,12 +335,19 @@ export default function StatePage() {
 
               <div className="sidebar-ad">
                 <div className="sidebar-ad__label">Advertisement</div>
-                <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" className="sidebar-ad__img" />
+                <img src="https://placehold.co/300x250/fff8e1/e65100?text=ADVERTISEMENT&font=montserrat" alt="Ad" className="sidebar-ad__img" style={{border: '1px solid #e0e0e0'}} />
               </div>
 
-              <section className="state-sidebar-section">
-                <h3 className="state-sidebar-section__header">Related Sections</h3>
-                <div className="state-story-item__meta">Coming soon...</div>
+              <section className="entertainment-sidebar-section">
+                <h3 className="entertainment-sidebar-section__header">Related Sections</h3>
+                <div className="related-sections-list">
+                  {RELATED_SECTIONS.map((sec) => (
+                    <a key={sec.name} href={`#${sec.name.toLowerCase()}`} className="related-section-link">
+                      <span>{sec.name}</span>
+                      <span className="related-count-badge">{sec.count}</span>
+                    </a>
+                  ))}
+                </div>
               </section>
             </aside>
           )}

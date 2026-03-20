@@ -3,6 +3,10 @@ import { PlusCircle, Trash2, Eye, Edit } from 'react-feather';
 
 const API_BASE = 'http://localhost:5000';
 
+function getToken() {
+    return localStorage.getItem('adminToken') || '';
+}
+
 interface NewsArticle {
     _id: string;
     title: string;
@@ -26,6 +30,7 @@ export default function News() {
     const [entries, setEntries] = useState(10);
     const [categoryFilter, setCategoryFilter] = useState('');
     const [searchQuery, setSearchQuery] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
     const [expandedRows, setExpandedRows] = useState<Set<string>>(new Set());
     const [viewingNews, setViewingNews] = useState<NewsArticle | null>(null);
     const [editingNews, setEditingNews] = useState<NewsArticle | null>(null);
@@ -49,7 +54,9 @@ export default function News() {
 
     const fetchNews = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/admin/news`);
+            const res = await fetch(`${API_BASE}/api/admin/news`, {
+                headers: { 'Authorization': `Bearer ${getToken()}` }
+            });
             if (res.ok) {
                 const data = await res.json();
                 setNews(data);
@@ -76,7 +83,10 @@ export default function News() {
             try {
                 await fetch(`${API_BASE}/api/admin/news`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
                     body: JSON.stringify(newArticle)
                 });
             } catch (error) {
@@ -91,7 +101,10 @@ export default function News() {
             try {
                 await fetch(`${API_BASE}/api/admin/news/${editingNews._id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${getToken()}`
+                    },
                     body: JSON.stringify(editingNews)
                 });
             } catch (error) {
@@ -115,7 +128,10 @@ export default function News() {
             // Mock API DELETE calls
             try {
                 await Promise.all(idsToDelete.map(id =>
-                    fetch(`${API_BASE}/api/admin/news/${id}`, { method: 'DELETE' })
+                    fetch(`${API_BASE}/api/admin/news/${id}`, { 
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${getToken()}` }
+                    })
                 ));
             } catch (error) {
                 console.error('Failed to delete some news articles', error);
@@ -178,7 +194,10 @@ export default function News() {
         try {
             await fetch(`${API_BASE}/api/admin/news/${id}`, {
                 method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
+                headers: { 
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${getToken()}`
+                },
                 body: JSON.stringify({ [field]: !currentValue })
             });
         } catch (error) {
@@ -190,11 +209,19 @@ export default function News() {
         }
     };
 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [categoryFilter, searchQuery, entries]);
+
     const filteredNews = news.filter(item => {
         if (categoryFilter && item.category !== categoryFilter) return false;
         if (searchQuery && !item.title.toLowerCase().includes(searchQuery.toLowerCase())) return false;
         return true;
-    }).slice(0, entries);
+    });
+
+    const totalPages = Math.ceil(filteredNews.length / entries);
+    const startIdx = (currentPage - 1) * entries;
+    const paginatedNews = filteredNews.slice(startIdx, startIdx + entries);
 
     const ToggleSwitch = ({ checked, onChange }: { checked: boolean, onChange: () => void }) => (
         <div className={`custom-toggle ${checked ? 'active' : ''}`} onClick={onChange}>
@@ -439,12 +466,12 @@ export default function News() {
                                         <tr>
                                             <td colSpan={12} style={{ textAlign: 'center', padding: '20px' }}>Loading news...</td>
                                         </tr>
-                                    ) : filteredNews.length === 0 ? (
+                                    ) : paginatedNews.length === 0 ? (
                                         <tr>
                                             <td colSpan={12} style={{ textAlign: 'center', padding: '20px' }}>No news found.</td>
                                         </tr>
                                     ) : (
-                                        filteredNews.map((item, index) => {
+                                        paginatedNews.map((item, index) => {
                                             const isExpanded = expandedRows.has(item._id);
                                             return (
                                                 <React.Fragment key={item._id}>
@@ -452,7 +479,7 @@ export default function News() {
                                                         <td className="sno-cell">
                                                             <span className={`expand-icon ${isExpanded ? 'minus' : ''}`} onClick={() => toggleExpand(item._id)}>
                                                                 {isExpanded ? '−' : '+'}
-                                                            </span> {index + 1}
+                                                            </span> {startIdx + index + 1}
                                                         </td>
                                                         <td>
                                                             <input
@@ -530,6 +557,60 @@ export default function News() {
                                 </tbody>
                             </table>
                         </div>
+
+                        {/* Pagination */}
+                        {!loading && filteredNews.length > 0 && (
+                            <div className="rss-pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
+                                <span className="rss-page-info" style={{ color: '#6c757d', fontSize: '14px' }}>
+                                    Showing {startIdx + 1} to {Math.min(startIdx + entries, filteredNews.length)} of {filteredNews.length} entries
+                                </span>
+                                <div className="rss-page-btns" style={{ display: 'flex', gap: '5px' }}>
+                                    <button
+                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === 1 ? '#e9ecef' : '#fff', color: currentPage === 1 ? '#6c757d' : '#e8380d', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
+                                        disabled={currentPage === 1}
+                                        onClick={() => setCurrentPage(p => p - 1)}
+                                    >
+                                        Previous
+                                    </button>
+                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
+                                        let pageNum: number;
+                                        if (totalPages <= 5) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage <= 3) {
+                                            pageNum = i + 1;
+                                        } else if (currentPage >= totalPages - 2) {
+                                            pageNum = totalPages - 4 + i;
+                                        } else {
+                                            pageNum = currentPage - 2 + i;
+                                        }
+                                        const isActive = currentPage === pageNum;
+                                        return (
+                                            <button
+                                                key={pageNum}
+                                                style={{
+                                                    padding: '6px 12px',
+                                                    border: '1px solid #dee2e6',
+                                                    backgroundColor: isActive ? '#e8380d' : '#fff',
+                                                    color: isActive ? '#fff' : '#495057',
+                                                    cursor: 'pointer',
+                                                    borderRadius: '4px'
+                                                }}
+                                                onClick={() => setCurrentPage(pageNum)}
+                                            >
+                                                {pageNum}
+                                            </button>
+                                        );
+                                    })}
+                                    <button
+                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === totalPages ? '#e9ecef' : '#fff', color: currentPage === totalPages ? '#6c757d' : '#e8380d', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
+                                        disabled={currentPage === totalPages}
+                                        onClick={() => setCurrentPage(p => p + 1)}
+                                    >
+                                        Next
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </>
                 ) : (
                     <div className="news-detail-container">

@@ -1,0 +1,479 @@
+.world-region-page {
+  width: 100%;
+  margin-top: calc(var(--nav-offset, 140px) + 20px);
+  background: #fdfdfd;
+  min-height: 100vh;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
+  position: relative;
+  top: 80px;
+}
+
+.world-region-shell {
+  max-width: 1160px;
+  margin: 0 auto;
+  padding: 0 16px 40px;
+}
+
+/* Subnav Wrapper */
+.world-subnav-wrapper {
+  display: flex;
+  align-items: center;
+  background: #fdfdfd;
+  border-top: 1px solid #eaeaea;
+  border-bottom: 1px solid #eaeaea;
+  margin-bottom: 24px;
+  position: sticky;
+  top: var(--nav-offset, 140px);
+  z-index: 100;
+  padding: 0;
+}
+
+.world-nav-btn {
+  color: #fff;
+  border: none;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  flex-shrink: 0;
+  margin: 0 16px;
+  font-size: 16px;
+  transition: all 0.2s;
+}
+
+.world-nav-btn.prev {
+  background: #ffbba6;
+}
+
+.world-nav-btn.prev:hover {
+  background: #ffab91;
+}
+
+.world-nav-btn.next {
+  background: #ff5722;
+}
+
+.world-nav-btn.next:hover {
+  background: #e64a19;
+}
+
+.world-subnav {
+  display: flex;
+  flex: 1;
+  gap: 0;
+  overflow-x: auto;
+  white-space: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-behavior: smooth;
+}
+
+.world-subnav::-webkit-scrollbar {
+  display: none;
+}
+
+.world-subnav__item {
+  border: none;
+  background: transparent;
+  color: #555;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 14px 16px;
+  cursor: pointer;
+  outline: none;
+  text-transform: uppercase;
+  border-bottom: 2px solid transparent;
+  transition: all 0.2s;
+  letter-spacing: 0.5px;
+}
+
+.world-subnav__item:hover {
+  color: #111;
+}
+
+.world-subnav__item.active {
+  color: #ff5722;
+  border-bottom: 2px solid #ff5722;
+}
+
+/* Grid Layout */
+.world-content-grid {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 32px;
+}
+
+/* Loading & Empty worlds */
+.world-loader,
+.world-empty {
+  min-height: 300px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  color: #666;
+  text-align: center;
+  padding: 40px;
+}
+
+.world-loader__spinner {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid #e0e0e0;
+  border-top-color: #e8380d;
+  margin-bottom: 16px;
+  animation: worldSpin 0.8s linear infinite;
+}
+
+@keyframes worldSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Story Meta Info */
+.world-story-item__meta {
+  color: #888;
+  font-size: 11px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 600;
+}
+
+.meta-icon {
+  margin-right: 4px;
+  font-size: 12px;
+  vertical-align: middle;
+}
+
+/* Hero Card */
+.world-hero-card {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+  margin-bottom: 24px;
+  position: relative;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.world-hero-card__image-wrap {
+  position: relative;
+  height: 480px;
+  width: 100%;
+  background: #f5f5f5;
+}
+
+.world-hero-card__image,
+.world-hero-card__placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.world-hero-card__overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(to top, rgba(0,0,0,0.95) 0%, rgba(0,0,0,0.5) 40%, rgba(0,0,0,0) 70%);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  padding: 30px;
+}
+
+.world-badge {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  background: #ff5722;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 4px 8px;
+  text-transform: uppercase;
+  z-index: 2;
+  border-radius: 2px;
+  letter-spacing: 0.5px;
+}
+
+.world-badge.small {
+  top: 6px;
+  left: 6px;
+  font-size: 8px;
+  padding: 3px 6px;
+}
+
+.world-hero-card__title {
+  margin: 0 0 10px;
+  font-size: 32px;
+  color: #fff;
+  font-weight: 800;
+  line-height: 1.25;
+}
+
+.world-hero-card__desc {
+  margin: 0 0 14px;
+  color: #e0e0e0;
+  font-size: 15px;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.world-hero-card .world-story-item__meta {
+  color: #aaa;
+}
+
+/* Story List */
+.world-story-list {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.world-story-item {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  gap: 16px;
+  text-decoration: none;
+  color: inherit;
+  background: transparent;
+  align-items: start;
+}
+
+.world-story-item__thumb-wrap {
+  width: 100%;
+  height: 160px;
+  overflow: hidden;
+  border-radius: 4px;
+  background: #f5f5f5;
+  position: relative;
+}
+
+.world-story-item__thumb,
+.world-story-item__thumb-placeholder {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.world-story-item__thumb-placeholder {
+  background: linear-gradient(135deg, #e8380d22, #1a233244);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.world-story-item__thumb-placeholder::after {
+  content: 'TV19';
+  font-size: 13px;
+  font-weight: 800;
+  color: #e8380d88;
+  letter-spacing: 2px;
+}
+
+.world-story-item__content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  height: 100%;
+  padding: 4px 0;
+}
+
+.world-story-item__title {
+  margin: 0 0 8px;
+  font-size: 22px;
+  color: #1a1a1a;
+  font-weight: 800;
+  line-height: 1.3;
+}
+
+.world-story-item:hover .world-story-item__title {
+  color: #e8380d;
+}
+
+.world-story-item__desc {
+  margin: 0 0 12px;
+  color: #555;
+  font-size: 15px;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Sidebar Trending */
+.world-sidebar {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.world-sidebar-section__header {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a1a1a;
+  text-transform: uppercase;
+  margin: 0 0 20px;
+  border-bottom: 3px solid #f0f0f0;
+  padding-bottom: 8px;
+  position: relative;
+  letter-spacing: 0.5px;
+}
+
+.world-sidebar-section__header::before {
+  content: '';
+  position: absolute;
+  bottom: -3px;
+  left: 0;
+  width: 60px;
+  height: 3px;
+  background: #e8380d;
+}
+
+.trending-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.trending-item-top {
+  display: block;
+  text-decoration: none;
+  color: inherit;
+}
+
+.trending-item-top__image-wrap {
+  width: 100%;
+  height: 190px;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 10px;
+  background: #f5f5f5;
+  position: relative;
+}
+
+.trending-item-top__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trending-rank {
+  color: #e8380d;
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  display: block;
+}
+
+.trending-item-top__title {
+  font-size: 17px;
+  font-weight: 800;
+  margin: 0 0 8px;
+  line-height: 1.35;
+  color: #1a1a1a;
+}
+.trending-item-top:hover .trending-item-top__title {
+  color: #e8380d;
+}
+
+.trending-item-small {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 12px;
+  text-decoration: none;
+  color: inherit;
+  align-items: start;
+}
+
+.trending-item-small__image-wrap {
+  width: 100%;
+  height: 70px;
+  border-radius: 2px;
+  overflow: hidden;
+  background: #f5f5f5;
+  position: relative;
+}
+
+.trending-item-small__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.trending-item-small__title {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 6px;
+  line-height: 1.4;
+  color: #1a1a1a;
+}
+.trending-item-small:hover .trending-item-small__title {
+  color: #e8380d;
+}
+
+/* Ad Box */
+.sidebar-ad {
+  width: 100%;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.sidebar-ad__label {
+  font-size: 9px;
+  color: #999;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.5px;
+}
+
+.sidebar-ad__img {
+  width: 100%;
+  border-radius: 2px;
+  display: block;
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
+  .world-content-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .world-hero-card__image-wrap {
+    height: 300px;
+  }
+  .world-hero-card__title {
+    font-size: 22px;
+  }
+  .world-story-item {
+    grid-template-columns: 120px 1fr;
+    gap: 12px;
+  }
+  .world-story-item__thumb-wrap {
+    height: 80px;
+  }
+  .world-story-item__title {
+    font-size: 16px;
+  }
+  .world-story-item__content {
+    padding: 0;
+  }
+  .world-story-item__desc {
+    font-size: 13px;
+  }
+}
