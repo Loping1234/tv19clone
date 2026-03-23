@@ -14,6 +14,12 @@ import StatePage from './pages/components/STATE/StatePage.tsx'
 import WorldPage from './pages/components/WORLD/WorldPage.tsx'
 import EntertainmentPage from './pages/components/ENTERTAINMENT/EntertainmentPage.tsx'
 import SportsPage from './pages/components/SPORTS/SportsPage.tsx'
+import IndiaPage from './pages/components/INDIA/IndiaPage.tsx'
+import PoliticsPage from './pages/components/POLITICS/PoliticsPage.tsx'
+import TechnologyPage from './pages/components/TECHNOLOGY/TechnologyPage.tsx'
+import LifestylePage from './pages/components/LIFESTYLE/LifestylePage.tsx'
+import BusinessPage from './pages/components/BUSINESS/BusinessPage.tsx'
+import EducationPage from './pages/components/EDUCATION/EducationPage.tsx'
 
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
 
@@ -33,10 +39,16 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/about" element={<AboutUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
         <Route path="/state" element={<StatePage />} />
+        <Route path="/india" element={<IndiaPage />} />
         <Route path="/world" element={<WorldPage />} />
         <Route path="/entertainment" element={<EntertainmentPage />} />
         <Route path="/sports" element={<SportsPage />} />
         <Route path="/career" element={<Career />} />
+        <Route path="/politics" element={<PoliticsPage />} />
+        <Route path="/technology" element={<TechnologyPage />} />
+        <Route path="/lifestyle" element={<LifestylePage />} />
+        <Route path="/business" element={<BusinessPage />} />
+        <Route path="/education" element={<EducationPage />} />
       </Routes>
       <Footer />
     </BrowserRouter>

@@ -1,20 +1,20 @@
-.entertainment-region-page {
+.education-region-page {
   width: 100%;
-  margin-top: calc(var(--nav-offset, 140px) + 25px);
+  margin-top: calc(var(--nav-offset, 140px) + 23px);
   background: #fdfdfd;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   position: relative;
 }
 
-.entertainment-region-shell {
+.education-region-shell {
   max-width: 1160px;
   margin: 0 auto;
   padding: 0 16px 40px;
 }
 
 /* Subnav Wrapper */
-.entertainment-subnav-wrapper {
+.education-subnav-wrapper {
   display: flex;
   align-items: center;
   background: #fdfdfd;
@@ -27,7 +27,7 @@
   padding: 0;
 }
 
-.entertainment-nav-btn {
+.education-nav-btn {
   color: #fff;
   border: none;
   width: 28px;
@@ -43,23 +43,23 @@
   transition: all 0.2s;
 }
 
-.entertainment-nav-btn.prev {
+.education-nav-btn.prev {
   background: #ffbba6;
 }
 
-.entertainment-nav-btn.prev:hover {
+.education-nav-btn.prev:hover {
   background: #ffab91;
 }
 
-.entertainment-nav-btn.next {
+.education-nav-btn.next {
   background: #ff5722;
 }
 
-.entertainment-nav-btn.next:hover {
+.education-nav-btn.next:hover {
   background: #e64a19;
 }
 
-.entertainment-subnav {
+.education-subnav {
   display: flex;
   flex: 1;
   gap: 0;
@@ -70,11 +70,11 @@
   scroll-behavior: smooth;
 }
 
-.entertainment-subnav::-webkit-scrollbar {
+.education-subnav::-webkit-scrollbar {
   display: none;
 }
 
-.entertainment-subnav__item {
+.education-subnav__item {
   border: none;
   background: transparent;
   color: #555;
@@ -89,25 +89,25 @@
   letter-spacing: 0.5px;
 }
 
-.entertainment-subnav__item:hover {
+.education-subnav__item:hover {
   color: #111;
 }
 
-.entertainment-subnav__item.active {
+.education-subnav__item.active {
   color: #ff5722;
   border-bottom: 2px solid #ff5722;
 }
 
 /* Grid Layout */
-.entertainment-content-grid {
+.education-content-grid {
   display: grid;
   grid-template-columns: 1fr 320px;
   gap: 32px;
 }
 
-/* Loading & Empty states */
-.entertainment-loader,
-.entertainment-empty {
+/* Loading & Empty */
+.education-loader,
+.education-empty {
   min-height: 300px;
   display: flex;
   align-items: center;
@@ -118,22 +118,22 @@
   padding: 40px;
 }
 
-.entertainment-loader__spinner {
+.education-loader__spinner {
   width: 32px;
   height: 32px;
   border-radius: 50%;
   border: 2px solid #e0e0e0;
   border-top-color: #e8380d;
   margin-bottom: 16px;
-  animation: enSpin 0.8s linear infinite;
+  animation: educationSpin 0.8s linear infinite;
 }
 
-@keyframes enSpin {
+@keyframes educationSpin {
   to { transform: rotate(360deg); }
 }
 
 /* Story Meta Info */
-.entertainment-story-item__meta {
+.education-story-item__meta {
   color: #888;
   font-size: 11px;
   display: flex;
@@ -142,14 +142,14 @@
   font-weight: 600;
 }
 
-.meta-icon {
+.education-story-item__meta .meta-icon {
   margin-right: 4px;
   font-size: 12px;
   vertical-align: middle;
 }
 
 /* Hero Card */
-.entertainment-hero-card {
+.education-hero-card {
   display: block;
   text-decoration: none;
   color: inherit;
@@ -159,22 +159,22 @@
   overflow: hidden;
 }
 
-.entertainment-hero-card__image-wrap {
+.education-hero-card__image-wrap {
   position: relative;
   height: 480px;
   width: 100%;
   background: #f5f5f5;
 }
 
-.entertainment-hero-card__image,
-.entertainment-hero-card__placeholder {
+.education-hero-card__image,
+.education-hero-card__placeholder {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
 }
 
-.entertainment-hero-card__overlay {
+.education-hero-card__overlay {
   position: absolute;
   top: 0;
   left: 0;
@@ -187,7 +187,7 @@
   padding: 30px;
 }
 
-.en-badge {
+.education-badge {
   position: absolute;
   top: 16px;
   left: 16px;
@@ -202,14 +202,14 @@
   letter-spacing: 0.5px;
 }
 
-.en-badge.small {
+.education-badge.small {
   top: 6px;
   left: 6px;
   font-size: 8px;
   padding: 3px 6px;
 }
 
-.entertainment-hero-card__title {
+.education-hero-card__title {
   margin: 0 0 10px;
   font-size: 32px;
   color: #fff;
@@ -217,7 +217,7 @@
   line-height: 1.25;
 }
 
-.entertainment-hero-card__desc {
+.education-hero-card__desc {
   margin: 0 0 14px;
   color: #e0e0e0;
   font-size: 15px;
@@ -229,18 +229,18 @@
   overflow: hidden;
 }
 
-.entertainment-hero-card .entertainment-story-item__meta {
+.education-hero-card .education-story-item__meta {
   color: #aaa;
 }
 
 /* Story List */
-.entertainment-story-list {
+.education-story-list {
   display: flex;
   flex-direction: column;
   gap: 24px;
 }
 
-.entertainment-story-item {
+.education-story-item {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 16px;
@@ -250,7 +250,7 @@
   align-items: start;
 }
 
-.entertainment-story-item__thumb-wrap {
+.education-story-item__thumb-wrap {
   width: 100%;
   height: 160px;
   overflow: hidden;
@@ -259,21 +259,28 @@
   position: relative;
 }
 
-.entertainment-story-item__thumb,
-.entertainment-story-item__thumb-placeholder {
+.education-story-item__thumb,
+.education-story-item__thumb-placeholder {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.entertainment-story-item__thumb-placeholder {
+.education-story-item__thumb-placeholder {
   background: linear-gradient(135deg, #e8380d22, #1a233244);
   display: flex;
   align-items: center;
   justify-content: center;
 }
+.education-story-item__thumb-placeholder::after {
+  content: 'TV19';
+  font-size: 13px;
+  font-weight: 800;
+  color: #e8380d88;
+  letter-spacing: 2px;
+}
 
-.entertainment-story-item__content {
+.education-story-item__content {
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -281,7 +288,7 @@
   padding: 4px 0;
 }
 
-.entertainment-story-item__title {
+.education-story-item__title {
   margin: 0 0 8px;
   font-size: 22px;
   color: #1a1a1a;
@@ -289,11 +296,11 @@
   line-height: 1.3;
 }
 
-.entertainment-story-item:hover .entertainment-story-item__title {
+.education-story-item:hover .education-story-item__title {
   color: #e8380d;
 }
 
-.entertainment-story-item__desc {
+.education-story-item__desc {
   margin: 0 0 12px;
   color: #555;
   font-size: 15px;
@@ -306,13 +313,13 @@
 }
 
 /* Sidebar Trending */
-.entertainment-sidebar {
+.education-sidebar {
   display: flex;
   flex-direction: column;
   gap: 32px;
 }
 
-.entertainment-sidebar-section__header {
+.education-sidebar-section__header {
   font-size: 17px;
   font-weight: 800;
   color: #1a1a1a;
@@ -324,7 +331,7 @@
   letter-spacing: 0.5px;
 }
 
-.entertainment-sidebar-section__header::before {
+.education-sidebar-section__header::before {
   content: '';
   position: absolute;
   bottom: -3px;
@@ -334,19 +341,19 @@
   background: #e8380d;
 }
 
-.trending-list {
+.education-trending-list {
   display: flex;
   flex-direction: column;
   gap: 20px;
 }
 
-.trending-item-top {
+.education-trending-item-top {
   display: block;
   text-decoration: none;
   color: inherit;
 }
 
-.trending-item-top__image-wrap {
+.education-trending-item-top__image-wrap {
   width: 100%;
   height: 190px;
   border-radius: 2px;
@@ -356,13 +363,13 @@
   position: relative;
 }
 
-.trending-item-top__image {
+.education-trending-item-top__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.trending-rank {
+.education-trending-rank {
   color: #e8380d;
   font-size: 9px;
   font-weight: 800;
@@ -371,18 +378,18 @@
   display: block;
 }
 
-.trending-item-top__title {
+.education-trending-item-top__title {
   font-size: 17px;
   font-weight: 800;
   margin: 0 0 8px;
   line-height: 1.35;
   color: #1a1a1a;
 }
-.trending-item-top:hover .trending-item-top__title {
+.education-trending-item-top:hover .education-trending-item-top__title {
   color: #e8380d;
 }
 
-.trending-item-small {
+.education-trending-item-small {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 12px;
@@ -391,7 +398,7 @@
   align-items: start;
 }
 
-.trending-item-small__image-wrap {
+.education-trending-item-small__image-wrap {
   width: 100%;
   height: 70px;
   border-radius: 2px;
@@ -400,32 +407,31 @@
   position: relative;
 }
 
-.trending-item-small__image {
+.education-trending-item-small__image {
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.trending-item-small__title {
+.education-trending-item-small__title {
   font-size: 14px;
   font-weight: 700;
   margin: 0 0 6px;
   line-height: 1.4;
   color: #1a1a1a;
 }
-.trending-item-small:hover .trending-item-small__title {
+.education-trending-item-small:hover .education-trending-item-small__title {
   color: #e8380d;
 }
 
 /* Ad Box */
-.sidebar-ad {
+.education-sidebar-ad {
   width: 100%;
   text-align: center;
   margin-top: 20px;
-  background: #fdfdfd;
 }
 
-.sidebar-ad__label {
+.education-sidebar-ad__label {
   font-size: 9px;
   color: #999;
   text-transform: uppercase;
@@ -433,75 +439,40 @@
   letter-spacing: 0.5px;
 }
 
-.sidebar-ad__img {
+.education-sidebar-ad__img {
   width: 100%;
   border-radius: 2px;
   display: block;
 }
 
-/* Related Sections */
-.related-sections-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0;
-  border-top: 1px solid #f0f0f0;
-}
-
-.related-section-link {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 4px;
-  text-decoration: none;
-  color: #333;
-  font-size: 13px;
-  font-weight: 500;
-  border-bottom: 1px solid #f0f0f0;
-  transition: all 0.2s;
-}
-
-.related-section-link:hover {
-  color: #e8380d;
-  padding-left: 8px;
-}
-
-.related-count-badge {
-  background: #666;
-  color: #fff;
-  font-size: 10px;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 2px;
-}
-
 /* Responsive */
 @media (max-width: 1024px) {
-  .entertainment-content-grid {
+  .education-content-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .entertainment-hero-card__image-wrap {
+  .education-hero-card__image-wrap {
     height: 300px;
   }
-  .entertainment-hero-card__title {
+  .education-hero-card__title {
     font-size: 22px;
   }
-  .entertainment-story-item {
+  .education-story-item {
     grid-template-columns: 120px 1fr;
     gap: 12px;
   }
-  .entertainment-story-item__thumb-wrap {
+  .education-story-item__thumb-wrap {
     height: 80px;
   }
-  .entertainment-story-item__title {
+  .education-story-item__title {
     font-size: 16px;
   }
-  .entertainment-story-item__content {
+  .education-story-item__content {
     padding: 0;
   }
-  .entertainment-story-item__desc {
+  .education-story-item__desc {
     font-size: 13px;
   }
 }

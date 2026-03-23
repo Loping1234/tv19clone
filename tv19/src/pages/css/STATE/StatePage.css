@@ -1,11 +1,10 @@
 .state-region-page {
   width: 100%;
-  margin-top: calc(var(--nav-offset, 140px) + 20px);
+  margin-top: calc(var(--nav-offset, 140px) + 23px);
   background: #fdfdfd;
   min-height: 100vh;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif;
   position: relative;
-  top: 40px;
 }
 
 .state-region-shell {
@@ -23,7 +22,7 @@
   border-bottom: 1px solid #eaeaea;
   margin-bottom: 24px;
   position: sticky;
-  top: var(--nav-offset, 140px);
+  top: var(--navbar-height, 40px);
   z-index: 100;
   padding: 0;
 }

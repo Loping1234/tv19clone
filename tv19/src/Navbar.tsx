@@ -6,8 +6,9 @@ import { getTopHeadlines, searchNews, type Article } from './services/newsServic
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getWeatherByCity, type WeatherResponse } from "./services/weatherService";
 import { getSiteConfig, applySiteConfig, type SiteConfig } from './services/siteConfigService';
-import { UilFacebook, UilYoutube, UilTwitter, UilInstagram, UilSearch } from '@iconscout/react-unicons';
+import { UilSearch } from '@iconscout/react-unicons';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import logoImg from './assets/Image_Logo.png';
 
 interface BreakingNewsProps {
   category?: 'top' | 'entertainment' | 'sports' | 'technology' | 'business' | 'health' | 'science';
@@ -33,6 +34,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
   const [newsError, setNewsError] = useState<string | null>(null);
   const tickerRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const navbarRef = useRef<HTMLElement>(null);
   const [scrolled, setScrolled] = useState(false);
 
   // Site config state
@@ -56,17 +58,34 @@ const Navbar: React.FC<BreakingNewsProps> = ({
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // Keep a live CSS offset for the fixed navbar height (handles zoom/resize)
+  // Keep a live CSS offset for the fixed navbar height (handles zoom/resize/scroll shrink)
   useEffect(() => {
+    if (!containerRef.current) return;
+
     const updateOffset = () => {
       if (!containerRef.current) return;
       const height = containerRef.current.getBoundingClientRect().height;
       document.documentElement.style.setProperty('--nav-offset', `${height}px`);
+      // Also set the dark navbar-only height for sticky subnavbars
+      if (navbarRef.current) {
+        const navbarHeight = navbarRef.current.getBoundingClientRect().height;
+        document.documentElement.style.setProperty('--navbar-height', `${navbarHeight}px`);
+      }
     };
 
     updateOffset();
     window.addEventListener('resize', updateOffset);
-    return () => window.removeEventListener('resize', updateOffset);
+    
+    // Smoothly update offset when navbar shrinks/grows during scroll
+    const resizeObserver = new ResizeObserver(() => {
+      updateOffset();
+    });
+    resizeObserver.observe(containerRef.current);
+
+    return () => {
+      window.removeEventListener('resize', updateOffset);
+      resizeObserver.disconnect();
+    };
   }, []);
 
   // Fetch breaking news with fallback to keyword search
@@ -166,15 +185,15 @@ const Navbar: React.FC<BreakingNewsProps> = ({
   const navItems = [
     { label: 'Home', to: '/', isLink: true },
     { label: 'State', to: '/state', isLink: true },
-    { label: 'India', href: '#india' },
-    { label: 'World', href: '/world' },
-    { label: 'Entertainment', href: '/entertainment' },
-    { label: 'Sports', href: '/sports' },
-    { label: 'Politics', href: '#politics' },
-    { label: 'Technology', href: '#technology' },
-    { label: 'Lifestyle', href: '#lifestyle' },
-    { label: 'Business', href: '#business' },
-    { label: 'Education', href: '#education' },
+    { label: 'India', to: '/india', isLink: true },
+    { label: 'World', to: '/world', isLink: true },
+    { label: 'Entertainment', to: '/entertainment', isLink: true },
+    { label: 'Sports', to: '/sports', isLink: true },
+    { label: 'Politics', to: '/politics', isLink: true },
+    { label: 'Technology', to: '/technology', isLink: true },
+    { label: 'Lifestyle', to: '/lifestyle', isLink: true },
+    { label: 'Business', to: '/business', isLink: true },
+    { label: 'Education', to: '/education', isLink: true },
   ];
 
   return (
@@ -182,24 +201,24 @@ const Navbar: React.FC<BreakingNewsProps> = ({
       <header className='main-header'>
         {/* Logo */}
         <div className="logo-block">
-          <span className="logo-tv">TV</span>
-          <span className="logo-19">19</span>
-          <span className="logo-news">NEWS</span>
+          <img src={logoImg} alt="TV19 News" className="logo-img" />
         </div>
 
         {/* Location + Date/Time + Weather */}
         <div className="weather-block">
-          <div className="weather-city">
-            <span className="weather-icon-emoji">☁️</span>
-            <span className="weather-city-name">{DEFAULT_CITY}</span>
-          </div>
-          <div className="weather-detail">
-            <span className="weather-datetime">{formatDateTime(now)}</span>
-            {loading && <span className="weather-temp"> · Loading...</span>}
-            {errorMessage && <span className="weather-temp"> · {errorMessage}</span>}
-            {data && (
-              <span className="weather-temp"> · {data.main.temp}°C</span>
-            )}
+          <i className="fas fa-cloud-sun weather-fa-icon"></i>
+          <div className="weather-info">
+            <div className="weather-city">
+              <span className="weather-city-name">{DEFAULT_CITY}</span>
+            </div>
+            <div className="weather-detail">
+              <span className="weather-datetime">{formatDateTime(now)}</span>
+              {loading && <span className="weather-temp"> · Loading...</span>}
+              {errorMessage && <span className="weather-temp"> · {errorMessage}</span>}
+              {data && (
+                <span className="weather-temp"> · {data.main.temp}°C</span>
+              )}
+            </div>
           </div>
         </div>
 
@@ -208,18 +227,18 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           <Link to='/about' className='header-link'>ABOUT US</Link>
           <Link to='/contact' className='header-link'>CONTACT US</Link>
           <Link to='/career' className='header-link'>CAREER</Link>
-          <a href='#community' className='header-link'>COMMUNITY</a>
+          <div className="header-divider"></div>
           <div className="social-icons">
-            <a href="#facebook" className="social-icon"><UilFacebook /></a>
-            <a href="#twitter" className="social-icon"><UilTwitter /></a>
-            <a href="#youtube" className="social-icon"><UilYoutube /></a>
-            <a href="#instagram" className="social-icon"><UilInstagram /></a>
+            <a href="#facebook" className="social-icon-box"><i className="fab fa-facebook-f"></i></a>
+            <a href="#twitter" className="social-icon-box"><i className="fab fa-twitter"></i></a>
+            <a href="#youtube" className="social-icon-box"><i className="fab fa-youtube"></i></a>
+            <a href="#instagram" className="social-icon-box"><i className="fab fa-instagram"></i></a>
           </div>
           <button className="search-btn" aria-label="Search"><UilSearch size={18} /></button>
         </div>
       </header>
 
-      <nav className='navbar'>
+      <nav ref={navbarRef} className='navbar'>
         <ul className='navbar-list'>
           {navItems.map((item) => {
             const isActive = item.isLink
@@ -254,64 +273,56 @@ const Navbar: React.FC<BreakingNewsProps> = ({
         {/* Login / Sign Up buttons */}
         <div className="navbar-auth">
           <a href="#login" className="btn-login">
-            <i className="fas fa-sign-in-alt"></i> LOGIN
+            LOGIN
           </a>
           <a href="#signup" className="btn-signup">
-            <i className="fas fa-user-plus"></i> SIGN UP
+            SIGN UP
           </a>
         </div>
       </nav>
 
-      {/* Breaking News Ticker */}
-      <div className='ticker'>
-        <div className="breaking-news-container">
-          <div className="breaking-news-wrapper">
-            <div className="breaking-label">
-              <span className="breaking-icon">⚡</span>
-              BREAKING NEWS
+      {/* Breaking News Cards — Scrolling */}
+      <div className='breaking-news-container'>
+        <div className="breaking-news-track-wrapper">
+          {newsLoading && articles.length === 0 ? (
+            <div className="breaking-loading">Loading latest news...</div>
+          ) : newsError ? (
+            <div className="breaking-error">{newsError}</div>
+          ) : (
+            <div className="breaking-news-track">
+              {articles.slice(0, 8).map((article, index) => (
+                <a key={index} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                  <div className="breaking-card-image-wrap">
+                    {article.image ? (
+                      <img src={article.image} alt="" className="breaking-card-image" />
+                    ) : (
+                      <div className="breaking-card-placeholder" />
+                    )}
+                  </div>
+                  <div className="breaking-card-body">
+                    <span className="breaking-badge">BREAKING</span>
+                    <h4 className="breaking-card-title">{article.title}</h4>
+                  </div>
+                </a>
+              ))}
+              {/* Duplicate for seamless loop */}
+              {articles.slice(0, 8).map((article, index) => (
+                <a key={`dup-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                  <div className="breaking-card-image-wrap">
+                    {article.image ? (
+                      <img src={article.image} alt="" className="breaking-card-image" />
+                    ) : (
+                      <div className="breaking-card-placeholder" />
+                    )}
+                  </div>
+                  <div className="breaking-card-body">
+                    <span className="breaking-badge">BREAKING</span>
+                    <h4 className="breaking-card-title">{article.title}</h4>
+                  </div>
+                </a>
+              ))}
             </div>
-            <div className="breaking-content">
-              {newsLoading && articles.length === 0 ? (
-                <div className="breaking-ticker loading">
-                  Loading latest news...
-                </div>
-              ) : newsError ? (
-                <div className="breaking-ticker error">
-                  {newsError}
-                </div>
-              ) : (
-                <div className="breaking-ticker" ref={tickerRef}>
-                  {articles.map((article, index) => (
-                    <span key={index} className="breaking-item">
-                      <span className="breaking-bullet">●</span>
-                      <a
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="breaking-link"
-                      >
-                        {article.title}
-                      </a>
-                    </span>
-                  ))}
-                  {/* Duplicate for seamless loop */}
-                  {articles.map((article, index) => (
-                    <span key={`duplicate-${index}`} className="breaking-item">
-                      <span className="breaking-bullet">●</span>
-                      <a
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="breaking-link"
-                      >
-                        {article.title}
-                      </a>
-                    </span>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
+          )}
         </div>
       </div>
     </div>

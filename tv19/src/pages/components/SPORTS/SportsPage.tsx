@@ -5,13 +5,14 @@ import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@i
 
 const REGIONS = [
   'All Stories',
+  'Athletics',
+  'Chess',
   'Cricket',
   'Football',
-  'Tennis',
-  'WWE',
-  'F1',
-  'US Sports',
-  'Others'
+  'Hockey',
+  'ICC',
+  'IPL',
+  'Tennis'
 ] as const;
 
 const RELATED_SECTIONS = [
@@ -194,7 +195,6 @@ export default function SportsPage() {
     <main className="sports-region-page">
       <section className="sports-region-shell">
         <div className="sports-subnav-wrapper">
-          <button className="sports-nav-btn prev" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
           <div className="sports-subnav" role="tablist" aria-label="Sports regions" ref={scrollRef}>
             {REGIONS.map((region) => (
               <button
@@ -205,11 +205,10 @@ export default function SportsPage() {
                 className={`sports-subnav__item ${activeRegion === region ? 'active' : ''}`}
                 onClick={() => setActiveRegion(region)}
               >
-                {region}
+                {region.toUpperCase()}
               </button>
             ))}
           </div>
-          <button className="sports-nav-btn next" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
         </div>
 
         <div className="sports-content-grid">
