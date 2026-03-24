@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import '../../../pages/css/STATE/StatePage.css';
+import '../../../pages/css/topic_categories.css';
 import { getStateNews, scrapeFallbackImage, type Article } from '../../../services/newsService';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
@@ -199,27 +200,32 @@ export default function StatePage() {
 
   return (
     <main className="state-region-page">
-      <section className="state-region-shell">
-        <div className="state-subnav-wrapper">
-          <button className="state-nav-btn prev" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
-          <div className="state-subnav" role="tablist" aria-label="Rajasthan regions" ref={scrollRef}>
-            {REGIONS.map((region) => (
-              <button
-                key={region}
-                type="button"
-                role="tab"
-                aria-selected={activeRegion === region}
-                className={`state-subnav__item ${activeRegion === region ? 'active' : ''}`}
-                onClick={() => setActiveRegion(region)}
-              >
-                {region}
-              </button>
-            ))}
-          </div>
-          <button className="state-nav-btn next" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
-        </div>
+      <div className="tabs-scroll-wrap">
+        <button className="tabs-arrow left" aria-label="Scroll left" onClick={() => scroll('left')}>
+          <UilAngleLeft />
+        </button>
 
-        <div className="state-content-grid">
+        <div className="tabs-scroll" id="tabsScroll" ref={scrollRef}>
+          <ul className="nav nav-tabs" id="topicTabs">
+            {REGIONS.map(region => (
+              <li className="nav-item" key={region}>
+                <a
+                  href="#0"
+                  onClick={(e) => { e.preventDefault(); setActiveRegion(region); }}
+                  className={`nav-link ${activeRegion === region ? 'active' : ''}`}
+                >
+                  {region}
+                </a>
+              </li>
+            ))}
+          </ul>
+        </div>
+        
+        <button className="tabs-arrow right" aria-label="Scroll right" onClick={() => scroll('right')}>
+          <UilAngleRight />
+        </button>
+      </div>
+      <div className="state-content-grid">
           <section className="state-main-column" aria-live="polite">
             {loading ? (
               <div className="state-loader">
@@ -348,7 +354,6 @@ export default function StatePage() {
             </aside>
           )}
         </div>
-      </section>
     </main>
   );
 }

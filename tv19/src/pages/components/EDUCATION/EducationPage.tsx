@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import '../../../pages/css/EDUCATION/EducationPage.css';
+import '../../../pages/css/topic_categories.css';
 import { getEducation, scrapeFallbackImage, type Article } from '../../../services/newsService';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
@@ -169,23 +170,26 @@ export default function EducationPage() {
     return (
         <main className="education-region-page">
             <section className="education-region-shell">
-                <div className="education-subnav-wrapper">
-                    <button className="education-nav-btn prev" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
-                    <div className="education-subnav" role="tablist" aria-label="Education regions" ref={scrollRef}>
-                        {REGIONS.map((region) => (
-                            <button
-                                key={region}
-                                type="button"
-                                role="tab"
-                                aria-selected={activeRegion === region}
-                                className={`education-subnav__item ${activeRegion === region ? 'active' : ''}`}
-                                onClick={() => setActiveRegion(region)}
-                            >
-                                {region}
-                            </button>
-                        ))}
+                <div className="tabs-scroll-wrap">
+                    <button className="tabs-arrow left" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
+                    <div className="tabs-scroll" id="tabsScroll" ref={scrollRef}>
+                        <ul className="nav nav-tabs" id="topicTabs" aria-label="Education regions">
+                            {REGIONS.map((region) => (
+                                <li className="nav-item" key={region}>
+                                    <a
+                                        href="#0"
+                                        role="tab"
+                                        aria-selected={activeRegion === region}
+                                        className={`nav-link ${activeRegion === region ? 'active' : ''}`}
+                                        onClick={(e) => { e.preventDefault(); setActiveRegion(region); }}
+                                    >
+                                        {region}
+                                    </a>
+                                </li>
+                            ))}
+                        </ul>
                     </div>
-                    <button className="education-nav-btn next" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
+                    <button className="tabs-arrow right" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
                 </div>
 
                 <div className="education-content-grid">

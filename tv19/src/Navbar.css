@@ -187,30 +187,35 @@
   width: 100%;
   display: flex;
   align-items: center;
-  padding: 0 0;
+  justify-content: flex-start;
+  position: relative;
+  padding: 0 1.5rem;
   background-color: #1e2227;
   transition: padding 0.3s ease;
-  padding-left: 1.5rem;
 }
 
 .navbar-list {
   display: flex;
+  align-items: center; /* Fixes "it is up" (vertical center) */
   list-style: none;
   margin: 0;
   padding: 0;
   gap: 0;
+  height: 57px;
 }
 
 
 .navbar-list>li>.navbar-link,
 .navbar-list>li>a.navbar-link {
-  display: block;
+  display: flex;
+  align-items: center;
   color: #e2e4e8;
   text-decoration: none;
-  font-size: 0.75rem;
+  font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.4px;
-  padding: 0.75rem 1.1rem;
+  padding: 0 0.7rem;
+  height: 100%; /* Fill the 57px height */
   white-space: nowrap;
   transition: background 0.2s, color 0.2s;
   text-transform: uppercase;
@@ -278,11 +283,11 @@
 
 /* ── LOGIN / SIGN UP buttons ── */
 .navbar-auth {
-  margin-left: auto;
+  position: absolute;
+  right: 1.5rem;
   display: flex;
   align-items: center;
   gap: 0.6rem;
-  padding-right: 1rem;
 }
 
 .btn-login,

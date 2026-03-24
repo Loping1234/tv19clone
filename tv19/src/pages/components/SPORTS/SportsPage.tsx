@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import '../../../pages/css/SPORTS/SportsPage.css';
+import '../../../pages/css/topic_categories.css';
 import { getSports, scrapeFallbackImage, type Article } from '../../../services/newsService';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
@@ -194,22 +195,28 @@ export default function SportsPage() {
   return (
     <main className="sports-region-page">
       <section className="sports-region-shell">
-        <div className="sports-subnav-wrapper">
-          <div className="sports-subnav" role="tablist" aria-label="Sports regions" ref={scrollRef}>
-            {REGIONS.map((region) => (
-              <button
-                key={region}
-                type="button"
-                role="tab"
-                aria-selected={activeRegion === region}
-                className={`sports-subnav__item ${activeRegion === region ? 'active' : ''}`}
-                onClick={() => setActiveRegion(region)}
-              >
-                {region.toUpperCase()}
-              </button>
-            ))}
-          </div>
+        <div className="tabs-scroll-wrap">
+            <button className="tabs-arrow left" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
+            <div className="tabs-scroll" id="tabsScroll" ref={scrollRef}>
+                <ul className="nav nav-tabs" id="topicTabs" aria-label="Sports regions">
+                    {REGIONS.map((region) => (
+                        <li className="nav-item" key={region}>
+                            <a
+                                href="#0"
+                                role="tab"
+                                aria-selected={activeRegion === region}
+                                className={`nav-link ${activeRegion === region ? 'active' : ''}`}
+                                onClick={(e) => { e.preventDefault(); setActiveRegion(region); }}
+                            >
+                                {region}
+                            </a>
+                        </li>
+                    ))}
+                </ul>
+            </div>
+            <button className="tabs-arrow right" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
         </div>
+
 
         <div className="sports-content-grid">
           <section className="sports-main-column" aria-live="polite">

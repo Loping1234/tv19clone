@@ -484,6 +484,31 @@ export const getTrending = async (
   }
 };
 
+// --- Generic Dynamic Category Fetcher ---
+export const getDynamicCategoryNews = async (
+  category: string,
+  subCategory: string = "All Stories",
+  pageSize: number = 30,
+  skip: number = 0
+): Promise<NewsResponse> => {
+  try {
+    const params: Record<string, string | number> = {
+      category,
+      size: pageSize,
+      skip,
+    };
+    if (subCategory && subCategory !== "All Stories") {
+      params.state = subCategory;
+    }
+
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, { params });
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
 // --- Category Counts ---
 
 export interface CategoryCountsResponse {

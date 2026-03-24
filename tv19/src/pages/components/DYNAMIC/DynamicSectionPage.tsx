@@ -1,14 +1,22 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
-import '../../../pages/css/TECHNOLOGY/TechnologyPage.css';
+import { useParams, Navigate } from 'react-router-dom';
+import '../../../pages/css/DYNAMIC/DynamicSectionPage.css';
 import '../../../pages/css/topic_categories.css';
-import { getTechnology, scrapeFallbackImage, type Article } from '../../../services/newsService';
+import { getDynamicCategoryNews, scrapeFallbackImage, type Article } from '../../../services/newsService';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
-const REGIONS = [
-    'All Stories',
-    'Artificial Intelligence',
-    'Science'
-] as const;
+export const DYNAMIC_CATEGORIES_CONFIG: Record<string, { title: string, apiCategory: string, subcategories: string[] }> = {
+    'art': { title: 'Art', apiCategory: 'art', subcategories: ['All Stories', 'Art & Design', 'Book Review', 'Dance', 'Movies', 'Music', 'Television', 'Theater'] },
+    'astrology': { title: 'Astrology', apiCategory: 'astrology', subcategories: ['All Stories', 'Festivals', 'Horoscope', 'Pilgrimage', 'Religion', 'Spiritual', 'Temples'] },
+    'breaking': { title: 'Breaking', apiCategory: 'breaking', subcategories: ['All Stories'] },
+    'crime': { title: 'Crime', apiCategory: 'crime', subcategories: ['All Stories'] },
+    'finance': { title: 'Finance', apiCategory: 'finance', subcategories: ['All Stories'] },
+    'opinion': { title: 'Opinion', apiCategory: 'opinion', subcategories: ['All Stories', 'Cartoon', 'Columns', 'Comment', 'Editorial', 'Interview', 'Lead', 'Letters', 'Open Page', "Readers' Editor"] },
+    'top': { title: 'Top', apiCategory: 'top', subcategories: ['All Stories'] },
+    'trending': { title: 'Trending', apiCategory: 'trending', subcategories: ['All Stories'] },
+    'weather': { title: 'Weather', apiCategory: 'weather', subcategories: ['All Stories'] },
+    'green-future': { title: 'Green Future', apiCategory: 'green-future', subcategories: ['All Stories', 'Climate Innovation', 'Funding', 'Infrastructure', 'Renewable Energy'] },
+};
 
 function timeAgo(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -38,7 +46,15 @@ function sortArticlesForCover(items: Article[]) {
     });
 }
 
-export default function TechnologyPage() {
+interface Props {
+    categoryId?: string;
+}
+
+export default function DynamicSectionPage({ categoryId: propCategoryId }: Props) {
+    const { categoryId: paramCategoryId } = useParams<{ categoryId: string }>();
+    const categoryId = propCategoryId || paramCategoryId;
+    const config = categoryId ? DYNAMIC_CATEGORIES_CONFIG[categoryId] : null;
+
     const [activeRegion, setActiveRegion] = useState<string>('All Stories');
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
@@ -52,6 +68,12 @@ export default function TechnologyPage() {
     const [hasMore, setHasMore] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
     const observerTarget = useRef<HTMLDivElement>(null);
+
+    // Reset subcategory state when switching to a completely different main category via URL
+    useEffect(() => {
+        setActiveRegion('All Stories');
+        window.scrollTo({ top: 0, behavior: 'auto' });
+    }, [categoryId]);
 
     const scroll = (direction: 'left' | 'right') => {
         if (scrollRef.current) {
@@ -79,6 +101,8 @@ export default function TechnologyPage() {
     }, []);
 
     const fetchRegionNews = useCallback(async (region: string, isLoadMore: boolean = false) => {
+        if (!config) return;
+
         if (!isLoadMore) {
             setLoading(true);
             setError(null);
@@ -90,7 +114,7 @@ export default function TechnologyPage() {
 
         try {
             const currentSkip = isLoadMore ? skipRef.current + 30 : 0;
-            const response = await getTechnology(region, 30, currentSkip);
+            const response = await getDynamicCategoryNews(config.apiCategory, region, 30, currentSkip);
             const newUnique = dedupeByTitle(response.articles);
 
             if (isLoadMore) {
@@ -110,14 +134,14 @@ export default function TechnologyPage() {
 
                 // Show notice only if no articles found
                 if (sortedUnique.length === 0) {
-                    setError(`No stories found for ${region}. Try another region.`);
+                    setError(`No stories found for ${region}. Try another subcategory.`);
                 }
             }
 
         } catch (err) {
-            console.error('technology region fetch failed:', err);
+            console.error(`${config.apiCategory} subcategory fetch failed:`, err);
             if (!isLoadMore) {
-                setError('Could not load regional news right now. Please try again.');
+                setError('Could not load news right now. Please try again.');
                 setArticles([]);
             }
         } finally {
@@ -127,12 +151,12 @@ export default function TechnologyPage() {
                 setLoadingMore(false);
             }
         }
-    }, []);
+    }, [config]);
 
     const loadMore = useCallback(() => {
-        if (!hasMore || loadingMore || loading) return;
+        if (!hasMore || loadingMore || loading || !config) return;
         fetchRegionNews(activeRegion, true);
-    }, [activeRegion, fetchRegionNews, hasMore, loadingMore, loading]);
+    }, [activeRegion, fetchRegionNews, hasMore, loadingMore, loading, config]);
 
     useEffect(() => {
         const target = observerTarget.current;
@@ -152,25 +176,26 @@ export default function TechnologyPage() {
     }, [loadMore]);
 
     useEffect(() => {
-        window.scrollTo({ top: 0, behavior: 'auto' });
-    }, []);
-
-    useEffect(() => {
         fetchRegionNews(activeRegion, false);
-    }, [activeRegion, fetchRegionNews]);
+    }, [activeRegion, fetchRegionNews, categoryId]); // Fetch when region or root categoryId changes
+
+    if (!config) {
+        return <Navigate to="/" replace />;
+    }
 
     const heroArticle = useMemo(() => articles[0], [articles]);
     const trendingArticles = useMemo(() => articles.slice(11, 16), [articles]);
     const mainListArticles = useMemo(() => articles.slice(1, 11).concat(articles.slice(16)), [articles]);
 
     return (
-        <main className="technology-region-page">
-            <section className="technology-region-shell">
+        <main className="dynamic-region-page">
+            <section className="dynamic-region-shell">
                 <div className="tabs-scroll-wrap">
                     <button className="tabs-arrow left" aria-label="Scroll left" onClick={() => scroll('left')}><UilAngleLeft /></button>
+                    
                     <div className="tabs-scroll" id="tabsScroll" ref={scrollRef}>
-                        <ul className="nav nav-tabs" id="topicTabs" aria-label="Technology regions">
-                            {REGIONS.map((region) => (
+                        <ul className="nav nav-tabs" id="topicTabs" aria-label={`${config.title} regions`}>
+                            {config.subcategories.map((region) => (
                                 <li className="nav-item" key={region}>
                                     <a
                                         href="#0"
@@ -185,45 +210,45 @@ export default function TechnologyPage() {
                             ))}
                         </ul>
                     </div>
+
                     <button className="tabs-arrow right" aria-label="Scroll right" onClick={() => scroll('right')}><UilAngleRight /></button>
                 </div>
 
-
-                <div className="technology-content-grid">
-                    <section className="technology-main-column" aria-live="polite">
+                <div className="dynamic-content-grid">
+                    <section className="dynamic-main-column" aria-live="polite">
                         {loading ? (
-                            <div className="technology-loader">
-                                <div className="technology-loader__spinner" />
+                            <div className="dynamic-loader">
+                                <div className="dynamic-loader__spinner" />
                                 <p>Loading {activeRegion} stories...</p>
                             </div>
                         ) : error ? (
-                            <div className="technology-empty">{error}</div>
+                            <div className="dynamic-empty">{error}</div>
                         ) : articles.length === 0 ? (
-                            <div className="technology-empty">
-                                No stories found for {activeRegion}. Try another region.
+                            <div className="dynamic-empty">
+                                No stories found for {activeRegion}. Try another subcategory.
                             </div>
                         ) : (
                             <>
                                 {fallbackNotice && (
-                                    <div className="technology-fallback-note">{fallbackNotice}</div>
+                                    <div className="dynamic-fallback-note">{fallbackNotice}</div>
                                 )}
 
                                 {heroArticle && (
-                                    <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="technology-hero-card">
-                                        <div className="technology-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
+                                    <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="dynamic-hero-card">
+                                        <div className="dynamic-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                                             {heroArticle.image && !failedImages.has(heroArticle.image) ? (
-                                                <img src={heroArticle.image} alt={heroArticle.title} className="technology-hero-card__image" onError={() => handleImageError(heroArticle)} />
+                                                <img src={heroArticle.image} alt={heroArticle.title} className="dynamic-hero-card__image" onError={() => handleImageError(heroArticle)} />
                                             ) : (
-                                                <div className="technology-hero-card__placeholder" />
+                                                <div className="dynamic-hero-card__placeholder" />
                                             )}
 
-                                            <div className="technology-hero-card__overlay">
-                                                <div className={`technology-badge ${activeRegion.length > 12 ? 'small' : ''}`}>
-                                                    {activeRegion === 'All Stories' ? 'TECHNOLOGY' : activeRegion}
+                                            <div className="dynamic-hero-card__overlay">
+                                                <div className={`dynamic-badge ${activeRegion.length > 12 ? 'small' : ''}`}>
+                                                    {activeRegion === 'All Stories' ? config.title.toUpperCase() : activeRegion}
                                                 </div>
-                                                <h1 className="technology-hero-card__title">{heroArticle.title}</h1>
-                                                {heroArticle.description && <p className="technology-hero-card__desc">{heroArticle.description}</p>}
-                                                <div className="technology-story-item__meta">
+                                                <h1 className="dynamic-hero-card__title">{heroArticle.title}</h1>
+                                                {heroArticle.description && <p className="dynamic-hero-card__desc">{heroArticle.description}</p>}
+                                                <div className="dynamic-story-item__meta">
                                                     <span><UilClock className="meta-icon" />{timeAgo(heroArticle.publishedAt)}</span>
                                                     <span><UilEye className="meta-icon" />0 Views</span>
                                                     <span><UilCommentAlt className="meta-icon" />0 Comments</span>
@@ -233,20 +258,20 @@ export default function TechnologyPage() {
                                     </a>
                                 )}
 
-                                <div className="technology-story-list">
+                                <div className="dynamic-story-list">
                                     {mainListArticles.map((article, index) => (
-                                        <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="technology-story-item">
-                                            <div className="technology-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
+                                        <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="dynamic-story-item">
+                                            <div className="dynamic-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                                                 {article.image && !failedImages.has(article.image) ? (
-                                                    <img src={article.image} alt={article.title} className="technology-story-item__thumb" onError={() => handleImageError(article)} />
+                                                    <img src={article.image} alt={article.title} className="dynamic-story-item__thumb" onError={() => handleImageError(article)} />
                                                 ) : (
-                                                    <div className="technology-story-item__thumb-placeholder" />
+                                                    <div className="dynamic-story-item__thumb-placeholder" />
                                                 )}
                                             </div>
-                                            <div className="technology-story-item__content">
-                                                <h2 className="technology-story-item__title">{article.title}</h2>
-                                                {article.description && <p className="technology-story-item__desc">{article.description}</p>}
-                                                <div className="technology-story-item__meta">
+                                            <div className="dynamic-story-item__content">
+                                                <h2 className="dynamic-story-item__title">{article.title}</h2>
+                                                {article.description && <p className="dynamic-story-item__desc">{article.description}</p>}
+                                                <div className="dynamic-story-item__meta">
                                                     <span><UilClock className="meta-icon" />{timeAgo(article.publishedAt)}</span>
                                                     <span><UilEye className="meta-icon" />0 Views</span>
                                                     <span><UilCommentAlt className="meta-icon" />0 Comments</span>
@@ -260,7 +285,7 @@ export default function TechnologyPage() {
                                 <div ref={observerTarget} className="infinite-scroll-loading" style={{ margin: '30px 0', textAlign: 'center' }}>
                                     {loadingMore && (
                                         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
-                                            <div className="technology-loader__spinner" style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
+                                            <div className="dynamic-loader__spinner" style={{ width: '30px', height: '30px', borderWidth: '3px' }} />
                                             <p style={{ color: '#666', fontSize: '14px' }}>Loading more stories...</p>
                                         </div>
                                     )}
@@ -275,34 +300,34 @@ export default function TechnologyPage() {
                     </section>
 
                     {articles.length > 0 && (
-                        <aside className="technology-sidebar">
-                            <section className="technology-sidebar-section">
-                                <h3 className="technology-sidebar-section__header">Trending in Technology</h3>
-                                <div className="technology-trending-list">
+                        <aside className="dynamic-sidebar">
+                            <section className="dynamic-sidebar-section">
+                                <h3 className="dynamic-sidebar-section__header">Trending in {config.title}</h3>
+                                <div className="dynamic-trending-list">
                                     {trendingArticles.map((article, idx) => (
                                         idx === 0 ? (
-                                            <a key={idx} href={article.url} className="technology-trending-item-top" target="_blank" rel="noopener noreferrer">
-                                                <div className="technology-trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
+                                            <a key={idx} href={article.url} className="dynamic-trending-item-top" target="_blank" rel="noopener noreferrer">
+                                                <div className="dynamic-trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                                                     {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="technology-trending-item-top__image" onError={() => handleImageError(article)} />
+                                                        <img src={article.image} className="dynamic-trending-item-top__image" onError={() => handleImageError(article)} />
                                                     )}
                                                 </div>
-                                                <span className="technology-trending-rank">#{idx + 1} Trending</span>
-                                                <h4 className="technology-trending-item-top__title">{article.title}</h4>
-                                                <div className="technology-story-item__meta">
+                                                <span className="dynamic-trending-rank">#{idx + 1} Trending</span>
+                                                <h4 className="dynamic-trending-item-top__title">{article.title}</h4>
+                                                <div className="dynamic-story-item__meta">
                                                     <span><UilEye className="meta-icon" />0 Views</span>
                                                 </div>
                                             </a>
                                         ) : (
-                                            <a key={idx} href={article.url} className="technology-trending-item-small" target="_blank" rel="noopener noreferrer">
-                                                <div className="technology-trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
+                                            <a key={idx} href={article.url} className="dynamic-trending-item-small" target="_blank" rel="noopener noreferrer">
+                                                <div className="dynamic-trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                                                     {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="technology-trending-item-small__image" onError={() => handleImageError(article)} />
+                                                        <img src={article.image} className="dynamic-trending-item-small__image" onError={() => handleImageError(article)} />
                                                     )}
                                                 </div>
                                                 <div>
-                                                    <span className="technology-trending-rank">#{idx + 1} Trending</span>
-                                                    <h4 className="technology-trending-item-small__title">{article.title}</h4>
+                                                    <span className="dynamic-trending-rank">#{idx + 1} Trending</span>
+                                                    <h4 className="dynamic-trending-item-small__title">{article.title}</h4>
                                                 </div>
                                             </a>
                                         )
@@ -310,9 +335,9 @@ export default function TechnologyPage() {
                                 </div>
                             </section>
 
-                            <div className="technology-sidebar-ad">
-                                <div className="technology-sidebar-ad__label">Advertisement</div>
-                                <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" className="technology-sidebar-ad__img" />
+                            <div className="dynamic-sidebar-ad">
+                                <div className="dynamic-sidebar-ad__label">Advertisement</div>
+                                <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" className="dynamic-sidebar-ad__img" />
                             </div>
                         </aside>
                     )}

@@ -1,0 +1,109 @@
+/* Base structure simulating Bootstrap Nav components used in stle.html.bak */
+.nav {
+    display: flex;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.nav-tabs {
+    border-bottom: 2px solid #eaeaea;
+}
+
+.nav-link {
+    display: block;
+    padding: 12px 16px;
+    color: #444;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    border-bottom: 3px solid transparent;
+}
+
+.nav-link:hover {
+    color: #ff3c00;
+    background-color: #f9f9f9;
+}
+
+.nav-link.active {
+    color: #ff3c00;
+    border-bottom: 3px solid #ff3c00;
+    font-weight: 700;
+}
+
+/* User's custom layout styles from topic_categories.css.bak */
+.tabs-scroll-wrap {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    position: relative;
+    background: #fff;
+    padding: 5px 15px;
+    margin-bottom: 20px;
+}
+
+.tabs-scroll {
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    flex: 1;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+}
+
+.tabs-scroll::-webkit-scrollbar {
+    display: none;
+}
+
+#topicTabs {
+    flex-wrap: nowrap !important;
+}
+
+#topicTabs .nav-item {
+    flex: 0 0 auto;
+}
+
+#topicTabs .nav-link {
+    white-space: nowrap;
+}
+
+/* Customized tabs-arrow (display changed from none to flex for visibility) */
+.tabs-arrow {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    min-height: 34px;
+    padding: 0;
+    border-radius: 50%;
+    border: none;
+    background: #ff5722;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, .2);
+    flex-shrink: 0;
+}
+
+.tabs-arrow:hover {
+    background: #e64a19;
+}
+
+.tabs-arrow i, .tabs-arrow svg {
+    color: #fff;
+    width: 20px;
+    height: 20px;
+}
+
+.tabs-arrow:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+@media (max-width: 768px) {
+    .tabs-arrow {
+        display: none; /* Hide interactive scroll arrows on mobile (native touch swipe is preferred) */
+    }
+}

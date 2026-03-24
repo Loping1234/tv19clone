@@ -245,9 +245,13 @@ process.on("unhandledRejection", (reason) => {
 
 // RSS feed URLs mapped by category (Times of India + BBC + supplementary)
 const RSS_FEEDS = {
+  // ═══════════════════════════════════════════
+  //  MAIN CATEGORIES
+  // ═══════════════════════════════════════════
   top: [
     "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
     "https://feeds.bbci.co.uk/news/rss.xml",
+    "https://www.thehindu.com/news/feeder/default.rss",
   ],
   india: [
     "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
@@ -258,10 +262,12 @@ const RSS_FEEDS = {
     "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms",
     "https://feeds.bbci.co.uk/news/business/rss.xml",
     "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
+    "https://www.thehindu.com/business/feeder/default.rss",
   ],
   finance: [
     "https://economictimes.indiatimes.com/wealth/rssfeeds/837555174.cms",
     "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
+    "https://news.google.com/rss/search?q=finance+India&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   markets: [
     "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
@@ -270,6 +276,7 @@ const RSS_FEEDS = {
   entertainment: [
     "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
     "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
+    "https://www.thehindu.com/entertainment/feeder/default.rss",
   ],
   health: [
     "https://timesofindia.indiatimes.com/rssfeeds/3908999.cms",
@@ -297,28 +304,32 @@ const RSS_FEEDS = {
     "https://www.thehindu.com/news/international/feeder/default.rss",
   ],
   politics: [
-    "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
+    "https://timesofindia.indiatimes.com/rssfeeds/7503091.cms",
     "https://feeds.bbci.co.uk/news/politics/rss.xml",
     "https://www.thehindu.com/news/national/feeder/default.rss",
+    "https://news.google.com/rss/search?q=India+politics+news&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   environment: [
     "https://timesofindia.indiatimes.com/rssfeeds/2647163.cms",
     "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-    "https://www.downtoearth.org.in/rss/all",
   ],
   lifestyle: [
     "https://timesofindia.indiatimes.com/rssfeeds/2886704.cms",
     "https://feeds.bbci.co.uk/news/magazine/rss.xml",
+    "https://www.thehindu.com/life-and-style/feeder/default.rss",
   ],
   education: [
     "https://timesofindia.indiatimes.com/rssfeeds/913168846.cms",
     "https://feeds.bbci.co.uk/news/education/rss.xml",
+    "https://www.thehindu.com/education/feeder/default.rss",
   ],
   crime: [
     "https://news.google.com/rss/search?q=crime+news+india&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/2950623.cms",
   ],
   astrology: [
     "https://timesofindia.indiatimes.com/rssfeeds/6547154.cms",
+    "https://news.google.com/rss/search?q=horoscope+astrology+India&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   opinion: [
     "https://timesofindia.indiatimes.com/rssfeeds/784865811.cms",
@@ -327,423 +338,311 @@ const RSS_FEEDS = {
   arts: [
     "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
     "https://www.thehindu.com/entertainment/art/feeder/default.rss",
+    "https://news.google.com/rss/search?q=art+culture+India&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   weather: [
-    "https://www.skymetweather.com/content/feed/",
-    "https://www.downtoearth.org.in/rss/climate-change",
+    "https://news.google.com/rss/search?q=weather+India+forecast&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss/search?q=IMD+weather+alert&hl=en-IN&gl=IN&ceid=IN:en",
   ],
-  // Categories that map to Google News RSS searches
-  green_future: [
+  // key uses hyphen to match frontend route /green-future
+  "green-future": [
     "https://news.google.com/rss/search?q=green+energy+sustainability+india&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://www.downtoearth.org.in/rss/all",
+    "https://news.google.com/rss/search?q=renewable+energy+India&hl=en-IN&gl=IN&ceid=IN:en",
   ],
   trending: [
     "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
     "https://feeds.bbci.co.uk/news/rss.xml",
     "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
   ],
-  rajasthan: [
-  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-  "https://www.thehindu.com/news/national/other-states/feeder/default.rss",
-  "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
   manufacturing: [
     "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
     "https://economictimes.indiatimes.com/industry/indl-goods/svs/rssfeeds/13352651.cms",
   ],
-  // Replace/add these in your RSS_FEEDS object in server/index.js
 
-// ── RAJASTHAN (already exists, update it) ──
-"rajasthan": [
-  "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-  "https://www.bhaskar.com/rss-feed/1061/",
-  "https://www.patrika.com/rss/rajasthan-news.xml",
-],
+  // ═══════════════════════════════════════════
+  //  INDIAN STATES
+  // ═══════════════════════════════════════════
+  "rajasthan": [
+    "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+    "https://www.thehindu.com/news/national/other-states/feeder/default.rss",
+  ],
+  "uttar pradesh": [
+    "https://news.google.com/rss/search?q=Uttar+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/3947060.cms",
+  ],
+  "maharashtra": [
+    "https://news.google.com/rss/search?q=Maharashtra+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/-2128817995.cms",
+  ],
+  "madhya pradesh": [
+    "https://news.google.com/rss/search?q=Madhya+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "gujarat": [
+    "https://news.google.com/rss/search?q=Gujarat+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/4021545.cms",
+  ],
+  "bihar": [
+    "https://news.google.com/rss/search?q=Bihar+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/2128929.cms",
+  ],
+  "west bengal": [
+    "https://news.google.com/rss/search?q=West+Bengal+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/4118235.cms",
+  ],
+  "karnataka": [
+    "https://news.google.com/rss/search?q=Karnataka+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/-2128816011.cms",
+  ],
+  "tamil nadu": [
+    "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
+  ],
+  "andhra pradesh": [
+    "https://news.google.com/rss/search?q=Andhra+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "telangana": [
+    "https://news.google.com/rss/search?q=Telangana+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "kerala": [
+    "https://news.google.com/rss/search?q=Kerala+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://www.thehindu.com/news/national/kerala/feeder/default.rss",
+  ],
+  "punjab": [
+    "https://news.google.com/rss/search?q=Punjab+news+India&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "haryana": [
+    "https://news.google.com/rss/search?q=Haryana+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jharkhand": [
+    "https://news.google.com/rss/search?q=Jharkhand+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "odisha": [
+    "https://news.google.com/rss/search?q=Odisha+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "chhattisgarh": [
+    "https://news.google.com/rss/search?q=Chhattisgarh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "uttarakhand": [
+    "https://news.google.com/rss/search?q=Uttarakhand+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "himachal pradesh": [
+    "https://news.google.com/rss/search?q=Himachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "assam": [
+    "https://news.google.com/rss/search?q=Assam+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "goa": [
+    "https://news.google.com/rss/search?q=Goa+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "manipur": [
+    "https://news.google.com/rss/search?q=Manipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "meghalaya": [
+    "https://news.google.com/rss/search?q=Meghalaya+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "mizoram": [
+    "https://news.google.com/rss/search?q=Mizoram+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "nagaland": [
+    "https://news.google.com/rss/search?q=Nagaland+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "tripura": [
+    "https://news.google.com/rss/search?q=Tripura+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "arunachal pradesh": [
+    "https://news.google.com/rss/search?q=Arunachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "sikkim": [
+    "https://news.google.com/rss/search?q=Sikkim+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
 
-// ── UTTAR PRADESH ──
-"uttar pradesh": [
-  "https://news.google.com/rss/search?q=Uttar+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1080/",
-  "https://www.patrika.com/rss/uttar-pradesh-news.xml",
-],
+  // ═══════════════════════════════════════════
+  //  UNION TERRITORIES
+  // ═══════════════════════════════════════════
+  "delhi": [
+    "https://news.google.com/rss/search?q=Delhi+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+    "https://www.thehindu.com/news/cities/Delhi/feeder/default.rss",
+  ],
+  "jammu kashmir": [
+    "https://news.google.com/rss/search?q=Jammu+Kashmir+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "ladakh": [
+    "https://news.google.com/rss/search?q=Ladakh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "puducherry": [
+    "https://news.google.com/rss/search?q=Puducherry+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "chandigarh": [
+    "https://news.google.com/rss/search?q=Chandigarh+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "andaman nicobar": [
+    "https://news.google.com/rss/search?q=Andaman+Nicobar+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "lakshadweep": [
+    "https://news.google.com/rss/search?q=Lakshadweep+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "dadra daman diu": [
+    "https://news.google.com/rss/search?q=Dadra+Nagar+Haveli+Daman+Diu+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
 
-// ── MAHARASHTRA ──
-"maharashtra": [
-  "https://news.google.com/rss/search?q=Maharashtra+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
-  "https://www.patrika.com/rss/maharashtra-news.xml",
-],
+  // ═══════════════════════════════════════════
+  //  RAJASTHAN CITY-SPECIFIC FEEDS
+  // ═══════════════════════════════════════════
+  "ajmer": [
+    "https://news.google.com/rss/search?q=Ajmer+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "alwar": [
+    "https://news.google.com/rss/search?q=Alwar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bagru": [
+    "https://news.google.com/rss/search?q=Bagru+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "banswara": [
+    "https://news.google.com/rss/search?q=Banswara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "barmer": [
+    "https://news.google.com/rss/search?q=Barmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bassi": [
+    "https://news.google.com/rss/search?q=Bassi+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "beawer": [
+    "https://news.google.com/rss/search?q=Beawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bharatpur": [
+    "https://news.google.com/rss/search?q=Bharatpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bhilwara": [
+    "https://news.google.com/rss/search?q=Bhilwara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bhiwadi": [
+    "https://news.google.com/rss/search?q=Bhiwadi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "bikaner": [
+    "https://news.google.com/rss/search?q=Bikaner+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "chittorgarh": [
+    "https://news.google.com/rss/search?q=Chittorgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "churu": [
+    "https://news.google.com/rss/search?q=Churu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "dausa": [
+    "https://news.google.com/rss/search?q=Dausa+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "dholpur": [
+    "https://news.google.com/rss/search?q=Dholpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "dungarpur": [
+    "https://news.google.com/rss/search?q=Dungarpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "hanumangarh": [
+    "https://news.google.com/rss/search?q=Hanumangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jaipur": [
+    "https://news.google.com/rss/search?q=Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
+  ],
+  "jaisalmer": [
+    "https://news.google.com/rss/search?q=Jaisalmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jalore": [
+    "https://news.google.com/rss/search?q=Jalore+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jhalawar": [
+    "https://news.google.com/rss/search?q=Jhalawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jhunjhunu": [
+    "https://news.google.com/rss/search?q=Jhunjhunu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "jodhpur": [
+    "https://news.google.com/rss/search?q=Jodhpur+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "karauli": [
+    "https://news.google.com/rss/search?q=Karauli+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "kishangarh": [
+    "https://news.google.com/rss/search?q=Kishangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "kota": [
+    "https://news.google.com/rss/search?q=Kota+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "nagaur": [
+    "https://news.google.com/rss/search?q=Nagaur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "pali": [
+    "https://news.google.com/rss/search?q=Pali+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "pratapgarh": [
+    "https://news.google.com/rss/search?q=Pratapgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "rajsamand": [
+    "https://news.google.com/rss/search?q=Rajsamand+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "sawai madhopur": [
+    "https://news.google.com/rss/search?q=Sawai+Madhopur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "sikar": [
+    "https://news.google.com/rss/search?q=Sikar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "sirohi": [
+    "https://news.google.com/rss/search?q=Sirohi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "sri ganganagar": [
+    "https://news.google.com/rss/search?q=Sri+Ganganagar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "tonk": [
+    "https://news.google.com/rss/search?q=Tonk+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
+  "udaipur": [
+    "https://news.google.com/rss/search?q=Udaipur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
+  ],
 
-// ── MADHYA PRADESH ──
-"madhya pradesh": [
-  "https://news.google.com/rss/search?q=Madhya+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1071/",
-  "https://www.patrika.com/rss/madhya-pradesh-news.xml",
-],
-
-// ── GUJARAT ──
-"gujarat": [
-  "https://news.google.com/rss/search?q=Gujarat+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1063/",
-  "https://www.patrika.com/rss/gujarat-news.xml",
-],
-
-// ── BIHAR ──
-"bihar": [
-  "https://news.google.com/rss/search?q=Bihar+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1055/",
-  "https://www.patrika.com/rss/bihar-news.xml",
-],
-
-// ── WEST BENGAL ──
-"west bengal": [
-  "https://news.google.com/rss/search?q=West+Bengal+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── KARNATAKA ──
-"karnataka": [
-  "https://news.google.com/rss/search?q=Karnataka+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
-  "https://www.patrika.com/rss/karnataka-news.xml",
-],
-
-// ── TAMIL NADU ──
-"tamil nadu": [
-  "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── ANDHRA PRADESH ──
-"andhra pradesh": [
-  "https://news.google.com/rss/search?q=Andhra+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── TELANGANA ──
-"telangana": [
-  "https://news.google.com/rss/search?q=Telangana+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── KERALA ──
-"kerala": [
-  "https://news.google.com/rss/search?q=Kerala+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── PUNJAB ──
-"punjab": [
-  "https://news.google.com/rss/search?q=Punjab+news+India&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1079/",
-  "https://www.patrika.com/rss/punjab-news.xml",
-],
-
-// ── HARYANA ──
-"haryana": [
-  "https://news.google.com/rss/search?q=Haryana+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1064/",
-  "https://www.patrika.com/rss/haryana-news.xml",
-],
-
-// ── JHARKHAND ──
-"jharkhand": [
-  "https://news.google.com/rss/search?q=Jharkhand+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1068/",
-  "https://www.patrika.com/rss/jharkhand-news.xml",
-],
-
-// ── ODISHA ──
-"odisha": [
-  "https://news.google.com/rss/search?q=Odisha+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── CHHATTISGARH ──
-"chhattisgarh": [
-  "https://news.google.com/rss/search?q=Chhattisgarh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1058/",
-  "https://www.patrika.com/rss/chhattisgarh-news.xml",
-],
-
-// ── UTTARAKHAND ──
-"uttarakhand": [
-  "https://news.google.com/rss/search?q=Uttarakhand+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1082/",
-  "https://www.patrika.com/rss/uttarakhand-news.xml",
-],
-
-// ── HIMACHAL PRADESH ──
-"himachal pradesh": [
-  "https://news.google.com/rss/search?q=Himachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1066/",
-  "https://www.patrika.com/rss/himachal-pradesh-news.xml",
-],
-
-// ── ASSAM ──
-"assam": [
-  "https://news.google.com/rss/search?q=Assam+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── GOA ──
-"goa": [
-  "https://news.google.com/rss/search?q=Goa+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/1221656.cms",
-],
-
-// ── MANIPUR ──
-"manipur": [
-  "https://news.google.com/rss/search?q=Manipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── MEGHALAYA ──
-"meghalaya": [
-  "https://news.google.com/rss/search?q=Meghalaya+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── MIZORAM ──
-"mizoram": [
-  "https://news.google.com/rss/search?q=Mizoram+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── NAGALAND ──
-"nagaland": [
-  "https://news.google.com/rss/search?q=Nagaland+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── TRIPURA ──
-"tripura": [
-  "https://news.google.com/rss/search?q=Tripura+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── ARUNACHAL PRADESH ──
-"arunachal pradesh": [
-  "https://news.google.com/rss/search?q=Arunachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── SIKKIM ──
-"sikkim": [
-  "https://news.google.com/rss/search?q=Sikkim+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ══ UNION TERRITORIES ══
-
-// ── DELHI ──
-"delhi": [
-  "https://news.google.com/rss/search?q=Delhi+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-  "https://www.bhaskar.com/rss-feed/1060/",
-],
-
-// ── JAMMU & KASHMIR ──
-"jammu kashmir": [
-  "https://news.google.com/rss/search?q=Jammu+Kashmir+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.patrika.com/rss/jammu-kashmir-news.xml",
-],
-
-// ── LADAKH ──
-"ladakh": [
-  "https://news.google.com/rss/search?q=Ladakh+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── PUDUCHERRY ──
-"puducherry": [
-  "https://news.google.com/rss/search?q=Puducherry+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── CHANDIGARH ──
-"chandigarh": [
-  "https://news.google.com/rss/search?q=Chandigarh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://www.bhaskar.com/rss-feed/1057/",
-],
-
-// ── ANDAMAN & NICOBAR ──
-"andaman nicobar": [
-  "https://news.google.com/rss/search?q=Andaman+Nicobar+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── LAKSHADWEEP ──
-"lakshadweep": [
-  "https://news.google.com/rss/search?q=Lakshadweep+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── DADRA & NAGAR HAVELI / DAMAN & DIU ──
-"dadra daman diu": [
-  "https://news.google.com/rss/search?q=Dadra+Nagar+Haveli+Daman+Diu+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-  // Rajasthan City-Specific Feeds
-"ajmer": [
-  "https://news.google.com/rss/search?q=Ajmer+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"alwar": [
-  "https://news.google.com/rss/search?q=Alwar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bagru": [
-  "https://news.google.com/rss/search?q=Bagru+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"banswara": [
-  "https://news.google.com/rss/search?q=Banswara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"barmer": [
-  "https://news.google.com/rss/search?q=Barmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bassi": [
-  "https://news.google.com/rss/search?q=Bassi+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"beawer": [
-  "https://news.google.com/rss/search?q=Beawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bharatpur": [
-  "https://news.google.com/rss/search?q=Bharatpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bhilwara": [
-  "https://news.google.com/rss/search?q=Bhilwara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bhiwadi": [
-  "https://news.google.com/rss/search?q=Bhiwadi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"bikaner": [
-  "https://news.google.com/rss/search?q=Bikaner+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"chittorgarh": [
-  "https://news.google.com/rss/search?q=Chittorgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"churu": [
-  "https://news.google.com/rss/search?q=Churu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"dausa": [
-  "https://news.google.com/rss/search?q=Dausa+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"dholpur": [
-  "https://news.google.com/rss/search?q=Dholpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"dungarpur": [
-  "https://news.google.com/rss/search?q=Dungarpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"hanumangarh": [
-  "https://news.google.com/rss/search?q=Hanumangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"jaipur": [
-  "https://news.google.com/rss/search?q=Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-],
-"jaisalmer": [
-  "https://news.google.com/rss/search?q=Jaisalmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"jalore": [
-  "https://news.google.com/rss/search?q=Jalore+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"jhalawar": [
-  "https://news.google.com/rss/search?q=Jhalawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"jhunjhunu": [
-  "https://news.google.com/rss/search?q=Jhunjhunu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"jodhpur": [
-  "https://news.google.com/rss/search?q=Jodhpur+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"karauli": [
-  "https://news.google.com/rss/search?q=Karauli+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"kishangarh": [
-  "https://news.google.com/rss/search?q=Kishangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"kota": [
-  "https://news.google.com/rss/search?q=Kota+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"nagaur": [
-  "https://news.google.com/rss/search?q=Nagaur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"pali": [
-  "https://news.google.com/rss/search?q=Pali+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"pratapgarh": [
-  "https://news.google.com/rss/search?q=Pratapgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"rajsamand": [
-  "https://news.google.com/rss/search?q=Rajsamand+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"sawai madhopur": [
-  "https://news.google.com/rss/search?q=Sawai+Madhopur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"sikar": [
-  "https://news.google.com/rss/search?q=Sikar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"sirohi": [
-  "https://news.google.com/rss/search?q=Sirohi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"sri ganganagar": [
-  "https://news.google.com/rss/search?q=Sri+Ganganagar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"tonk": [
-  "https://news.google.com/rss/search?q=Tonk+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-"udaipur": [
-  "https://news.google.com/rss/search?q=Udaipur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-],
-
-// ── AFRICA ──
-"africa": [
-  "https://news.google.com/rss/search?q=Africa+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
-],
-
-// ── AMERICA ──
-"america": [
-  "https://news.google.com/rss/search?q=America+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-  "https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml",
-],
-
-// ── ASIA PACIFIC ──
-"asia pacific": [
-  "https://news.google.com/rss/search?q=Asia+Pacific+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
-],
-
-// ── EUROPE ──
-"europe": [
-  "https://news.google.com/rss/search?q=Europe+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/europe/rss.xml",
-  "https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml",
-],
-
-// ── MIDDLE EAST ──
-"middle east": [
-  "https://news.google.com/rss/search?q=Middle+East+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
-  "https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml",
-],
-
-// ── NEW YORK ──
-"new york": [
-  "https://news.google.com/rss/search?q=New+York+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://rss.nytimes.com/services/xml/rss/nyt/NYRegion.xml",
-  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-],
-
-// ── PAKISTAN ──
-"pakistan": [
-  "https://news.google.com/rss/search?q=Pakistan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/south_asia/rss.xml",
-  "https://rss.nytimes.com/services/xml/rss/nyt/World.xml",
-],
-
-// ── UK ──
-"uk": [
-  "https://news.google.com/rss/search?q=UK+United+Kingdom+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/uk/rss.xml",
-  "https://www.theguardian.com/uk/rss",
-],
-
-// ── US ──
-"us": [
-  "https://news.google.com/rss/search?q=United+States+news&hl=en-IN&gl=IN&ceid=IN:en",
-  "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-  "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
-],
+  // ═══════════════════════════════════════════
+  //  WORLD REGIONS
+  // ═══════════════════════════════════════════
+  "africa": [
+    "https://news.google.com/rss/search?q=Africa+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
+  ],
+  "america": [
+    "https://news.google.com/rss/search?q=America+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml",
+  ],
+  "asia pacific": [
+    "https://news.google.com/rss/search?q=Asia+Pacific+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
+  ],
+  "europe": [
+    "https://news.google.com/rss/search?q=Europe+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/europe/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml",
+  ],
+  "middle east": [
+    "https://news.google.com/rss/search?q=Middle+East+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml",
+  ],
+  "new york": [
+    "https://news.google.com/rss/search?q=New+York+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://rss.nytimes.com/services/xml/rss/nyt/NYRegion.xml",
+  ],
+  "pakistan": [
+    "https://news.google.com/rss/search?q=Pakistan+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/south_asia/rss.xml",
+  ],
+  "uk": [
+    "https://news.google.com/rss/search?q=UK+United+Kingdom+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/uk/rss.xml",
+  ],
+  "us": [
+    "https://news.google.com/rss/search?q=United+States+news&hl=en-IN&gl=IN&ceid=IN:en",
+    "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
+    "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
+  ],
 };
 
 // Images that are known to be generic/broken and should be skipped
@@ -864,17 +763,8 @@ app.get("/api/news/state", async (req, res) => {
       const missingImages = articles.filter((article) => !article.image);
 
       if (missingImages.length > 0) {
-        await enrichArticlesWithImages(missingImages);
-        await Promise.all(
-          missingImages
-            .filter((article) => article.image)
-            .map((article) =>
-              News.findOneAndUpdate(
-                { url: article.url },
-                { $set: { image: article.image } }
-              )
-            )
-        );
+        // Run image scraping completely in the BACKGROUND. DO NOT block API response.
+        enrichAndSaveRemainingImages(missingImages).catch(console.error);
       }
 
       articles = sortArticlesForCover(articles);
@@ -888,18 +778,17 @@ app.get("/api/news/state", async (req, res) => {
 
       try {
         const mapped = deduplicateByTitle(await fetchFeeds(liveUrls, categoryKey));
-        await enrichArticlesWithImages(mapped);
         const prioritizedMapped = sortArticlesForCover(mapped).slice(0, size * 3);
 
-        // Save these to MongoDB for future requests as draft (status: false)
-        for (const article of prioritizedMapped) {
-          await News.findOneAndUpdate(
+        // Map and bulk fire the MongoDB Upserts for TEXT immediately so the user doesn't wait
+        const saveOps = prioritizedMapped.map(article => 
+          News.findOneAndUpdate(
             { url: article.url },
             {
               $set: {
                 title: article.title,
                 description: article.description,
-                image: article.image,
+                image: article.image, // Could be null, perfectly fine
                 source: article.source,
                 category: categoryKey,
                 publishedAt: article.publishedAt,
@@ -908,9 +797,11 @@ app.get("/api/news/state", async (req, res) => {
               $setOnInsert: { status: false }
             },
             { upsert: true }
-          );
-        }
+          )
+        );
+        await Promise.allSettled(saveOps);
 
+        // Query the DB again to return the correctly structured data to the frontend
         articles = await News.find({ 
           status: true, 
           category: categoryKey 
@@ -919,6 +810,11 @@ app.get("/api/news/state", async (req, res) => {
           .limit(size);
 
         articles = sortArticlesForCover(articles);
+
+        // SILENT BACKGROUND MAGIC: Now that the user's request is satisfied natively from the DB,
+        // fire off the image scraping engine into the background without awaiting it. Next time
+        // they refresh, images will be there.
+        enrichAndSaveRemainingImages(prioritizedMapped).catch(console.error);
 
       } catch (feedErr) {
         console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
@@ -940,7 +836,8 @@ app.get("/api/news/state", async (req, res) => {
       if (articles.length > 0) {
         const missingImages = articles.filter((article) => !article.image);
         if (missingImages.length > 0) {
-          await enrichArticlesWithImages(missingImages);
+          // Fire background scrape. NEVER block the API response.
+          enrichAndSaveRemainingImages(missingImages).catch(console.error);
         }
         articles = sortArticlesForCover(articles);
       }
@@ -1279,8 +1176,8 @@ function sortArticlesForCover(articles) {
 }
 
 /**
- * For articles missing images, attempts to scrape og:image from the article URL.
- * Updates articles in-place.
+ * Helper strictly used internally (now deprecated actively but kept for edge logic).
+ * Use `enrichAndSaveRemainingImages` for bulk decoupled processing.
  */
 async function enrichArticlesWithImages(articles) {
   await Promise.allSettled(
@@ -1296,6 +1193,34 @@ async function enrichArticlesWithImages(articles) {
       }
     })
   );
+}
+
+/**
+ * NEW DECOUPLED BACKGROUND PROCESSOR
+ * Automatically drops articles into chunks of 10 to protect Node.js and external websites
+ * from being DDoS'd with 10k parallel requests. When an image is found, instantly writes to DB.
+ */
+async function enrichAndSaveRemainingImages(articles) {
+  const missingImages = articles.filter(a => !a.image && a.url);
+  if (missingImages.length === 0) return;
+
+  const chunkSize = 10;
+  for (let i = 0; i < missingImages.length; i += chunkSize) {
+    const chunk = missingImages.slice(i, i + chunkSize);
+    await Promise.allSettled(
+      chunk.map(async (article) => {
+        const scrapedImage = await fetchOgImage(article.url);
+        if (scrapedImage && !GENERIC_IMAGE_PATTERNS.some(pat => scrapedImage.includes(pat))) {
+          article.image = scrapedImage;
+          await News.findOneAndUpdate(
+            { url: article.url },
+            { $set: { image: scrapedImage } },
+            { upsert: false } // only update if existing, though DB is guaranteed populated at this stage
+          );
+        }
+      })
+    );
+  }
 }
 
 // Scrape og:image (or twitter:image fallback) from an article URL
@@ -1382,6 +1307,7 @@ async function refreshAllFeeds() {
   console.log('🔄 Starting RSS fetch job...');
   try {
     let totalProcessed = 0;
+    const allArticlesAcrossCategories = [];
 
     // Read active feeds from MongoDB
     const feeds = await RssFeed.find({ status: true });
@@ -1391,17 +1317,18 @@ async function refreshAllFeeds() {
       feedCategories[feed.category].push(feed.url);
     }
 
-    // Loop through ALL active categories
+    // Phase 1: FAST FETCH -> Save TEXT news for ALL categories immediately!
     for (const [category, feedUrls] of Object.entries(feedCategories)) {
-      console.log(`Fetching category: ${category}...`);
+      console.log(`📡 Fetching text category: ${category}...`);
+      
+      // Delay for 1 second between categories
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
       let articles = await fetchFeeds(feedUrls, category);
-
-      // Attempt to ensure they all have images before saving
-      await enrichArticlesWithImages(articles);
-
-      for (const article of articles) {
-        // Upsert into DB — $set overwrites existing articles with fresh data
-        await News.findOneAndUpdate(
+      
+      // Map all MongoDB text updates asynchronously for extreme speed
+      const saveOps = articles.map(article => 
+        News.findOneAndUpdate(
           { url: article.url },
           {
             $set: {
@@ -1413,14 +1340,25 @@ async function refreshAllFeeds() {
               publishedAt: article.publishedAt,
               content: article.content,
             },
-            $setOnInsert: {
-              status: false // Draft status for NEW articles, requires admin approval
-            }
+            $setOnInsert: { status: false }
           },
-          { upsert: true, returnDocument: 'after' }
-        );
-        totalProcessed++;
-      }
+          { upsert: true } // Don't return document to save memory
+        )
+      );
+
+      // Await all Upserts for this category so the category becomes live instantly!
+      await Promise.allSettled(saveOps);
+      totalProcessed += articles.length;
+      
+      // Push text references into array for background image processing
+      allArticlesAcrossCategories.push(...articles);
+    }
+    
+    // Phase 2: BACKGROUND PASSIVE SCRAPE -> Retrieve images missing from text payload.
+    // Done entirely asynchronously in chunks to prevent Node execution lag from blocking other DB events.
+    if (allArticlesAcrossCategories.length > 0) {
+      console.log(`🖼️ Launching background image scraping core on ${allArticlesAcrossCategories.length} items...`);
+      enrichAndSaveRemainingImages(allArticlesAcrossCategories).catch(console.error);
     }
 
     // Update last fetch timestamp in SiteConfig

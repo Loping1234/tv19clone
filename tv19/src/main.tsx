@@ -20,6 +20,7 @@ import TechnologyPage from './pages/components/TECHNOLOGY/TechnologyPage.tsx'
 import LifestylePage from './pages/components/LIFESTYLE/LifestylePage.tsx'
 import BusinessPage from './pages/components/BUSINESS/BusinessPage.tsx'
 import EducationPage from './pages/components/EDUCATION/EducationPage.tsx'
+import DynamicSectionPage from './pages/components/DYNAMIC/DynamicSectionPage.tsx'
 
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
 
@@ -49,6 +50,18 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/lifestyle" element={<LifestylePage />} />
         <Route path="/business" element={<BusinessPage />} />
         <Route path="/education" element={<EducationPage />} />
+        
+        {/* 10 Dynamic More Sections */}
+        <Route path="/art" element={<DynamicSectionPage categoryId="art" />} />
+        <Route path="/astrology" element={<DynamicSectionPage categoryId="astrology" />} />
+        <Route path="/breaking" element={<DynamicSectionPage categoryId="breaking" />} />
+        <Route path="/crime" element={<DynamicSectionPage categoryId="crime" />} />
+        <Route path="/finance" element={<DynamicSectionPage categoryId="finance" />} />
+        <Route path="/opinion" element={<DynamicSectionPage categoryId="opinion" />} />
+        <Route path="/top" element={<DynamicSectionPage categoryId="top" />} />
+        <Route path="/trending" element={<DynamicSectionPage categoryId="trending" />} />
+        <Route path="/weather" element={<DynamicSectionPage categoryId="weather" />} />
+        <Route path="/green-future" element={<DynamicSectionPage categoryId="green-future" />} />
       </Routes>
       <Footer />
     </BrowserRouter>

@@ -257,15 +257,18 @@ const Navbar: React.FC<BreakingNewsProps> = ({
             );
           })}
           <li className="dropdown">
-            <a href="#more" className="navbar-link dropdown-toggle">More ▾</a>
+            <a href="#more" className="navbar-link dropdown-toggle" onClick={(e) => e.preventDefault()}>More ▾</a>
             <ul className="dropdown-menu">
-              <li><a href="#arts" className="navbar-link">Arts</a></li>
-              <li><a href="#astrology" className="navbar-link">Astrology</a></li>
-              <li><a href="#crime" className="navbar-link">Crime</a></li>
-              <li><a href="#finance" className="navbar-link">Finance</a></li>
-              <li><a href="#opinion" className="navbar-link">Opinion</a></li>
-              <li><a href="#weather" className="navbar-link">Weather</a></li>
-              <li><a href="#green-future" className="navbar-link">Green Future</a></li>
+              <li><Link to="/art" className="navbar-link">Art</Link></li>
+              <li><Link to="/astrology" className="navbar-link">Astrology</Link></li>
+              <li><Link to="/breaking" className="navbar-link">Breaking</Link></li>
+              <li><Link to="/crime" className="navbar-link">Crime</Link></li>
+              <li><Link to="/finance" className="navbar-link">Finance</Link></li>
+              <li><Link to="/opinion" className="navbar-link">Opinion</Link></li>
+              <li><Link to="/top" className="navbar-link">Top</Link></li>
+              <li><Link to="/trending" className="navbar-link">Trending</Link></li>
+              <li><Link to="/weather" className="navbar-link">Weather</Link></li>
+              <li><Link to="/green-future" className="navbar-link">Green Future</Link></li>
             </ul>
           </li>
         </ul>
