@@ -26,6 +26,10 @@ import {
     Search,        // SEO Pages
     ChevronDown,   // Submenu arrow down
     ChevronRight,  // Submenu arrow right
+    Info,          // About Us
+    Phone,         // Contact Us
+    Shield,        // Disclaimer
+    Lock,          // Privacy Policy
 } from 'react-feather';
 
 const API_BASE = 'http://localhost:5000'

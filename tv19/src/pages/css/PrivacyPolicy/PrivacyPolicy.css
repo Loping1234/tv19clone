@@ -1,0 +1,330 @@
+/* ----------------------------------------------------
+   PRIVACY POLICY PAGE STYLES
+   ---------------------------------------------------- */
+
+.privacy-page-container {
+    font-family: 'Inter', sans-serif;
+    color: #333;
+    background-color: #f8f9fa;
+    line-height: 1.6;
+    padding-bottom: 60px;
+}
+
+/* --- Hero Section --- */
+.privacy-hero {
+    position: relative;
+    background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 100%);
+    color: white;
+    text-align: center;
+    padding: 80px 20px;
+    overflow: hidden;
+    /* Optional dots pattern for texture */
+    background-image: radial-gradient(rgba(255,255,255,0.1) 1px, transparent 1px);
+    background-size: 20px 20px;
+}
+
+.privacy-hero-bg-overlay {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+    pointer-events: none;
+}
+
+.privacy-hero-content {
+    position: relative;
+    z-index: 1;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.privacy-hero-content h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.privacy-hero-content p {
+    font-size: 1.1rem;
+    color: #cbd5e1;
+}
+
+/* --- Layout --- */
+.privacy-layout {
+    display: flex;
+    max-width: 1200px;
+    margin: -40px auto 0;
+    padding: 0 20px;
+    gap: 30px;
+    position: relative;
+    z-index: 2;
+    align-items: flex-start;
+}
+
+/* --- Sidebar Navigation --- */
+.privacy-sidebar {
+    width: 320px;
+    flex-shrink: 0;
+    position: sticky;
+    top: 100px; /* Adjust according to navbar height */
+}
+
+.privacy-sidebar-inner {
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+    overflow: hidden;
+}
+
+.privacy-sidebar-header {
+    background-color: #1e293b;
+    color: white;
+    padding: 16px 20px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.privacy-sidebar-nav ul {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.privacy-sidebar-nav li {
+    padding: 14px 24px;
+    cursor: pointer;
+    font-size: 0.95rem;
+    border-bottom: 1px solid #f1f5f9;
+    color: #475569;
+    transition: all 0.2s ease;
+    border-left: 3px solid transparent;
+}
+
+.privacy-sidebar-nav li:hover {
+    background-color: #f8fafc;
+    color: #0f172a;
+}
+
+.privacy-sidebar-nav li.active {
+    background-color: #fff8f5;
+    color: #e8380d;
+    font-weight: 600;
+    border-left: 3px solid #e8380d;
+}
+
+.privacy-last-updated {
+    padding: 16px 24px;
+    font-size: 0.85rem;
+    color: #64748b;
+    background-color: #f8fafc;
+    border-top: 1px solid #f1f5f9;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.privacy-last-updated .dot {
+    width: 6px;
+    height: 6px;
+    background-color: #e8380d;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+/* --- Main Content --- */
+.privacy-content {
+    flex: 1;
+    background-color: white;
+    padding: 40px;
+    border-radius: 8px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+}
+
+.privacy-content section {
+    margin-bottom: 40px;
+    padding-bottom: 40px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.privacy-content section:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+}
+
+/* Headers */
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+.section-badge {
+    background-color: #e8380d;
+    color: white;
+    font-weight: bold;
+    font-size: 1rem;
+    width: 28px;
+    height: 28px;
+    border-radius: 4px; /* Squircle style as in image */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.privacy-content h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: #0f172a;
+    margin: 0;
+}
+
+.privacy-content h3 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #1e293b;
+    margin: 24px 0 12px;
+}
+
+.privacy-content p {
+    margin-bottom: 16px;
+    color: #475569;
+}
+
+/* Custom Bullet Points */
+.custom-bullets {
+    list-style: none;
+    padding-left: 0;
+    margin-bottom: 20px;
+}
+
+.custom-bullets li {
+    position: relative;
+    padding-left: 24px;
+    margin-bottom: 10px;
+    color: #475569;
+}
+
+.custom-bullets li::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 6px;
+    height: 6px;
+    background-color: #e8380d;
+    border-radius: 50%;
+}
+
+.custom-bullets li strong {
+    color: #0f172a;
+}
+
+/* Alert Boxes */
+.privacy-alert {
+    background-color: #fff4f1;
+    border-left: 4px solid #e8380d;
+    padding: 16px 20px;
+    border-radius: 0 4px 4px 0;
+    margin: 24px 0;
+    color: #a0280a;
+}
+
+.privacy-alert strong {
+    color: #e8380d;
+}
+
+/* --- Contact Card --- */
+.contact-card {
+    background-color: #1e293b;
+    border-radius: 8px;
+    padding: 30px;
+    color: white;
+    margin-top: 24px;
+}
+
+.contact-card-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.contact-icon {
+    color: #e8380d;
+}
+
+.contact-card h3 {
+    color: white;
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.contact-card p {
+    color: #cbd5e1;
+    margin-bottom: 24px;
+}
+
+.contact-buttons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.btn-contact {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 20px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.btn-contact:not(.btn-outline) {
+    background-color: #e8380d;
+    color: white;
+}
+
+.btn-contact:not(.btn-outline):hover {
+    background-color: #cc300b;
+}
+
+.btn-outline {
+    background-color: transparent;
+    border: 1px solid #475569;
+    color: white;
+}
+
+.btn-outline:hover {
+    border-color: #cbd5e1;
+    background-color: rgba(255,255,255,0.05);
+}
+
+.btn-icon {
+    opacity: 0.8;
+}
+
+/* --- Responsive Layout --- */
+@media (max-width: 900px) {
+    .privacy-layout {
+        flex-direction: column;
+        margin-top: -20px;
+    }
+
+    .privacy-sidebar {
+        width: 100%;
+        position: static;
+        margin-bottom: 20px;
+    }
+
+    .privacy-content {
+        padding: 24px;
+    }
+}

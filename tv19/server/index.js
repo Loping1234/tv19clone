@@ -7,6 +7,9 @@ import path from "path";
 import multer from "multer";
 import cron from "node-cron";
 import jwt from "jsonwebtoken";
+import rateLimit from "express-rate-limit";
+import morgan from "morgan";
+import mongoose from "mongoose";
 import connectDB from "./db.js";
 import { getConfig, updateConfig } from "./models/SiteConfig.js";
 import AdminProfile, { getProfile, updateProfile } from "./models/AdminProfile.js";
@@ -15,11 +18,21 @@ import RssFeed from "./models/RssFeed.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 
-const JWT_SECRET = process.env.JWT_SECRET || "your_jwt_secret_key_here";
+// ============================================================
+//  ENVIRONMENT VALIDATION (P0 Security)
+// ============================================================
+if (!process.env.JWT_SECRET) {
+  console.error("❌ CRITICAL: JWT_SECRET is not set in environment variables!");
+  console.error("   Please set JWT_SECRET in your .env file before starting the server.");
+  process.exit(1);
+}
+
+const JWT_SECRET = process.env.JWT_SECRET;
 const EMAIL_USER = process.env.EMAIL_USER;
 const EMAIL_PASS = process.env.EMAIL_PASS;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
 
 // Nodemailer Transporter
 const transporter = nodemailer.createTransport({
@@ -29,12 +42,62 @@ const transporter = nodemailer.createTransport({
     pass: EMAIL_PASS,
   },
 });
-// import View from "./models/View.js"; // You'll need to create this model if it doesn't exist
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+
+// ============================================================
+//  RATE LIMITING CONFIGURATION (P0 Security)
+// ============================================================
+
+// General API rate limiter - 100 requests per minute
+const apiLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 100, // 100 requests per minute
+  message: { error: "Too many requests, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Strict rate limiter for auth endpoints - 10 requests per minute
+const authLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 10, // 10 requests per minute
+  message: { error: "Too many authentication attempts, please try again later" },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// Image scraping endpoint limiter - 30 requests per minute
+const scrapeLimiter = rateLimit({
+  windowMs: 60 * 1000, // 1 minute
+  max: 30,
+  message: { error: "Too many image scrape requests" },
+});
+
+// ============================================================
+//  REQUEST LOGGING (P1 Improvement)
+// ============================================================
+app.use(morgan('combined'));
+
+// ============================================================
+//  CORS CONFIGURATION (P0 Security)
+// ============================================================
+app.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+
+    if (ALLOWED_ORIGINS.indexOf(origin) !== -1) {
+      return callback(null, true);
+    }
+    return callback(new Error('Not allowed by CORS'));
+  },
+  credentials: true,
+}));
+
 const parser = new Parser({
   customFields: {
     item: [
@@ -45,7 +108,6 @@ const parser = new Parser({
   },
 });
 
-app.use(cors());
 app.use(express.json());
 
 // Auth Middleware
@@ -152,6 +214,20 @@ app.post("/api/admin/login", async (req, res) => {
   } catch (err) {
     console.error("Login error:", err.message);
     res.status(500).json({ error: "Login failed" });
+  }
+});
+
+app.post("/api/admin/signup", async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    const existingAdmin = await AdminProfile.findOne({ email });
+    if (existingAdmin) return res.status(400).json({ error: "Admin with this email already exists" });
+    const admin = new AdminProfile({ name, email, password });
+    await admin.save();
+    res.json({ message: "Signup successful" });
+  } catch (err) {
+    console.error("Signup error:", err.message);
+    res.status(500).json({ error: "Failed to create admin" });
   }
 });
 
@@ -335,7 +411,7 @@ const RSS_FEEDS = {
     "https://timesofindia.indiatimes.com/rssfeeds/784865811.cms",
     "https://www.thehindu.com/opinion/feeder/default.rss",
   ],
-  arts: [
+  art: [
     "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
     "https://www.thehindu.com/entertainment/art/feeder/default.rss",
     "https://news.google.com/rss/search?q=art+culture+India&hl=en-IN&gl=IN&ceid=IN:en",
@@ -741,7 +817,7 @@ app.get("/api/news", async (req, res) => {
 // GET /api/news/state?state=Rajasthan&size=15&skip=0
 app.get("/api/news/state", async (req, res) => {
   try {
-    const stateName = (req.query.state || "Rajasthan").toString().trim();
+    const stateName = (req.query.state || req.query.category || "Rajasthan").toString().trim();
     const size = parseInt(req.query.size) || 15;
     const skip = parseInt(req.query.skip) || 0;
     const categoryKey = stateName.toLowerCase();
@@ -801,15 +877,8 @@ app.get("/api/news/state", async (req, res) => {
         );
         await Promise.allSettled(saveOps);
 
-        // Query the DB again to return the correctly structured data to the frontend
-        articles = await News.find({ 
-          status: true, 
-          category: categoryKey 
-        })
-          .sort({ publishedAt: -1 })
-          .limit(size);
-
-        articles = sortArticlesForCover(articles);
+        // Return the prioritised mapped articles immediately for the first load
+        articles = prioritizedMapped;
 
         // SILENT BACKGROUND MAGIC: Now that the user's request is satisfied natively from the DB,
         // fire off the image scraping engine into the background without awaiting it. Next time
@@ -1104,46 +1173,46 @@ app.post("/api/admin/refresh-feeds", authenticateToken, async (_req, res) => {
   }
 });
 
-//
-
-app.get("/api/admin/views", authenticateToken, async (req, res) => {
+// ============================================================
+//  HEALTH CHECK ENDPOINT (P0 - Monitoring)
+// ============================================================
+app.get("/health", async (_req, res) => {
   try {
-    const views = await View.find();
-    res.json(views);
-  } catch (error) {
-    console.error("Views fetch error:", error.message);
-    res.status(500).json({ error: "Failed to fetch views" });
+    const dbState = mongoose.connection.readyState === 1 ? "connected" : "disconnected";
+    res.json({
+      status: "ok",
+      timestamp: new Date().toISOString(),
+      database: dbState,
+      uptime: process.uptime(),
+    });
+  } catch (err) {
+    res.status(503).json({ status: "error", message: err.message });
   }
 });
 
-app.put("/api/admin/views/:id", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { views } = req.body;
-    const view = await View.findByIdAndUpdate(id, { views }, { new: true });
-    res.json(view);
-  } catch (error) {
-    console.error("Views update error:", error.message);
-    res.status(500).json({ error: "Failed to update views" });
-  }
-});
-
-app.delete("/api/admin/views/:id", authenticateToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-    const view = await View.findByIdAndDelete(id);
-    res.json(view);
-  } catch (error) {
-    console.error("Views delete error:", error.message);
-    res.status(500).json({ error: "Failed to delete views" });
-  }
-});
-
-// Admin News API
+// Admin News API - with pagination (P1 Performance)
 app.get("/api/admin/news", authenticateToken, async (req, res) => {
   try {
-    const news = await News.find().sort({ publishedAt: -1 });
-    res.json(news);
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 50;
+    const skip = (page - 1) * limit;
+
+    const news = await News.find()
+      .sort({ publishedAt: -1 })
+      .skip(skip)
+      .limit(limit);
+
+    const total = await News.countDocuments();
+
+    res.json({
+      news,
+      pagination: {
+        page,
+        limit,
+        total,
+        pages: Math.ceil(total / limit),
+      }
+    });
   }
   catch (err) {
     console.error("Admin News fetch error:", err.message);

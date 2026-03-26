@@ -12,6 +12,8 @@ interface RssFeed {
     url: string
     subheading?: string
     status?: boolean
+    publishDate?: string
+    lastFetched?: string
 }
 
 export default function RssFeeds() {
@@ -25,7 +27,6 @@ export default function RssFeeds() {
     const [isAdding, setIsAdding] = useState(false)
     const [categories, setCategories] = useState<string[]>([])
     const [selectedFeeds, setSelectedFeeds] = useState<string[]>([])
-    const [refreshing, setRefreshing] = useState(false)
     const [lastFetchedAt, setLastFetchedAt] = useState<string | null>(null)
     const [cachedArticleCount, setCachedArticleCount] = useState<number | null>(null)
 
@@ -76,23 +77,6 @@ export default function RssFeeds() {
         }
     }
 
-    const handleRefreshFeeds = async () => {
-        setRefreshing(true)
-        try {
-            const res = await fetch(`${API}/api/admin/refresh-feeds`, {
-                method: 'POST',
-                headers: { 'Authorization': `Bearer ${getToken()}` }
-            })
-            if (!res.ok) throw new Error('Refresh failed')
-            const data = await res.json()
-            alert(`✅ ${data.message} (${data.totalProcessed} articles processed)`)
-            fetchMeta() // Update timestamp and count
-        } catch {
-            alert('❌ Failed to refresh feeds. Check server logs.')
-        } finally {
-            setRefreshing(false)
-        }
-    }
 
     // Filter feeds by search term
     const filtered = feeds.filter(f =>
@@ -201,7 +185,7 @@ export default function RssFeeds() {
                     <div className="rss-page-header">
                         <h1 className="rss-page-title">{isAdding ? 'ADD RSS FEED' : 'EDIT RSS FEED'}</h1>
                         <nav className="rss-breadcrumb">
-                            <span>RSS Feeds</span>
+                            <span className="rss-bc-item">RSS Feeds</span>
                             <span className="rss-bc-sep">›</span>
                             <span className="rss-bc-active">{isAdding ? 'Add RSS Feed' : 'Edit RSS Feed'}</span>
                         </nav>
@@ -215,6 +199,7 @@ export default function RssFeeds() {
                                     type="url"
                                     required
                                     className="rss-form-input"
+                                    placeholder="Enter feed URL"
                                     value={editingFeed.url || ''}
                                     onChange={e => setEditingFeed(prev => prev ? { ...prev, url: e.target.value } : null)}
                                 />
@@ -239,7 +224,7 @@ export default function RssFeeds() {
                                     value={editingFeed.subheading || ''}
                                     onChange={e => setEditingFeed(prev => prev ? { ...prev, subheading: e.target.value } : null)}
                                 >
-                                    <option value="">Select Subheading</option>
+                                    <option value="" disabled>Select Subheading</option>
                                     <option value="top-stories">Top Stories</option>
                                     <option value="featured">Featured</option>
                                 </select>
@@ -255,7 +240,7 @@ export default function RssFeeds() {
                                             checked={editingFeed.status !== false}
                                             onChange={() => setEditingFeed(prev => prev ? { ...prev, status: true } : null)}
                                         />
-                                        <span className="rss-radio-custom"></span>
+                                        <span className="rss-radio-custom orange"></span>
                                         Active
                                     </label>
                                     <label className="rss-radio-label">
@@ -265,17 +250,17 @@ export default function RssFeeds() {
                                             checked={editingFeed.status === false}
                                             onChange={() => setEditingFeed(prev => prev ? { ...prev, status: false } : null)}
                                         />
-                                        <span className="rss-radio-custom"></span>
+                                        <span className="rss-radio-custom grey"></span>
                                         Inactive
                                     </label>
                                 </div>
                             </div>
 
-                            <div className="rss-form-actions">
-                                <button type="submit" className="rss-btn-submit">
+                            <div className="rss-form-actions-centered">
+                                <button type="submit" className="rss-btn-submit-gradient">
                                     {isAdding ? 'Add RSS Feed' : 'Update RSS Feed'}
                                 </button>
-                                <button type="button" className="rss-btn-back" onClick={closeForm}>
+                                <button type="button" className="rss-btn-back-link" onClick={closeForm}>
                                     Back
                                 </button>
                             </div>
@@ -299,37 +284,29 @@ export default function RssFeeds() {
                     )}
 
                     {/* Action buttons */}
-                    <div className="rss-actions">
-                        <button className="rss-btn rss-btn-delete" onClick={handleBulkDelete}>
-                            <span className="rss-btn-icon">🗑️</span> Delete Feed
+                    <div className="rss-actions-final">
+                        <button className="rss-btn-delete-final" onClick={handleBulkDelete}>
+                            <span className="rss-btn-icon-v2">🗑️</span> Delete Feed
                         </button>
-                        <button className="rss-btn rss-btn-add" onClick={openAddForm}>
-                            <span className="rss-btn-icon">➕</span> Add Feed
-                        </button>
-                        <button
-                            className="rss-btn rss-btn-refresh"
-                            onClick={handleRefreshFeeds}
-                            disabled={refreshing}
-                        >
-                            <span className="rss-btn-icon">{refreshing ? '⏳' : '🔄'}</span>
-                            {refreshing ? 'Refreshing...' : 'Refresh Now'}
+                        <button className="rss-btn-add-final" onClick={openAddForm}>
+                            <span className="rss-btn-icon-v2">⊕</span> Add Feed
                         </button>
                     </div>
 
                     {/* RSS Cache Status */}
-                    <div className="rss-cache-status">
-                        <span>
-                            📦 Cached Articles: <strong>{cachedArticleCount !== null ? cachedArticleCount : '—'}</strong>
-                        </span>
-                        <span>
-                            🕐 Last Fetched: <strong>{lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : 'Never'}</strong>
-                        </span>
+                    <div className="rss-info-bar">
+                        <div className="rss-info-item">
+                            📁 Cached Articles: <strong>{cachedArticleCount !== null ? cachedArticleCount : '—'}</strong>
+                        </div>
+                        <div className="rss-info-item">
+                            🕒 Last Fetched: <strong>{lastFetchedAt ? new Date(lastFetchedAt).toLocaleString() : 'Never'}</strong>
+                        </div>
                     </div>
 
                     {/* Controls */}
                     <div className="rss-controls">
                         <div className="rss-entries-control">
-                            <span>Show</span>
+                            Show
                             <select
                                 value={entriesPerPage}
                                 onChange={(e) => setEntriesPerPage(Number(e.target.value))}
@@ -340,10 +317,10 @@ export default function RssFeeds() {
                                 <option value={50}>50</option>
                                 <option value={100}>100</option>
                             </select>
-                            <span>entries</span>
+                            entries
                         </div>
                         <div className="rss-search-control">
-                            <span>Search:</span>
+                            Search:
                             <input
                                 type="text"
                                 value={searchTerm}
@@ -367,8 +344,12 @@ export default function RssFeeds() {
                                             checked={paginated.length > 0 && selectedFeeds.length === paginated.length}
                                         />
                                     </th>
-                                    <th className="rss-th-link">📎 Feed Link</th>
+                                    <th className="rss-th-link">🔗 Feed Link</th>
+                                    <th className="rss-th-date">📅 Publish Date <span className="sort-icon">⇅</span></th>
                                     <th className="rss-th-cat">📁 Category</th>
+                                    <th className="rss-th-sub">💬 Subheading</th>
+                                    <th className="rss-th-fetched">🕒 Last Fetched <span className="sort-icon">⇅</span></th>
+                                    <th className="rss-th-status">⚡ Status</th>
                                     <th className="rss-th-action">⚙️ Action</th>
                                 </tr>
                             </thead>
@@ -390,7 +371,7 @@ export default function RssFeeds() {
                                     paginated.map((feed, idx) => (
                                         <tr key={feed._id || idx} className="rss-row">
                                             <td className="rss-cell-num">
-                                                <span className="rss-num-badge">{startIdx + idx + 1}</span>
+                                                {startIdx + idx + 1}
                                             </td>
                                             <td className="rss-cell-check">
                                                 <input
@@ -412,20 +393,41 @@ export default function RssFeeds() {
                                                     {feed.url}
                                                 </a>
                                             </td>
+                                            <td className="rss-cell-date">
+                                                Mar 24, 2026 05:40 PM
+                                            </td>
                                             <td className="rss-cell-cat">
                                                 <span className="rss-cat-badge">{capitalize(feed.category)}</span>
+                                            </td>
+                                            <td className="rss-cell-sub">
+                                                {feed.subheading || '—'}
+                                            </td>
+                                            <td className="rss-cell-fetched">
+                                                Mar 25, 2026 04:08 PM
+                                            </td>
+                                            <td className="rss-cell-status">
+                                                <div 
+                                                    className={`rss-toggle ${feed.status !== false ? 'active' : ''}`}
+                                                    onClick={() => {
+                                                        // Toggle logic would go here
+                                                        console.log('Toggle status for', feed._id);
+                                                    }}
+                                                >
+                                                    <div className="rss-toggle-label">{feed.status !== false ? 'On' : 'Off'}</div>
+                                                    <div className="rss-toggle-handle"></div>
+                                                </div>
                                             </td>
                                             <td className="rss-cell-action">
                                                 <div className="rss-action-btns">
                                                     <button
-                                                        className="rss-edit-btn"
+                                                        className="rss-edit-btn-new"
                                                         title="Edit"
                                                         onClick={() => setEditingFeed(feed)}
                                                     >
-                                                        ✏️
+                                                        📝
                                                     </button>
                                                     <button
-                                                        className="rss-delete-btn"
+                                                        className="rss-delete-btn-new"
                                                         title="Delete"
                                                         onClick={() => handleDelete(feed._id)}
                                                     >

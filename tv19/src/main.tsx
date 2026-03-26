@@ -9,7 +9,11 @@ import ContactUs from './pages/components/ContactUs/ContactUs.tsx'
 import Footer from './pages/components/Footer/Footer.tsx'
 import AboutUs from './pages/components/AboutUs/AboutUs.tsx'
 import Disclaimer from './pages/components/Disclaimer/Disclaimer.tsx'
+import PrivacyPolicy from './pages/components/PrivacyPolicy/PrivacyPolicy.tsx'
+import Advertise from './pages/components/Advertise/Advertise.tsx'
 import Career from './pages/components/Career/career.tsx'
+import Login from './pages/components/Login/Login.tsx'
+import Signup from './pages/components/Signup/Signup.tsx'
 import StatePage from './pages/components/STATE/StatePage.tsx'
 import WorldPage from './pages/components/WORLD/WorldPage.tsx'
 import EntertainmentPage from './pages/components/ENTERTAINMENT/EntertainmentPage.tsx'
@@ -39,6 +43,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/contact" element={<ContactUs />} />
         <Route path="/about" element={<AboutUs />} />
         <Route path="/disclaimer" element={<Disclaimer />} />
+        <Route path="/privacy" element={<PrivacyPolicy />} />
+        <Route path="/advertise" element={<Advertise />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="/state" element={<StatePage />} />
         <Route path="/india" element={<IndiaPage />} />
         <Route path="/world" element={<WorldPage />} />
@@ -62,6 +70,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/trending" element={<DynamicSectionPage categoryId="trending" />} />
         <Route path="/weather" element={<DynamicSectionPage categoryId="weather" />} />
         <Route path="/green-future" element={<DynamicSectionPage categoryId="green-future" />} />
+        <Route path="/footer-preview" element={<div style={{ paddingTop: '100px', background: '#f8f9fa' }}><Footer /></div>} />
       </Routes>
       <Footer />
     </BrowserRouter>

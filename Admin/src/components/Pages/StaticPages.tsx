@@ -1,51 +1,70 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Edit, Eye } from 'react-feather';
 import EditTemplate from './EditTemplate';
 import ViewPage from './ViewPage';
+
+// Port where the TV19 frontend dev server is running
+const PREVIEW_PORT = 5175;
+
+// Helper to get the preview URL with the current hostname
+const getPreviewUrl = (path: string = '') => {
+    const host = window.location.hostname; // 'localhost' or '127.0.0.1'
+    return `http://${host}:${PREVIEW_PORT}${path}`;
+};
 
 const mockStaticPages = [
     { 
         id: 1, 
         title: 'About Us', 
         updatedOn: 'Mar 11, 2026 01:01 PM', 
-        metaTitle: 'About Us | TV19 News', 
-        metaKeywords: 'about us, tv19 news', 
-        metaDescription: 'Learn more about TV19 News.', 
-        content: '<iframe src="http://localhost:5173/about" width="100%" height="800px" style="border:none;"></iframe>' 
+        metaTitle: 'About Us – TV19 News', 
+        metaKeywords: 'About Us, TV19 News, Indian News, News Channel', 
+        metaDescription: 'Learn about TV19 News — India\'s trusted source for breaking news, live updates, and in-depth coverage across politics, sports, entertainment, and more.', 
+        content: `<iframe src="${getPreviewUrl('/about')}" width="100%" height="800px" style="border:none;"></iframe>` 
     },
     { 
         id: 6, 
         title: 'Contact Us', 
         updatedOn: 'Feb 17, 2026 03:37 PM', 
-        metaTitle: 'Contact Us | TV19 News', 
-        metaKeywords: 'contact us, tv19 news', 
-        metaDescription: 'Get in touch with TV19 News.', 
-        content: '<iframe src="http://localhost:5173/contact" width="100%" height="800px" style="border:none;"></iframe>' 
+        metaTitle: 'Contact Us – TV19 News', 
+        metaKeywords: 'Contact Us, TV19 News, Customer Support, Feedback', 
+        metaDescription: 'Get in touch with TV19 News for inquiries, feedback, partnerships, or advertising. Reach our editorial and business teams directly.', 
+        content: `<iframe src="${getPreviewUrl('/contact')}" width="100%" height="800px" style="border:none;"></iframe>` 
     },
     { 
         id: 3, 
         title: 'Disclaimer', 
         updatedOn: 'Mar 11, 2026 03:36 PM', 
-        metaTitle: 'Disclaimer | TV19 News', 
-        metaKeywords: 'disclaimer, tv19 news', 
-        metaDescription: 'Read the TV19 News disclaimer.', 
-        content: '<iframe src="http://localhost:5173/disclaimer" width="100%" height="800px" style="border:none;"></iframe>' 
+        metaTitle: 'Disclaimer – TV19 News', 
+        metaKeywords: 'Disclaimer, TV19 News, Terms, Legal', 
+        metaDescription: 'Read the official disclaimer of TV19 News to understand the terms and conditions governing the use of our website and content.', 
+        content: `<iframe src="${getPreviewUrl('/disclaimer')}" width="100%" height="800px" style="border:none;"></iframe>` 
     },
-    { id: 4, title: 'Home Page', updatedOn: 'Feb 17, 2026 03:39 PM', metaTitle: 'TV19 News | Breaking News, Live Updates & Top Headlines', metaKeywords: 'breaking news today', metaDescription: 'TV19 News brings you breaking news, live updates and top headlines from Jodhpur, Rajasthan and India covering politics, crime, business, sports and more.', content: '<iframe src="http://localhost:5173" width="100%" height="800px" style="border:none;"></iframe>' },
-    { id: 2, title: 'Join Our Team', updatedOn: 'Feb 17, 2026 06:47 PM', metaTitle: 'Join Our Team | TV19 News', metaKeywords: 'careers, jobs, tv19 news', metaDescription: 'Explore career opportunities at TV19 News.', content: '' },
-    { id: 5, title: 'Privacy Policy', updatedOn: 'Feb 17, 2026 03:38 PM', metaTitle: 'Privacy Policy | TV19 News', metaKeywords: 'privacy policy, tv19 news', metaDescription: 'Read our privacy policy.', content: '' },
-    { id: 7, title: 'Advertise With Us', updatedOn: 'Feb 17, 2026 03:13 PM', metaTitle: 'Advertise | TV19 News', metaKeywords: 'advertise, tv19 news', metaDescription: 'Advertise your brand with us.', content: '' },
-    { id: 8, title: 'Footer', updatedOn: 'Dec 19, 2025 11:14 AM', metaTitle: 'Footer | TV19 News', metaKeywords: 'footer', metaDescription: 'Website footer.', content: '' },
+    { id: 4, title: 'Home Page', updatedOn: 'Feb 17, 2026 03:39 PM', metaTitle: 'TV19 News | Breaking News, Live Updates & Top Headlines', metaKeywords: 'Breaking News, Live Updates, Top Headlines, India News, Jodhpur News', metaDescription: 'TV19 News brings you breaking news, live updates and top headlines from Jodhpur, Rajasthan and India covering politics, crime, business, sports and more.', content: `<iframe src="${getPreviewUrl('/')}" width="100%" height="800px" style="border:none;"></iframe>` },
+    { id: 2, title: 'Join Our Team', updatedOn: 'Feb 17, 2026 06:47 PM', metaTitle: 'Join Our Team – TV19 News', metaKeywords: 'Careers, Jobs, TV19 News, Media Jobs, Journalism', metaDescription: 'Explore exciting career opportunities at TV19 News. Join our dynamic team of journalists, editors, and digital media professionals.', content: `<iframe src="${getPreviewUrl('/career')}" width="100%" height="800px" style="border:none;"></iframe>` },
+    { id: 5, title: 'Privacy Policy', updatedOn: 'Feb 17, 2026 03:38 PM', metaTitle: 'Privacy Policy – TV19 News', metaKeywords: 'Privacy Policy', metaDescription: 'Read the privacy policy of TV19 News to understand how we collect, use and protect user data while delivering trusted digital news content.', content: `<iframe src="${getPreviewUrl('/privacy')}" width="100%" height="800px" style="border:none;"></iframe>` },
+    { id: 7, title: 'Advertise With Us', updatedOn: 'Feb 17, 2026 03:13 PM', metaTitle: 'Advertise With Us – TV19 News', metaKeywords: 'Advertise, TV19 News, Digital Advertising, Brand Promotion', metaDescription: 'Advertise your brand with TV19 News and connect with millions of engaged readers. Premium placements, data-driven insights, and measurable impact.', content: `<iframe src="${getPreviewUrl('/advertise')}" width="100%" height="800px" style="border:none;"></iframe>` },
+    { id: 8, title: 'Footer', updatedOn: 'Dec 19, 2025 11:14 AM', metaTitle: 'Footer – TV19 News', metaKeywords: 'Footer, Site Navigation, TV19 News', metaDescription: 'The global footer section of the TV19 News website, containing quick links, social media connections, and subscription options.', content: `<iframe src="${getPreviewUrl('/footer-preview')}" width="100%" height="800px" style="border:none;"></iframe>` },
 ];
 
-export default function StaticPages() {
+export default function StaticPages({ initialView }: { initialView?: { title: string } }) {
     const [entries, setEntries] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const [pages, setPages] = useState(mockStaticPages);
-    
+
     // Placeholder states for future Edit/View views
     const [selectedPage, setSelectedPage] = useState<any>(null);
     const [editingPage, setEditingPage] = useState<any>(null);
+
+    // Sync selectedPage with initialView if provided
+    useEffect(() => {
+        if (initialView) {
+            const page = mockStaticPages.find(p => p.title === initialView.title);
+            if (page) {
+                setSelectedPage(page);
+            }
+        }
+    }, [initialView]);
 
     // Save handler — updates the page in the state so changes reflect live
     const handleSavePage = (updatedPage: any) => {
@@ -122,15 +141,15 @@ export default function StaticPages() {
                                     <td>{page.updatedOn}</td>
                                     <td>
                                         <div className="cat-actions">
-                                            <button 
-                                                className="cat-action-btn edit-btn" 
+                                            <button
+                                                className="cat-action-btn edit-btn"
                                                 title="Edit"
                                                 onClick={() => setEditingPage(page)}
                                             >
                                                 <Edit size={14} />
                                             </button>
-                                            <button 
-                                                className="cat-action-btn view-btn" 
+                                            <button
+                                                className="cat-action-btn view-btn"
                                                 title="View"
                                                 onClick={() => setSelectedPage(page)}
                                             >

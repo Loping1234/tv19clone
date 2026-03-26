@@ -496,10 +496,8 @@ export const getDynamicCategoryNews = async (
       category,
       size: pageSize,
       skip,
+      state: (subCategory && subCategory !== "All Stories") ? subCategory : category
     };
-    if (subCategory && subCategory !== "All Stories") {
-      params.state = subCategory;
-    }
 
     const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, { params });
     return response.data;

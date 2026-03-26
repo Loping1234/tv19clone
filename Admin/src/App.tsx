@@ -14,6 +14,7 @@ import StaticPages from './components/Pages/StaticPages'
 import './App.css'
 
 export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
+| 'about-us' | 'contact-us' | 'disclaimer' | 'privacy-policy' | 'advertise'
 
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('adminToken'))
@@ -78,6 +79,11 @@ function App() {
       case 'categories': return <Categories />
       case 'email-templates': return <EmailTemplates />
       case 'pages': return <StaticPages />
+      case 'about-us': return <StaticPages initialView={{ title: 'About Us' }} />
+      case 'contact-us': return <StaticPages initialView={{ title: 'Contact Us' }} />
+      case 'disclaimer': return <StaticPages initialView={{ title: 'Disclaimer' }} />
+      case 'privacy-policy': return <StaticPages initialView={{ title: 'Privacy Policy' }} />
+      case 'advertise': return <StaticPages initialView={{ title: 'Advertise With Us' }} />
       case 'rss-feeds': return <RssFeeds />
       case 'profile': return <Profile />
       case 'reset-password': return <ResetPassword />

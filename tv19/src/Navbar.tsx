@@ -6,7 +6,10 @@ import { getTopHeadlines, searchNews, type Article } from './services/newsServic
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getWeatherByCity, type WeatherResponse } from "./services/weatherService";
 import { getSiteConfig, applySiteConfig, type SiteConfig } from './services/siteConfigService';
-import { UilSearch } from '@iconscout/react-unicons';
+import {
+    UilSearch,
+    UilSignInAlt,
+} from '@iconscout/react-unicons';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import logoImg from './assets/Image_Logo.png';
 
@@ -42,6 +45,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
 
   // Live date/time
   const [now, setNow] = useState(new Date());
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
   const location = useLocation();
 
   useEffect(() => {
@@ -201,6 +205,9 @@ const Navbar: React.FC<BreakingNewsProps> = ({
       <header className='main-header'>
         {/* Logo */}
         <div className="logo-block">
+          <button className="hamburger-btn" onClick={() => setIsMenuOpen(true)}>
+            <i className="fas fa-bars"></i>
+          </button>
           <img src={logoImg} alt="TV19 News" className="logo-img" />
         </div>
 
@@ -227,6 +234,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           <Link to='/about' className='header-link'>ABOUT US</Link>
           <Link to='/contact' className='header-link'>CONTACT US</Link>
           <Link to='/career' className='header-link'>CAREER</Link>
+          <Link to='/advertise' className='header-link'>ADVERTISE WITH US</Link>
           <div className="header-divider"></div>
           <div className="social-icons">
             <a href="#facebook" className="social-icon-box"><i className="fab fa-facebook-f"></i></a>
@@ -275,10 +283,10 @@ const Navbar: React.FC<BreakingNewsProps> = ({
 
         {/* Login / Sign Up buttons */}
         <div className="navbar-auth">
-          <a href="#login" className="btn-login">
-            LOGIN
-          </a>
-          <a href="#signup" className="btn-signup">
+          <Link to="/login" className="btn-login">
+            <UilSignInAlt size={16} /> Login
+          </Link>
+          <a href="/signup" className="btn-signup">
             SIGN UP
           </a>
         </div>
@@ -326,6 +334,55 @@ const Navbar: React.FC<BreakingNewsProps> = ({
               ))}
             </div>
           )}
+        </div>
+      </div>
+
+      {/* Mobile Sidebar Menu */}
+      <div className={`side-menu-overlay ${isMenuOpen ? 'open' : ''}`} onClick={() => setIsMenuOpen(false)}>
+        <div className="side-menu" onClick={(e) => e.stopPropagation()}>
+          <div className="side-menu-header">
+            <img src={logoImg} alt="TV19 News" className="side-logo" />
+            <button className="side-close-btn" onClick={() => setIsMenuOpen(false)}>
+              <i className="fas fa-times"></i>
+            </button>
+          </div>
+          
+          <div className="side-auth">
+            <Link to="/login" className="side-btn-login" onClick={() => setIsMenuOpen(false)}>
+              <i className="fas fa-sign-in-alt"></i> Login
+            </Link>
+            <a href="#signup" className="side-btn-signup">
+              <i className="fas fa-user-plus"></i> Sign Up
+            </a>
+          </div>
+
+          <div className="side-menu-section">
+            <span className="side-section-label">MENU</span>
+            <ul className="side-nav-list">
+              {navItems.map((item) => (
+                <li key={item.label}>
+                  <Link 
+                    to={item.to!} 
+                    className={`side-nav-link ${location.pathname === item.to ? 'active' : ''}`}
+                    onClick={() => setIsMenuOpen(false)}
+                  >
+                    {item.label}
+                  </Link>
+                </li>
+              ))}
+              <li className="side-dropdown-label">MORE SECTIONS</li>
+              <li><Link to="/art" onClick={() => setIsMenuOpen(false)}>Art</Link></li>
+              <li><Link to="/astrology" onClick={() => setIsMenuOpen(false)}>Astrology</Link></li>
+              <li><Link to="/breaking" onClick={() => setIsMenuOpen(false)}>Breaking</Link></li>
+              <li><Link to="/crime" onClick={() => setIsMenuOpen(false)}>Crime</Link></li>
+              <li><Link to="/finance" onClick={() => setIsMenuOpen(false)}>Finance</Link></li>
+              <li><Link to="/opinion" onClick={() => setIsMenuOpen(false)}>Opinion</Link></li>
+              <li><Link to="/top" onClick={() => setIsMenuOpen(false)}>Top</Link></li>
+              <li><Link to="/trending" onClick={() => setIsMenuOpen(false)}>Trending</Link></li>
+              <li><Link to="/weather" onClick={() => setIsMenuOpen(false)}>Weather</Link></li>
+              <li><Link to="/green-future" onClick={() => setIsMenuOpen(false)}>Green Future</Link></li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>

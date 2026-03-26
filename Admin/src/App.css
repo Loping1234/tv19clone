@@ -1618,27 +1618,26 @@ textarea.form-control {
 }
 
 /* ============================================================
-   RSS Feed List Page
+   RSS Feed List Page (Redesign)
    ============================================================ */
 .rss-page {
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 20px;
 }
 
 .rss-page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  margin-bottom: 10px;
 }
 
 .rss-page-title {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: 800;
-  letter-spacing: 1.5px;
-  color: var(--text-primary);
+  color: #1a1a2e;
+  margin-bottom: 20px;
 }
 
 .rss-breadcrumb {
@@ -1646,16 +1645,21 @@ textarea.form-control {
   align-items: center;
   gap: 6px;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: #6b7280;
+  margin-left: auto; /* Push to right */
+}
+
+.rss-bc-item {
+  color: #6b7280;
 }
 
 .rss-bc-sep {
-  color: #d1d5db;
+  color: #cbd5e1;
+  margin: 0 4px;
 }
 
 .rss-bc-active {
-  color: var(--text-primary);
-  font-weight: 600;
+  color: #94a3b8; /* Match screenshot grey */
 }
 
 .rss-error-banner {
@@ -1663,137 +1667,108 @@ textarea.form-control {
   border: 1px solid #fca5a5;
   color: #dc2626;
   padding: 12px 16px;
-  border-radius: var(--radius);
-  font-size: 13px;
-}
-
-/* Action Buttons */
-.rss-actions {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.rss-btn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 9px 18px;
-  border: none;
-  border-radius: 6px;
-  font-size: 13px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all var(--transition);
-}
-
-.rss-btn-delete {
-  background: #dc3545;
-  color: #fff;
-}
-
-.rss-btn-delete:hover {
-  background: #b02a37;
-}
-
-.rss-btn-add {
-  background: #28a745;
-  color: #fff;
-}
-
-.rss-btn-add:hover {
-  background: #1e7e34;
-}
-
-.rss-btn-icon {
-  font-size: 14px;
-}
-
-.rss-btn-refresh {
-  background: #0d6efd;
-  color: #fff;
-}
-
-.rss-btn-refresh:hover {
-  background: #0a58ca;
-}
-
-.rss-btn-refresh:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.rss-cache-status {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  flex-wrap: wrap;
-  padding: 12px 18px;
-  background: #f8f9fa;
-  border: 1px solid var(--border);
   border-radius: 8px;
   font-size: 13px;
-  color: var(--text-secondary);
+  margin-bottom: 20px;
 }
 
-.rss-cache-status strong {
-  color: var(--text-primary);
+/* Action Buttons Above Table (Final) */
+.rss-actions-final {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
 }
 
+.rss-btn-delete-final,
+.rss-btn-add-final {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  color: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
 
-/* Controls Row */
+.rss-btn-delete-final {
+  background: #ff5252; /* Match target red */
+}
+
+.rss-btn-add-final {
+  background: linear-gradient(135deg, #ff8a05, #ffca05); /* Match target gradient */
+  box-shadow: 0 4px 12px rgba(255, 177, 43, 0.2);
+}
+
+.rss-btn-delete-final:hover,
+.rss-btn-add-final:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.1);
+}
+
+.rss-btn-icon-v2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  border-radius: 50%;
+  font-size: 12px;
+}
+
+/* Info Bar */
+.rss-info-bar {
+  display: flex;
+  gap: 24px;
+  background: #f8f9fa;
+  border: 1px solid #edf2f7;
+  border-radius: 8px;
+  padding: 12px 20px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  color: #4a5565;
+}
+
+.rss-info-item strong {
+  color: #1a1a2e;
+}
+
+/* Table Controls */
 .rss-controls {
   display: flex;
-  align-items: center;
   justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.rss-entries-control {
-  display: flex;
   align-items: center;
-  gap: 6px;
+  margin-bottom: 16px;
   font-size: 13px;
-  color: var(--text-secondary);
+  color: #6b7280;
 }
 
-.rss-select {
-  padding: 5px 8px;
-  border: 1px solid var(--border);
+.rss-entries-control select {
+  margin: 0 8px;
+  padding: 4px 8px;
+  border: 1px solid #e1e4e8;
   border-radius: 4px;
-  font-size: 13px;
-  background: #fff;
-}
-
-.rss-search-control {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
 }
 
 .rss-search-input {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+  margin-left: 8px;
+  padding: 8px 12px;
+  border: 1px solid #e1e4e8;
   border-radius: 4px;
-  font-size: 13px;
   width: 200px;
-  transition: border-color var(--transition);
 }
 
-.rss-search-input:focus {
-  outline: none;
-  border-color: var(--accent);
-}
-
-/* Table */
+/* Redesigned Table */
 .rss-table-wrap {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  box-shadow: var(--shadow);
-  overflow-x: auto;
+  background: #fff;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  overflow: hidden;
+  border: 1px solid #edf2f7;
 }
 
 .rss-table {
@@ -1803,195 +1778,145 @@ textarea.form-control {
 }
 
 .rss-table th {
-  text-align: left;
-  padding: 12px 14px;
   background: #fafbfc;
-  border-bottom: 2px solid var(--border);
-  color: var(--text-secondary);
-  font-size: 12px;
+  padding: 14px 16px;
+  text-align: left;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  white-space: nowrap;
-}
-
-.rss-th-num {
-  width: 70px;
-}
-
-.rss-th-check {
-  width: 40px;
-}
-
-.rss-th-cat {
-  width: 130px;
-}
-
-.rss-th-action {
-  width: 80px;
-  text-align: center;
+  color: #4a5565;
+  border-bottom: 2px solid #edf2f7;
+  border-right: 1px solid #edf2f7;
+  text-transform: capitalize;
 }
 
 .rss-table td {
-  padding: 12px 14px;
-  border-bottom: 1px solid #f0f0f0;
+  padding: 14px 16px;
+  border-bottom: 1px solid #edf2f7;
+  border-right: 1px solid #edf2f7;
+  color: #1a1a2e;
   vertical-align: middle;
 }
 
-.rss-row:hover td {
-  background: #fffaf7;
+.rss-table th:last-child,
+.rss-table td:last-child {
+  border-right: none;
 }
 
-.rss-row:nth-child(even) td {
-  background: #fafbfc;
-}
+.rss-cell-num { width: 60px; font-weight: 600; text-align: center; }
+.rss-cell-check { width: 40px; text-align: center; }
+.rss-cell-status { width: 100px; }
+.rss-cell-action { width: 100px; text-align: center; }
 
-.rss-row:nth-child(even):hover td {
-  background: #fff5f0;
-}
-
-/* Number Badge */
-.rss-num-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--accent);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 700;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-}
-
-.rss-cell-check {
-  text-align: center;
-}
-
-/* Feed URL */
+/* Feed Link Link */
 .rss-feed-url {
-  color: #2563eb;
+  color: #007bff;
   text-decoration: none;
-  font-size: 13px;
-  word-break: break-all;
-}
-
-.rss-feed-url:hover {
-  text-decoration: underline;
-  color: var(--accent);
 }
 
 /* Category Badge */
 .rss-cat-badge {
-  display: inline-block;
-  background: #fff5ee;
-  color: var(--accent);
-  font-size: 12px;
+  background: #fff7ed;
+  color: #ffb12b;
+  padding: 4px 12px;
+  border-radius: 4px;
   font-weight: 600;
-  padding: 3px 10px;
-  border-radius: 12px;
-  text-transform: capitalize;
 }
 
-/* Action */
-.rss-cell-action {
-  text-align: center;
-}
-
-.rss-edit-btn {
-  background: #fff3e0;
-  border: 1px solid #ffe0b2;
-  border-radius: 6px;
-  padding: 5px 10px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all var(--transition);
-}
-
-.rss-edit-btn:hover {
-  background: #ffe0b2;
-}
-
-/* Loading / Empty */
-.rss-loading-cell,
-.rss-empty-cell {
-  text-align: center;
-  padding: 32px 16px;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.rss-spinner {
-  display: inline-block;
-  width: 24px;
+/* Status Toggle Switch */
+.rss-toggle {
+  width: 50px;
   height: 24px;
-  border: 3px solid #e0e0e0;
-  border-top-color: var(--accent);
-  border-radius: 50%;
-  animation: rssSpin 0.8s linear infinite;
-  margin-right: 8px;
-  vertical-align: middle;
-}
-
-@keyframes rssSpin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-/* Pagination */
-.rss-pagination {
+  background: #e2e8f0;
+  border-radius: 12px;
+  position: relative;
+  cursor: pointer;
+  padding: 0 6px;
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
+  transition: background 0.2s;
 }
 
-.rss-page-info {
-  font-size: 13px;
-  color: var(--text-secondary);
+.rss-toggle.active {
+  background: #ffb12b;
 }
 
-.rss-page-btns {
+.rss-toggle-label {
+  font-size: 10px;
+  font-weight: 800;
+  color: #64748b;
+  width: 100%;
+  text-align: right;
+  padding-right: 2px;
+}
+
+.rss-toggle.active .rss-toggle-label {
+  color: #fff;
+  text-align: left;
+  padding-left: 2px;
+}
+
+.rss-toggle-handle {
+  width: 18px;
+  height: 18px;
+  background: #fff;
+  border-radius: 50%;
+  position: absolute;
+  left: 3px;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.rss-toggle.active .rss-toggle-handle {
+  transform: translateX(26px);
+}
+
+/* Row Action Buttons */
+.rss-action-btns {
   display: flex;
-  gap: 4px;
+  gap: 8px;
+  justify-content: center;
 }
 
-.rss-page-btn {
-  padding: 6px 12px;
-  border: 1px solid var(--border);
+.rss-edit-btn-new,
+.rss-delete-btn-new {
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.rss-edit-btn-new {
+  background: #fff7ed;
+  color: #ffb12b;
+  border: 1px solid #ffedda;
+}
+
+.rss-delete-btn-new {
+  background: #f1f5f9;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
+/* Sorting icon styling */
+.sort-icon {
+  margin-left: 4px;
+  color: #cbd5e1;
+  font-size: 10px;
+}
+
+/* ==========================================================
+   Edit/Add Form (Redesign)
+   ========================================================= */
+.rss-edit-card {
   background: #fff;
   border-radius: 4px;
-  font-size: 12px;
-  cursor: pointer;
-  transition: all var(--transition);
-  color: var(--text-primary);
-}
-
-.rss-page-btn:hover:not(:disabled) {
-  background: #f0f2f5;
-  border-color: var(--accent);
-}
-
-.rss-page-btn.active {
-  background: var(--accent);
-  color: #fff;
-  border-color: var(--accent);
-}
-
-.rss-page-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-/* Edit RSS Feed Form */
-.rss-edit-card {
-  background: var(--bg-card);
-  border-radius: var(--radius);
-  padding: 32px;
-  box-shadow: var(--shadow);
-  max-width: 800px;
+  padding: 40px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+  border: 1px solid #edf2f7;
 }
 
 .rss-edit-form {
@@ -2000,50 +1925,42 @@ textarea.form-control {
   gap: 24px;
 }
 
-.rss-form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .rss-form-label {
   font-size: 13px;
   font-weight: 600;
-  color: #555;
+  color: #4a5565;
+  margin-bottom: 4px;
 }
 
 .rss-form-input,
 .rss-form-select {
-  padding: 12px 14px;
-  border: 1px solid #ddd;
+  padding: 12px 16px;
+  border: 1px solid #e1e4e8;
   border-radius: 4px;
   font-size: 14px;
-  font-family: inherit;
-  color: var(--text-primary);
-  background: #fdfdfd;
-  transition: border-color var(--transition);
+  color: #1a1a2e;
+  width: 100%;
 }
 
 .rss-form-input:focus,
 .rss-form-select:focus {
   outline: none;
-  border-color: var(--accent);
-  background: #fff;
+  border-color: #ffb12b;
 }
 
 /* Custom Radio Group */
 .rss-radio-group {
   display: flex;
-  gap: 24px;
-  margin-top: 4px;
+  gap: 32px;
+  align-items: center;
 }
 
 .rss-radio-label {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
-  color: #555;
+  font-size: 14px;
+  color: #1a1a2e;
   cursor: pointer;
 }
 
@@ -2052,70 +1969,70 @@ textarea.form-control {
 }
 
 .rss-radio-custom {
-  width: 16px;
-  height: 16px;
+  width: 18px;
+  height: 18px;
   border-radius: 50%;
-  border: 2px solid #ddd;
+  border: 2px solid #e1e4e8;
   position: relative;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s;
 }
 
-.rss-radio-label input[type="radio"]:checked+.rss-radio-custom {
-  border-color: var(--accent);
+.rss-radio-label input[type="radio"]:checked + .rss-radio-custom {
+  border-color: #ffb12b;
 }
 
-.rss-radio-label input[type="radio"]:checked+.rss-radio-custom::after {
+.rss-radio-label input[type="radio"]:checked + .rss-radio-custom::after {
   content: "";
   position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  width: 8px;
-  height: 8px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background-color: var(--accent);
+  background: #ffb12b;
 }
 
-/* Actions */
-.rss-form-actions {
+/* Form Actions (Centered) */
+.rss-form-actions-centered {
   display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-top: 16px;
   justify-content: center;
+  align-items: center;
+  gap: 24px;
+  margin-top: 12px;
 }
 
-.rss-btn-submit {
-  background: linear-gradient(135deg, var(--accent2), var(--accent));
+.rss-btn-submit-gradient {
+  padding: 12px 36px;
+  background: linear-gradient(135deg, #ff8a05, #ffb12b);
   color: #fff;
   border: none;
-  padding: 10px 24px;
   border-radius: 4px;
   font-weight: 700;
   font-size: 14px;
   cursor: pointer;
-  box-shadow: 0 4px 10px rgba(232, 56, 13, 0.2);
+  box-shadow: 0 4px 12px rgba(255, 177, 43, 0.3);
   transition: transform 0.2s, box-shadow 0.2s;
 }
 
-.rss-btn-submit:hover {
+.rss-btn-submit-gradient:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 14px rgba(232, 56, 13, 0.3);
+  box-shadow: 0 6px 16px rgba(255, 177, 43, 0.4);
 }
 
-.rss-btn-back {
+.rss-btn-back-link {
   background: none;
-  color: var(--text-secondary);
   border: none;
+  color: #a0aec0;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: color 0.2s;
 }
 
-.rss-btn-back:hover {
-  color: var(--text-primary);
+.rss-btn-back-link:hover {
+  color: #718096;
 }
+
 
 /* Profile Page Styles */
 .profile-page {
