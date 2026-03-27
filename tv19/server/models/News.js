@@ -17,6 +17,7 @@ const newsSchema = new mongoose.Schema(
         trending: { type: Boolean, default: false },
         top: { type: Boolean, default: false },
         breaking: { type: Boolean, default: false },
+        views: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

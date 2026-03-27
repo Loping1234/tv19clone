@@ -1,7 +1,8 @@
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import '../../../pages/css/BUSINESS/BusinessPage.css';
 import '../../../pages/css/topic_categories.css';
-import { getBusiness, scrapeFallbackImage, type Article } from '../../../services/newsService';
+import { getBusiness, type Article } from '../../../services/newsService';
+import NewsImage from '../common/NewsImage';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
 const REGIONS = [
@@ -49,7 +50,6 @@ export default function BusinessPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
-    const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Infinite Scroll worlds
@@ -68,27 +68,12 @@ export default function BusinessPage() {
         }
     };
 
-    const handleImageError = useCallback(async (article: Article) => {
-        if (!article.image) return;
-
-        // Immediately display the placeholder visually
-        setFailedImages((prev) => new Set(prev).add(article.image!));
-
-        // Attempt to scrape a working fallback image from the article website
-        const fallbackImage = await scrapeFallbackImage(article.url, article.image);
-        if (fallbackImage) {
-            setArticles((prev) =>
-                prev.map((a) => (a.url === article.url ? { ...a, image: fallbackImage } : a))
-            );
-        }
-    }, []);
 
     const fetchRegionNews = useCallback(async (region: string, isLoadMore: boolean = false) => {
         if (!isLoadMore) {
             setLoading(true);
             setError(null);
             setFallbackNotice(null);
-            setFailedImages(new Set());
         } else {
             setLoadingMore(true);
         }
@@ -162,6 +147,8 @@ export default function BusinessPage() {
 
     useEffect(() => {
         fetchRegionNews(activeRegion, false);
+        const interval = setInterval(() => fetchRegionNews(activeRegion, false), 1800000); // 30 minutes
+        return () => clearInterval(interval);
     }, [activeRegion, fetchRegionNews]);
 
     const heroArticle = useMemo(() => articles[0], [articles]);
@@ -215,12 +202,14 @@ export default function BusinessPage() {
 
                                 {heroArticle && (
                                     <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="business-hero-card">
-                                        <div className="business-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
-                                            {heroArticle.image && !failedImages.has(heroArticle.image) ? (
-                                                <img src={heroArticle.image} alt={heroArticle.title} className="business-hero-card__image" onError={() => handleImageError(heroArticle)} />
-                                            ) : (
-                                                <div className="business-hero-card__placeholder" />
-                                            )}
+                                        <div className="business-hero-card__image-wrap">
+                                            <NewsImage 
+                                                src={heroArticle.image} 
+                                                alt={heroArticle.title} 
+                                                category="business"
+                                                articleUrl={heroArticle.url}
+                                                className="business-hero-card__image"
+                                            />
 
                                             <div className="business-hero-card__overlay">
                                                 <div className={`business-badge ${activeRegion.length > 12 ? 'small' : ''}`}>
@@ -241,12 +230,14 @@ export default function BusinessPage() {
                                 <div className="business-story-list">
                                     {mainListArticles.map((article, index) => (
                                         <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="business-story-item">
-                                            <div className="business-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
-                                                {article.image && !failedImages.has(article.image) ? (
-                                                    <img src={article.image} alt={article.title} className="business-story-item__thumb" onError={() => handleImageError(article)} />
-                                                ) : (
-                                                    <div className="business-story-item__thumb-placeholder" />
-                                                )}
+                                            <div className="business-story-item__thumb-wrap">
+                                                <NewsImage 
+                                                    src={article.image} 
+                                                    alt={article.title} 
+                                                    category="business"
+                                                    articleUrl={article.url}
+                                                    className="business-story-item__thumb"
+                                                />
                                             </div>
                                             <div className="business-story-item__content">
                                                 <h2 className="business-story-item__title">{article.title}</h2>
@@ -287,10 +278,14 @@ export default function BusinessPage() {
                                     {trendingArticles.map((article, idx) => (
                                         idx === 0 ? (
                                             <a key={idx} href={article.url} className="business-trending-item-top" target="_blank" rel="noopener noreferrer">
-                                                <div className="business-trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
-                                                    {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="business-trending-item-top__image" onError={() => handleImageError(article)} />
-                                                    )}
+                                                <div className="business-trending-item-top__image-wrap">
+                                                    <NewsImage 
+                                                        src={article.image} 
+                                                        alt={article.title} 
+                                                        category="business"
+                                                        articleUrl={article.url}
+                                                        className="business-trending-item-top__image"
+                                                    />
                                                 </div>
                                                 <span className="business-trending-rank">#{idx + 1} Trending</span>
                                                 <h4 className="business-trending-item-top__title">{article.title}</h4>
@@ -300,10 +295,14 @@ export default function BusinessPage() {
                                             </a>
                                         ) : (
                                             <a key={idx} href={article.url} className="business-trending-item-small" target="_blank" rel="noopener noreferrer">
-                                                <div className="business-trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
-                                                    {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="business-trending-item-small__image" onError={() => handleImageError(article)} />
-                                                    )}
+                                                <div className="business-trending-item-small__image-wrap">
+                                                    <NewsImage 
+                                                        src={article.image} 
+                                                        alt={article.title} 
+                                                        category="business"
+                                                        articleUrl={article.url}
+                                                        className="business-trending-item-small__image"
+                                                    />
                                                 </div>
                                                 <div>
                                                     <span className="business-trending-rank">#{idx + 1} Trending</span>

@@ -54,12 +54,14 @@ export default function News() {
 
     const fetchNews = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/admin/news`, {
+            const page = 1;
+            const limit = 1000; // Fetch first 1000 for admin panel
+            const res = await fetch(`${API_BASE}/api/admin/news?page=${page}&limit=${limit}`, {
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             if (res.ok) {
                 const data = await res.json();
-                setNews(data);
+                setNews(data.news || []);
             }
         } catch (error) {
             console.error('Failed to fetch news', error);

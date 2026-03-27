@@ -2,7 +2,8 @@ import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import '../../../pages/css/DYNAMIC/DynamicSectionPage.css';
 import '../../../pages/css/topic_categories.css';
-import { getDynamicCategoryNews, scrapeFallbackImage, type Article } from '../../../services/newsService';
+import { getDynamicCategoryNews, type Article } from '../../../services/newsService';
+import NewsImage from '../common/NewsImage';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
 
 export const DYNAMIC_CATEGORIES_CONFIG: Record<string, { title: string, apiCategory: string, subcategories: string[] }> = {
@@ -60,7 +61,6 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [fallbackNotice, setFallbackNotice] = useState<string | null>(null);
-    const [failedImages, setFailedImages] = useState<Set<string>>(new Set());
     const scrollRef = useRef<HTMLDivElement>(null);
 
     // Infinite Scroll worlds
@@ -85,20 +85,6 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
         }
     };
 
-    const handleImageError = useCallback(async (article: Article) => {
-        if (!article.image) return;
-
-        // Immediately display the placeholder visually
-        setFailedImages((prev) => new Set(prev).add(article.image!));
-
-        // Attempt to scrape a working fallback image from the article website
-        const fallbackImage = await scrapeFallbackImage(article.url, article.image);
-        if (fallbackImage) {
-            setArticles((prev) =>
-                prev.map((a) => (a.url === article.url ? { ...a, image: fallbackImage } : a))
-            );
-        }
-    }, []);
 
     const fetchRegionNews = useCallback(async (region: string, isLoadMore: boolean = false) => {
         if (!config) return;
@@ -107,7 +93,6 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
             setLoading(true);
             setError(null);
             setFallbackNotice(null);
-            setFailedImages(new Set());
         } else {
             setLoadingMore(true);
         }
@@ -177,6 +162,8 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
 
     useEffect(() => {
         fetchRegionNews(activeRegion, false);
+        const interval = setInterval(() => fetchRegionNews(activeRegion, false), 1800000); // 30 minutes
+        return () => clearInterval(interval);
     }, [activeRegion, fetchRegionNews, categoryId]); // Fetch when region or root categoryId changes
 
     if (!config) {
@@ -235,12 +222,14 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
 
                                 {heroArticle && (
                                     <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="dynamic-hero-card">
-                                        <div className="dynamic-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
-                                            {heroArticle.image && !failedImages.has(heroArticle.image) ? (
-                                                <img src={heroArticle.image} alt={heroArticle.title} className="dynamic-hero-card__image" onError={() => handleImageError(heroArticle)} />
-                                            ) : (
-                                                <div className="dynamic-hero-card__placeholder" />
-                                            )}
+                                        <div className="dynamic-hero-card__image-wrap">
+                                            <NewsImage 
+                                                src={heroArticle.image} 
+                                                alt={heroArticle.title} 
+                                                category={config.apiCategory}
+                                                articleUrl={heroArticle.url}
+                                                className="dynamic-hero-card__image"
+                                            />
 
                                             <div className="dynamic-hero-card__overlay">
                                                 <div className={`dynamic-badge ${activeRegion.length > 12 ? 'small' : ''}`}>
@@ -261,12 +250,14 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                 <div className="dynamic-story-list">
                                     {mainListArticles.map((article, index) => (
                                         <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="dynamic-story-item">
-                                            <div className="dynamic-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
-                                                {article.image && !failedImages.has(article.image) ? (
-                                                    <img src={article.image} alt={article.title} className="dynamic-story-item__thumb" onError={() => handleImageError(article)} />
-                                                ) : (
-                                                    <div className="dynamic-story-item__thumb-placeholder" />
-                                                )}
+                                            <div className="dynamic-story-item__thumb-wrap">
+                                                <NewsImage 
+                                                    src={article.image} 
+                                                    alt={article.title} 
+                                                    category={config.apiCategory}
+                                                    articleUrl={article.url}
+                                                    className="dynamic-story-item__thumb"
+                                                />
                                             </div>
                                             <div className="dynamic-story-item__content">
                                                 <h2 className="dynamic-story-item__title">{article.title}</h2>
@@ -307,10 +298,14 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                     {trendingArticles.map((article, idx) => (
                                         idx === 0 ? (
                                             <a key={idx} href={article.url} className="dynamic-trending-item-top" target="_blank" rel="noopener noreferrer">
-                                                <div className="dynamic-trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
-                                                    {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="dynamic-trending-item-top__image" onError={() => handleImageError(article)} />
-                                                    )}
+                                                <div className="dynamic-trending-item-top__image-wrap">
+                                                    <NewsImage 
+                                                        src={article.image} 
+                                                        alt={article.title} 
+                                                        category={config.apiCategory}
+                                                        articleUrl={article.url}
+                                                        className="dynamic-trending-item-top__image"
+                                                    />
                                                 </div>
                                                 <span className="dynamic-trending-rank">#{idx + 1} Trending</span>
                                                 <h4 className="dynamic-trending-item-top__title">{article.title}</h4>
@@ -320,10 +315,14 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                             </a>
                                         ) : (
                                             <a key={idx} href={article.url} className="dynamic-trending-item-small" target="_blank" rel="noopener noreferrer">
-                                                <div className="dynamic-trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
-                                                    {article.image && !failedImages.has(article.image) && (
-                                                        <img src={article.image} className="dynamic-trending-item-small__image" onError={() => handleImageError(article)} />
-                                                    )}
+                                                <div className="dynamic-trending-item-small__image-wrap">
+                                                    <NewsImage 
+                                                        src={article.image} 
+                                                        alt={article.title} 
+                                                        category={config.apiCategory}
+                                                        articleUrl={article.url}
+                                                        className="dynamic-trending-item-small__image"
+                                                    />
                                                 </div>
                                                 <div>
                                                     <span className="dynamic-trending-rank">#{idx + 1} Trending</span>

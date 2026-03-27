@@ -63,7 +63,7 @@ const NAV_ITEMS: NavItem[] = [
 
     },
     //{ id: 'settings', label: 'Pages', icon: <Page size={16} /> },
-    { id: 'settings', label: 'Users', icon: <Users size={16} /> },
+    { id: 'users', label: 'Users', icon: <Users size={16} /> },
     { id: 'reset-password', label: 'Reset Password', icon: <User size={16} /> },
     { id: 'categories', label: 'Categories', icon: <Tag size={16} /> },
     { id: 'settings', label: 'SubHeadings', icon: <List size={16} /> },

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Opinion.css';
-import { getOpinion, type Article } from '../../../../services/newsService';
+import { getOpinion, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Opinion: React.FC = () => {
@@ -26,7 +28,7 @@ const Opinion: React.FC = () => {
 
     useEffect(() => {
         fetchOpinion();
-        const interval = setInterval(fetchOpinion, 180000);
+        const interval = setInterval(fetchOpinion, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchOpinion]);
 
@@ -62,25 +64,24 @@ const Opinion: React.FC = () => {
             <section className="Opinion-section">
                 <div className="Opinion-section__header">
                     <h3 className="Opinion-section__heading">Opinion</h3>
-                    <a href="#" className="Opinion-section__more">
+                    <Link to="/opinion" className="Opinion-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Opinion-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'opinion'}/${slugify(heroArticle.title)}`}
                         className="Opinion-hero"
                     >
                         <div className="Opinion-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Opinion-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="opinion"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Opinion-hero__body">
                             <span className="Opinion-hero__category">Opinion</span>
@@ -88,30 +89,23 @@ const Opinion: React.FC = () => {
                             <p className="Opinion-hero__desc">{heroArticle.description}</p>
                             <span className="Opinion-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Opinion-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'opinion'}/${slugify(article.title)}`}
                                 className="Opinion-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Opinion-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Opinion-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="opinion"
+                                    articleUrl={article.url}
+                                    className="Opinion-list__thumb"
+                                />
                                 <div className="Opinion-list__info">
                                     <h4 className="Opinion-list__title">{article.title}</h4>
                                     <span className="Opinion-list__meta">
@@ -119,7 +113,7 @@ const Opinion: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

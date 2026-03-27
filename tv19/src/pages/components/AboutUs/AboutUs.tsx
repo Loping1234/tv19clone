@@ -1,7 +1,32 @@
+import { useState, useEffect } from 'react';
 import '../../css/AboutUs/AboutUs.css';
 import { UilEye, UilBullseye } from '@iconscout/react-unicons';
 
+const API_BASE = 'http://localhost:5000';
+
+interface TeamMember {
+  _id: string;
+  name: string;
+  role: string;
+  description: string;
+  imageUrl: string;
+  status: boolean;
+}
+
 export default function AboutUs() {
+  const [teamMembers, setTeamMembers] = useState<TeamMember[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch(`${API_BASE}/api/team-members`)
+      .then(res => res.ok ? res.json() : Promise.reject('Failed'))
+      .then(data => {
+        const activeMembers = (data.members || []).filter((m: TeamMember) => m.status);
+        setTeamMembers(activeMembers);
+      })
+      .catch(err => console.error('Failed to load team members:', err))
+      .finally(() => setLoading(false));
+  }, []);
   return (
     <div className="about-page-wrapper">
       {/* Top Banner Section */}
@@ -101,57 +126,32 @@ export default function AboutUs() {
         </div>
 
         <div className="leadership-grid">
-          {/* 1 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-1"></div>
-            <h4>Rajdeep Singh</h4>
-            <span className="leader-role">Editor-in-Chief</span>
-            <p>The editor-in-chief holds the highest editorial position within a publication and media organization, overseeing content creation.</p>
-          </div>
-          {/* 2 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-2"></div>
-            <h4>Anjana Sharma</h4>
-            <span className="leader-role">Chief Content Officer</span>
-            <p>Chief content officers direct the multi-platform content strategy for the company\'s portfolio of brands.</p>
-          </div>
-          {/* 3 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-3"></div>
-            <h4>Pradeep Mehta</h4>
-            <span className="leader-role">Chief Marketing Officer</span>
-            <p>Oversees the marketing department, brand management, and all marketing communications.</p>
-          </div>
-          {/* 4 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-4"></div>
-            <h4>Sharad Joshi</h4>
-            <span className="leader-role">News Editor</span>
-            <p>खबर-गैलेरी एक डिजिटल न्यूज प्लेटफ़ॉर्म है, जो मुख्यधारा और ब्रेकिंग न्यूज और फीचर और वीडियो की प्रामाणिक और सटीक रिपोर्टिंग प्रदान करने पर केंद्रित है।</p>
-          </div>
-          {/* 5 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-5"></div>
-            <h4>Arvind Arora</h4>
-            <span className="leader-role">Head of Digital</span>
-            <p>Arvind drives our digital transformation, leading website, mobile app, and social media strategy for maximum reach.</p>
-          </div>
-          {/* 6 */}
-          <div className="leader-card">
-            <div className="leader-img placeholder-6"></div>
-            <h4>Zafar Choudhary</h4>
-            <span className="leader-role">Manager</span>
-            <p>Business administration expert and operations manager.</p>
-          </div>
-          {/* 7 */}
-          <div className="leader-card">
-            <div className="leader-img blur-placeholder">
-              <span>19</span>
+          {loading ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#999' }}>
+              Loading team members...
             </div>
-            <h4>TV19 News</h4>
-            <span className="leader-role">System Default Author</span>
-            <p>TV19 News represents the official editorial team responsible for publishing syndicated and agency-sourced content. Articles without a set author...</p>
-          </div>
+          ) : teamMembers.length === 0 ? (
+            <div style={{ gridColumn: '1 / -1', textAlign: 'center', padding: '40px', color: '#999' }}>
+              No team members available.
+            </div>
+          ) : (
+            teamMembers.map((member) => (
+              <div className="leader-card" key={member._id}>
+                <div className="leader-img">
+                  {member.imageUrl ? (
+                    <img src={`${API_BASE}${member.imageUrl}`} alt={member.name} />
+                  ) : (
+                    <div className="leader-placeholder">
+                      {member.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
+                </div>
+                <h4>{member.name}</h4>
+                <span className="leader-role">{member.role}</span>
+                <p>{member.description}</p>
+              </div>
+            ))
+          )}
         </div>
       </section>
     </div>

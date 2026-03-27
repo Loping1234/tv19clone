@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Arts.css';
-import { getArts, type Article } from '../../../../services/newsService';
+import { getArts, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Arts: React.FC = () => {
@@ -26,7 +28,7 @@ const Arts: React.FC = () => {
 
     useEffect(() => {
         fetchArts();
-        const interval = setInterval(fetchArts, 180000);
+        const interval = setInterval(fetchArts, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchArts]);
 
@@ -62,25 +64,24 @@ const Arts: React.FC = () => {
             <section className="Arts-section">
                 <div className="Arts-section__header">
                     <h3 className="Arts-section__heading">Arts</h3>
-                    <a href="#" className="Arts-section__more">
+                    <Link to="/art" className="Arts-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Arts-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'arts'}/${slugify(heroArticle.title)}`}
                         className="Arts-hero"
                     >
                         <div className="Arts-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Arts-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="arts"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Arts-hero__body">
                             <span className="Arts-hero__category">Arts</span>
@@ -88,30 +89,23 @@ const Arts: React.FC = () => {
                             <p className="Arts-hero__desc">{heroArticle.description}</p>
                             <span className="Arts-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Arts-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'arts'}/${slugify(article.title)}`}
                                 className="Arts-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Arts-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Arts-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="arts"
+                                    articleUrl={article.url}
+                                    className="Arts-list__thumb"
+                                />
                                 <div className="Arts-list__info">
                                     <h4 className="Arts-list__title">{article.title}</h4>
                                     <span className="Arts-list__meta">
@@ -119,7 +113,7 @@ const Arts: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

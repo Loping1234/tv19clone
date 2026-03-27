@@ -1,27 +1,142 @@
-import React, { useState } from 'react';
-import { PlusCircle, MinusCircle, Trash2, Eye, Edit, FileText, AlignLeft, ArrowLeft } from 'react-feather';
+import React, { useState, useEffect } from 'react';
+import { PlusCircle, MinusCircle, Trash2, Eye, Edit, FileText, AlignLeft, ArrowLeft, CheckCircle, AlertCircle } from 'react-feather';
 import './Categories.css';
 
-// Mock data to match the screenshot provided
-const mockCategories = [
-    { id: 1, name: 'World', createdOn: 'Oct 13, 2025 02:49 PM', status: true, metaKeyword: 'global news updates', metaDescription: 'Stay updated with world news today featuring global politics, international affairs, economy, conflicts and major events on TV19 News.' },
-    { id: 2, name: 'Technology', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'latest tech updates', metaDescription: 'Read technology news today with updates on gadgets, smartphones, AI, startups, apps, digital trends and innovation stories on TV19 News.' },
-    { id: 3, name: 'State', createdOn: 'Nov 18, 2025 04:03 PM', status: true, metaKeyword: 'state news local', metaDescription: 'Local and state news coverage.' },
-    { id: 4, name: 'Opinion', createdOn: 'Jan 28, 2026 02:10 PM', status: true, metaKeyword: 'expert opinions', metaDescription: 'Editorials and expert opinions.' },
-    { id: 5, name: 'Green Future', createdOn: 'Dec 18, 2025 08:00 PM', status: true, metaKeyword: 'climate change green', metaDescription: 'Environmental and climate change news.' },
-    { id: 6, name: 'Finance', createdOn: 'Nov 14, 2025 04:33 PM', status: true, metaKeyword: 'finance markets', metaDescription: 'Financial markets and economy news.' },
-    { id: 7, name: 'Entertainment', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'entertainment movies', metaDescription: 'Entertainment and pop culture.' },
-    { id: 8, name: 'Education', createdOn: 'Jan 19, 2026 04:48 PM', status: true, metaKeyword: 'education learning', metaDescription: 'Education sector updates.' },
-    { id: 9, name: 'Weather', createdOn: 'Oct 27, 2025 05:29 PM', status: true, metaKeyword: 'weather forecast', metaDescription: 'Daily weather forecasts.' },
-    { id: 10, name: 'Sports', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'sports scores', metaDescription: 'Live sports scores and news.' },
-];
+const API_BASE = 'http://localhost:5000';
+
+function getToken() {
+    return localStorage.getItem('adminToken') || '';
+}
+
+function authHeaders(contentType?: string) {
+    const headers: Record<string, string> = {
+        'Authorization': `Bearer ${getToken()}`
+    };
+    if (contentType) headers['Content-Type'] = contentType;
+    return headers;
+}
+
+interface Category {
+    _id: string;
+    name: string;
+    slug: string;
+    parent: string | null;
+    description: string;
+    icon: string;
+    order: number;
+    status: boolean;
+    isMainCategory: boolean;
+    createdAt: string;
+    children?: Category[];
+}
 
 const Categories = () => {
-    const [entries, setEntries] = useState(10);
-    const [searchTerm, setSearchTerm] = useState('');
-    const [categories, setCategories] = useState(mockCategories);
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
-    const [expandedRows, setExpandedRows] = useState<number[]>([]);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
+    const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+    const [viewingCategory, setViewingCategory] = useState<Category | null>(null);
+    const [showAddModal, setShowAddModal] = useState(false);
+    const [parentCategories, setParentCategories] = useState<Category[]>([]);
+
+    useEffect(() => {
+        fetchCategories();
+    }, []);
+
+    useEffect(() => {
+        if (toast) {
+            const t = setTimeout(() => setToast(null), 3000);
+            return () => clearTimeout(t);
+        }
+    }, [toast]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/categories`);
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data.categories || []);
+                setParentCategories((data.categories || []).filter((c: Category) => !c.parent));
+            }
+        } catch (error) {
+            console.error('Failed to fetch categories', error);
+            setToast({ type: 'error', msg: 'Failed to load categories' });
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleDelete = async () => {
+        if (selectedItems.length === 0) {
+            setToast({ type: 'error', msg: 'Please select at least one category' });
+            return;
+        }
+
+        if (!confirm('Are you sure you want to delete selected categories?')) return;
+
+        try {
+            await Promise.all(selectedItems.map(id =>
+                fetch(`${API_BASE}/api/categories/${id}`, {
+                    method: 'DELETE',
+                    headers: authHeaders()
+                })
+            ));
+            setToast({ type: 'success', msg: 'Categories deleted successfully' });
+            setSelectedItems([]);
+            fetchCategories();
+        } catch (error) {
+            console.error('Delete error:', error);
+            setToast({ type: 'error', msg: 'Failed to delete categories' });
+        }
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCategory) return;
+
+        try {
+            const method = editingCategory._id ? 'PUT' : 'POST';
+            const url = editingCategory._id
+                ? `${API_BASE}/api/categories/${editingCategory._id}`
+                : `${API_BASE}/api/categories`;
+
+            const res = await fetch(url, {
+                method,
+                headers: authHeaders('application/json'),
+                body: JSON.stringify(editingCategory)
+            });
+
+            if (!res.ok) throw new Error('Save failed');
+            setToast({ type: 'success', msg: `Category ${editingCategory._id ? 'updated' : 'added'} successfully` });
+            setEditingCategory(null);
+            setShowAddModal(false);
+            fetchCategories();
+        } catch (error) {
+            console.error('Save error:', error);
+            setToast({ type: 'error', msg: 'Failed to save category' });
+        }
+    };
+
+    const toggleStatus = async (id: string, currentStatus: boolean) => {
+        try {
+            const category = categories.find(c => c._id === id);
+            if (!category) return;
+
+            const res = await fetch(`${API_BASE}/api/categories/${id}`, {
+                method: 'PUT',
+                headers: authHeaders('application/json'),
+                body: JSON.stringify({ ...category, status: !currentStatus })
+            });
+
+            if (!res.ok) throw new Error('Update failed');
+            setCategories(prev => prev.map(c => c._id === id ? { ...c, status: !currentStatus } : c));
+        } catch (error) {
+            console.error('Toggle status error:', error);
+            setToast({ type: 'error', msg: 'Failed to update status' });
+        }
+    };
 
     const [editingCategory, setEditingCategory] = useState<typeof mockCategories[0] | null>(null);
     const [viewingCategory, setViewingCategory] = useState<typeof mockCategories[0] | null>(null);

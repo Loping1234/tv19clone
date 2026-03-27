@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Crime.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getTopHeadlines, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Crime: React.FC = () => {
@@ -27,7 +29,7 @@ const Crime: React.FC = () => {
 
     useEffect(() => {
         fetchCrimeNews();
-        const interval = setInterval(fetchCrimeNews, 180000);
+        const interval = setInterval(fetchCrimeNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchCrimeNews]);
 
@@ -63,25 +65,24 @@ const Crime: React.FC = () => {
             <section className="Crime-section">
                 <div className="Crime-section__header">
                     <h3 className="Crime-section__heading">Crime</h3>
-                    <a href="#" className="Crime-section__more">
+                    <Link to="/crime" className="Crime-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Crime-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'crime'}/${slugify(heroArticle.title)}`}
                         className="Crime-hero"
                     >
                         <div className="Crime-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Crime-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="crime"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Crime-hero__body">
                             <span className="Crime-hero__category">Crime</span>
@@ -89,30 +90,23 @@ const Crime: React.FC = () => {
                             <p className="Crime-hero__desc">{heroArticle.description}</p>
                             <span className="Crime-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Crime-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'crime'}/${slugify(article.title)}`}
                                 className="Crime-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Crime-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Crime-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="crime"
+                                    articleUrl={article.url}
+                                    className="Crime-list__thumb"
+                                />
                                 <div className="Crime-list__info">
                                     <h4 className="Crime-list__title">{article.title}</h4>
                                     <span className="Crime-list__meta">
@@ -120,7 +114,7 @@ const Crime: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

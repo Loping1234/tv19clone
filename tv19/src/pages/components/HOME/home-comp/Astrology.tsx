@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Astrology.css';
-import { getAstrology, type Article } from '../../../../services/newsService';
+import { getAstrology, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Astrology: React.FC = () => {
@@ -26,7 +28,7 @@ const Astrology: React.FC = () => {
 
     useEffect(() => {
         fetchAstrology();
-        const interval = setInterval(fetchAstrology, 180000);
+        const interval = setInterval(fetchAstrology, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchAstrology]);
 
@@ -62,25 +64,24 @@ const Astrology: React.FC = () => {
             <section className="Astrology-section">
                 <div className="Astrology-section__header">
                     <h3 className="Astrology-section__heading">Astrology</h3>
-                    <a href="#" className="Astrology-section__more">
+                    <Link to="/astrology" className="Astrology-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Astrology-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'astrology'}/${slugify(heroArticle.title)}`}
                         className="Astrology-hero"
                     >
                         <div className="Astrology-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Astrology-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="astrology"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Astrology-hero__body">
                             <span className="Astrology-hero__category">Astrology</span>
@@ -88,30 +89,23 @@ const Astrology: React.FC = () => {
                             <p className="Astrology-hero__desc">{heroArticle.description}</p>
                             <span className="Astrology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Astrology-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'astrology'}/${slugify(article.title)}`}
                                 className="Astrology-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Astrology-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Astrology-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="astrology"
+                                    articleUrl={article.url}
+                                    className="Astrology-list__thumb"
+                                />
                                 <div className="Astrology-list__info">
                                     <h4 className="Astrology-list__title">{article.title}</h4>
                                     <span className="Astrology-list__meta">
@@ -119,7 +113,7 @@ const Astrology: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

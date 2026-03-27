@@ -1,7 +1,7 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../../css/HOME/Home.css';
-import { getTopHeadlines, searchNews, type Article } from '../../../services/newsService';
+import { getTopHeadlines, searchNews, slugify, type Article } from '../../../services/newsService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import Rajasthan from './home-comp/Rajasthan';
 import TrendingStories from './home-comp/TrendingStories';
@@ -31,22 +31,27 @@ const Home: React.FC = () => {
   const fetchNews = useCallback(async () => {
     try {
       setLoading(true);
-      let response = await getTopHeadlines('top', 'in', 10);
+      // Fetch latest news with images only
+      let response = await getTopHeadlines('top', 'in', 20, true);
+      
       if (response.articles.length === 0) {
-        response = await searchNews('latest breaking news', 10);
+        response = await searchNews('latest breaking news', 20);
       }
-      // Filter articles that have images for the hero carousel
-      const withImages = response.articles.filter((a) => a.image);
+      
+      // Filter articles that have images
+      const withImages = response.articles.filter((a) => a.image && a.image.trim() !== '');
+      
+      // Remove duplicates by title
       const unique = withImages.filter(
         (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
       );
-      // Pick 5 for hero carousel
+      
+      // Pick 5 most recent for hero carousel
       const hero = unique.slice(0, 5);
       setHeroArticles(hero);
-      // Top stories: exclude hero articles
-      const heroTitles = new Set(hero.map(a => a.title));
-      const topStoriesFiltered = response.articles.filter(a => !heroTitles.has(a.title));
-      setTopStories(topStoriesFiltered.slice(0, 6));
+      
+      // Top stories: next 6 articles with images
+      setTopStories(unique.slice(5, 11));
 
     } catch (err) {
       console.error('Error fetching news for Home:', err);
@@ -109,11 +114,9 @@ const Home: React.FC = () => {
             <>
               <div className="carousel-viewport">
                 {heroArticles.map((article, index) => (
-                  <a
+                  <Link
                     key={index}
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    to={`/article/${article.category || 'top'}/${slugify(article.title)}`}
                     className={`carousel-slide ${index === activeSlide ? 'active' : ''}`}
                   >
                     <img
@@ -128,7 +131,7 @@ const Home: React.FC = () => {
                         {article.source} &bull; {timeAgo(article.publishedAt)}
                       </span>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
 
@@ -165,11 +168,9 @@ const Home: React.FC = () => {
           </div>
           <div className="top-stories-list">
             {topStories.map((article, index) => (
-              <a
+              <Link
                 key={index}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
+                to={`/article/${article.category || 'top'}/${slugify(article.title)}`}
                 className="story-item"
               >
                 <img
@@ -182,7 +183,7 @@ const Home: React.FC = () => {
                   <h6 className="story-title">{article.title}</h6>
                   <span className="story-time">{timeAgo(article.publishedAt)}</span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

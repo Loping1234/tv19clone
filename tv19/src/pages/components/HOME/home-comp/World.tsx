@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/World.css';
-import { getWorld, type Article } from '../../../../services/newsService';
+import { getWorld, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const World: React.FC = () => {
@@ -26,7 +28,7 @@ const World: React.FC = () => {
 
     useEffect(() => {
         fetchWorld();
-        const interval = setInterval(fetchWorld, 180000);
+        const interval = setInterval(fetchWorld, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchWorld]);
 
@@ -62,34 +64,27 @@ const World: React.FC = () => {
             <section className="World-section">
                 <div className="World-section__header">
                     <h3 className="World-section__heading">World</h3>
-                    <a href="#" className="World-section__more">
+                    <Link to="/world" className="World-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="World-grid">             
                     {/* Left: List with thumbnails */}
                     <div className="World-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'world'}/${slugify(article.title)}`}
                                 className="World-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="World-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="World-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="world"
+                                    articleUrl={article.url}
+                                    className="World-list__thumb"
+                                />
                                 <div className="World-list__info">
                                     <h4 className="World-list__title">{article.title}</h4>
                                     <span className="World-list__meta">
@@ -97,22 +92,21 @@ const World: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     {/* Right: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'world'}/${slugify(heroArticle.title)}`}
                         className="World-hero"
                     >
                         <div className="World-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="World-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="world"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="World-hero__body">
                             <span className="World-hero__category">World</span>
@@ -120,7 +114,7 @@ const World: React.FC = () => {
                             <p className="World-hero__desc">{heroArticle.description}</p>
                             <span className="World-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

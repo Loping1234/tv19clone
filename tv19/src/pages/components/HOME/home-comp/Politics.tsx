@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Politics.css';
-import { getPolitics, type Article } from '../../../../services/newsService';
+import { getPolitics, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Politics: React.FC = () => {
@@ -9,7 +11,7 @@ const Politics: React.FC = () => {
     const fetchPolitics = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getPolitics('politics', 'in', 10);
+            const response = await getPolitics('politics', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -26,7 +28,7 @@ const Politics: React.FC = () => {
 
     useEffect(() => {
         fetchPolitics();
-        const interval = setInterval(fetchPolitics, 180000);
+        const interval = setInterval(fetchPolitics, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchPolitics]);
 
@@ -62,34 +64,27 @@ const Politics: React.FC = () => {
             <section className="Politics-section">
                 <div className="Politics-section__header">
                     <h3 className="Politics-section__heading">Politics</h3>
-                    <a href="#" className="Politics-section__more">
+                    <Link to="/politics" className="Politics-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Politics-grid">             
                     {/* Left: List with thumbnails */}
                     <div className="Politics-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'politics'}/${slugify(article.title)}`}
                                 className="Politics-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Politics-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Politics-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="politics"
+                                    articleUrl={article.url}
+                                    className="Politics-list__thumb"
+                                />
                                 <div className="Politics-list__info">
                                     <h4 className="Politics-list__title">{article.title}</h4>
                                     <span className="Politics-list__meta">
@@ -97,22 +92,21 @@ const Politics: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     {/* Right: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'politics'}/${slugify(heroArticle.title)}`}
                         className="Politics-hero"
                     >
                         <div className="Politics-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Politics-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="politics"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Politics-hero__body">
                             <span className="Politics-hero__category">Politics</span>
@@ -120,7 +114,7 @@ const Politics: React.FC = () => {
                             <p className="Politics-hero__desc">{heroArticle.description}</p>
                             <span className="Politics-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

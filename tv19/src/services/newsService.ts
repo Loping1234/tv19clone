@@ -10,6 +10,9 @@ export interface Article {
   image: string | null;
   publishedAt: string;
   content: string | null;
+  category: string;
+  views?: number;
+  _id?: string;
 }
 
 export interface NewsResponse {
@@ -547,3 +550,49 @@ function handleApiError(error: unknown): never {
   }
   throw error;
 }
+
+/**
+ * Fetch a single article by its slug.
+ */
+export const getArticleBySlug = async (
+  slug: string,
+  category?: string
+): Promise<{ article: Article; related: Article[] }> => {
+  try {
+    const params = category ? { category } : {};
+    const response = await axios.get<{ article: Article; related: Article[] }>(
+      `${BASE_URL}/article/${slug}`,
+      { params }
+    );
+    return response.data;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Increment the view count for an article.
+ */
+export const incrementViewCount = async (id: string): Promise<void> => {
+  try {
+    await axios.post(`${BASE_URL}/view/${id}`);
+  } catch (error) {
+    console.warn("View increment failed:", error);
+  }
+};
+
+/**
+ * Helper to generate a slug from a title.
+ */
+export const slugify = (text: string): string => {
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, "-") // Replace spaces with -
+    .replace(/[^\w-]+/g, "") // Remove all non-word chars
+    .replace(/--+/g, "-") // Replace multiple - with single -
+    .replace(/^-+/, "") // Trim - from start of text
+    .replace(/-+$/, ""); // Trim - from end of text
+};

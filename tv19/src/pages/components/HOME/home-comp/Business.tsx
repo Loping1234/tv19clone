@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Business.css';
-import { getBusiness, type Article } from '../../../../services/newsService';
+import { getBusiness, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Business: React.FC = () => {
@@ -28,7 +30,7 @@ const Business: React.FC = () => {
 
     useEffect(() => {
         fetchBusinessNews();
-        const interval = setInterval(fetchBusinessNews, 180000);
+        const interval = setInterval(fetchBusinessNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchBusinessNews]);
 
@@ -62,25 +64,18 @@ const Business: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
+        <Link
             key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/article/${article.category || 'business'}/${slugify(article.title)}`}
             className="Business-side-item"
         >
-            {article.image ? (
-                <img
-                    src={article.image}
-                    alt={article.title}
-                    className="Business-side-thumb"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                />
-            ) : (
-                <div className="Business-side-thumb-placeholder" />
-            )}
+            <NewsImage 
+                src={article.image} 
+                alt={article.title} 
+                category="business"
+                articleUrl={article.url}
+                className="Business-side-thumb"
+            />
             <div className="Business-side-info">
                 <h4 className="Business-side-title">{article.title}</h4>
                 <span className="Business-side-meta">
@@ -88,7 +83,7 @@ const Business: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -96,9 +91,9 @@ const Business: React.FC = () => {
             <section className="Business-section">
                 <div className="Business-section__header">
                     <h3 className="Business-section__heading">Business</h3>
-                    <a href="#" className="Business-section__more">
+                    <Link to="/business" className="Business-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Business-grid">
@@ -115,18 +110,17 @@ const Business: React.FC = () => {
                     </div>
 
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'business'}/${slugify(heroArticle.title)}`}
                         className="Business-hero"
                     >
                         <div className="Business-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Business-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="business"
+                                articleUrl={heroArticle.url}
+                            />
                             <span className="Business-hero__badge">{heroArticle.source}</span>
                         </div>
                         <div className="Business-hero__body">
@@ -136,7 +130,7 @@ const Business: React.FC = () => {
                             </div>
                             <span className="Business-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

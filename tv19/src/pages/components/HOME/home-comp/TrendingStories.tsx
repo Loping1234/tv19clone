@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/topheadlines.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getTopHeadlines, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const categoryLabels = ['INDUSTRY', 'JODHPUR', 'TENNIS', 'MOVIES', 'SPORTS', 'WORLD'];
@@ -26,7 +28,7 @@ const TrendingStories: React.FC = () => {
 
     useEffect(() => {
         fetchTrendingStories();
-        const interval = setInterval(fetchTrendingStories, 180000);
+        const interval = setInterval(fetchTrendingStories, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchTrendingStories]);
 
@@ -49,47 +51,36 @@ const TrendingStories: React.FC = () => {
                 {/* Section header */}
                 <div className="ts-header">
                     <h3 className="ts-heading">TRENDING STORIES</h3>
-                    <a href="#" className="ts-more">MORE <i className="fas fa-arrow-right"></i></a>
+                    <Link to="/trending" className="ts-more">MORE <i className="fas fa-arrow-right"></i></Link>
                 </div>
 
                 {/* 4-column card row */}
                 <div className="ts-grid">
                     {articles.map((article, idx) => (
-                        <a
+                        <Link
                             key={idx}
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
+                            to={`/article/${article.category || 'top'}/${slugify(article.title)}`}
                             className="ts-card"
                         >
-                            {/* Thumbnail */}
                             <div className="ts-card__img">
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).src =
-                                                'https://placehold.co/300x180/cccccc/555555?text=No+Image';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="ts-card__img-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="top"
+                                    articleUrl={article.url}
+                                />
                             </div>
 
-                            {/* Body */}
                             <div className="ts-card__body">
-                                {/* Numbered category badge */}
                                 <span className="ts-card__badge">
                                     #{idx + 1} {categoryLabels[idx] || article.source?.toUpperCase() || 'NEWS'}
                                 </span>
                                 <h4 className="ts-card__title">{article.title}</h4>
                                 <span className="ts-card__views">
-                                    <i className="far fa-eye"></i> 1 VIEWS
+                                    <i className="far fa-eye"></i> {article.views || 0} VIEWS
                                 </span>
                             </div>
-                        </a>
+                        </Link>
                     ))}
                 </div>
             </section>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Finance.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getTopHeadlines, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Finance: React.FC = () => {
@@ -28,7 +30,7 @@ const Finance: React.FC = () => {
 
     useEffect(() => {
         fetchFinanceNews();
-        const interval = setInterval(fetchFinanceNews, 180000);
+        const interval = setInterval(fetchFinanceNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchFinanceNews]);
 
@@ -62,25 +64,18 @@ const Finance: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
+        <Link
             key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/article/${article.category || 'finance'}/${slugify(article.title)}`}
             className="finance-side-item"
         >
-            {article.image ? (
-                <img
-                    src={article.image}
-                    alt={article.title}
-                    className="finance-side-thumb"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                />
-            ) : (
-                <div className="finance-side-thumb-placeholder" />
-            )}
+            <NewsImage 
+                src={article.image} 
+                alt={article.title} 
+                category="finance"
+                articleUrl={article.url}
+                className="finance-side-thumb"
+            />
             <div className="finance-side-info">
                 <h4 className="finance-side-title">{article.title}</h4>
                 <span className="finance-side-meta">
@@ -88,7 +83,7 @@ const Finance: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -96,9 +91,9 @@ const Finance: React.FC = () => {
             <section className="finance-section">
                 <div className="finance-section__header">
                     <h3 className="finance-section__heading">FINANCE</h3>
-                    <a href="#" className="finance-section__more">
+                    <Link to="/finance" className="finance-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="finance-grid">
@@ -108,18 +103,17 @@ const Finance: React.FC = () => {
                     </div>
 
                     {/* Center column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'finance'}/${slugify(heroArticle.title)}`}
                         className="finance-hero"
                     >
                         <div className="finance-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="finance-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="finance"
+                                articleUrl={heroArticle.url}
+                            />
                             <span className="finance-hero__badge">{heroArticle.source}</span>
                         </div>
                         <div className="finance-hero__body">
@@ -129,7 +123,7 @@ const Finance: React.FC = () => {
                             </div>
                             <span className="finance-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right column: list with thumbnails */}
                     <div className="finance-side-list">

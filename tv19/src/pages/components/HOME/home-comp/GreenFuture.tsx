@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/GreenFuture.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getTopHeadlines, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const GreenFuture: React.FC = () => {
@@ -28,7 +30,7 @@ const GreenFuture: React.FC = () => {
 
     useEffect(() => {
         fetchGreenFuture();
-        const interval = setInterval(fetchGreenFuture, 180000);
+        const interval = setInterval(fetchGreenFuture, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchGreenFuture]);
 
@@ -64,25 +66,24 @@ const GreenFuture: React.FC = () => {
             <section className="Green-Future-section">
                 <div className="Green-Future-section__header">
                     <h3 className="Green-Future-section__heading">TRENDING STORIES</h3>
-                    <a href="#" className="Green-Future-section__more">
+                    <Link to="/green-future" className="Green-Future-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Green-Future-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'environment'}/${slugify(heroArticle.title)}`}
                         className="Green-Future-hero"
                     >
                         <div className="Green-Future-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Green-Future-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="general"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Green-Future-hero__body">
                             <span className="Green-Future-hero__category">TRENDING</span>
@@ -90,30 +91,23 @@ const GreenFuture: React.FC = () => {
                             <p className="Green-Future-hero__desc">{heroArticle.description}</p>
                             <span className="Green-Future-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Green-Future-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'environment'}/${slugify(article.title)}`}
                                 className="Green-Future-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Green-Future-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Green-Future-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="general"
+                                    articleUrl={article.url}
+                                    className="Green-Future-list__thumb"
+                                />
                                 <div className="Green-Future-list__info">
                                     <h4 className="Green-Future-list__title">{article.title}</h4>
                                     <span className="Green-Future-list__meta">
@@ -121,7 +115,7 @@ const GreenFuture: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

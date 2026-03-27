@@ -7,13 +7,14 @@ import News from './components/Pages/News'
 import RssFeeds from './components/Pages/RssFeeds'
 import Profile from './components/Pages/Profile'
 import Login from './components/Pages/Login'
-import Categories from './components/Pages/Categories'
+import Categories from './components/Pages/CategoriesNew'
+import Users from './components/Pages/Users'
 import ResetPassword from './components/Pages/ResetPassword'
 import EmailTemplates from './components/Pages/EmailTemplates'
 import StaticPages from './components/Pages/StaticPages'
 import './App.css'
 
-export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
+export type Page = 'dashboard' | 'news' | 'categories' | 'users' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
 | 'about-us' | 'contact-us' | 'disclaimer' | 'privacy-policy' | 'advertise'
 
 function App() {
@@ -77,6 +78,7 @@ function App() {
       case 'social': return <Social />
       case 'news': return <News />
       case 'categories': return <Categories />
+      case 'users': return <Users />
       case 'email-templates': return <EmailTemplates />
       case 'pages': return <StaticPages />
       case 'about-us': return <StaticPages initialView={{ title: 'About Us' }} />
@@ -85,7 +87,7 @@ function App() {
       case 'privacy-policy': return <StaticPages initialView={{ title: 'Privacy Policy' }} />
       case 'advertise': return <StaticPages initialView={{ title: 'Advertise With Us' }} />
       case 'rss-feeds': return <RssFeeds />
-      case 'profile': return <Profile />
+      case 'profile': return <Profile onProfileUpdate={(name, imageUrl) => { setAdminName(name); setAdminImage(imageUrl); }} />
       case 'reset-password': return <ResetPassword />
       default: return (
         <div className="coming-soon">

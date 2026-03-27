@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Entertainment.css';
-import { getEntertainment, type Article } from '../../../../services/newsService';
+import { getEntertainment, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Entertainment: React.FC = () => {
@@ -28,7 +30,7 @@ const Entertainment: React.FC = () => {
 
     useEffect(() => {
         fetchEntertainmentNews();
-        const interval = setInterval(fetchEntertainmentNews, 180000);
+        const interval = setInterval(fetchEntertainmentNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchEntertainmentNews]);
 
@@ -62,25 +64,18 @@ const Entertainment: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
+        <Link
             key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/article/${article.category || 'entertainment'}/${slugify(article.title)}`}
             className="Entertainment-side-item"
         >
-            {article.image ? (
-                <img
-                    src={article.image}
-                    alt={article.title}
-                    className="Entertainment-side-thumb"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                />
-            ) : (
-                <div className="Entertainment-side-thumb-placeholder" />
-            )}
+            <NewsImage 
+                src={article.image} 
+                alt={article.title} 
+                category="entertainment"
+                articleUrl={article.url}
+                className="Entertainment-side-thumb"
+            />
             <div className="Entertainment-side-info">
                 <h4 className="Entertainment-side-title">{article.title}</h4>
                 <span className="Entertainment-side-meta">
@@ -88,7 +83,7 @@ const Entertainment: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -96,9 +91,9 @@ const Entertainment: React.FC = () => {
             <section className="Entertainment-section">
                 <div className="Entertainment-section__header">
                     <h3 className="Entertainment-section__heading">Entertainment</h3>
-                    <a href="#" className="Entertainment-section__more">
+                    <Link to="/entertainment" className="Entertainment-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Entertainment-grid">
@@ -115,18 +110,17 @@ const Entertainment: React.FC = () => {
                     </div>
 
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'entertainment'}/${slugify(heroArticle.title)}`}
                         className="Entertainment-hero"
                     >
                         <div className="Entertainment-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Entertainment-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="entertainment"
+                                articleUrl={heroArticle.url}
+                            />
                             <span className="Entertainment-hero__badge">{heroArticle.source}</span>
                         </div>
                         <div className="Entertainment-hero__body">
@@ -136,7 +130,7 @@ const Entertainment: React.FC = () => {
                             </div>
                             <span className="Entertainment-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

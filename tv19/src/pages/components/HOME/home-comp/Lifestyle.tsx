@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Lifestyle.css';
-import { getLifestyle, type Article } from '../../../../services/newsService';
+import { getLifestyle, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Lifestyle: React.FC = () => {
@@ -9,7 +11,7 @@ const Lifestyle: React.FC = () => {
     const fetchLifestyle = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getLifestyle('lifestyle', 'in', 10);
+            const response = await getLifestyle('lifestyle', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -26,7 +28,7 @@ const Lifestyle: React.FC = () => {
 
     useEffect(() => {
         fetchLifestyle();
-        const interval = setInterval(fetchLifestyle, 180000);
+        const interval = setInterval(fetchLifestyle, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchLifestyle]);
 
@@ -62,25 +64,24 @@ const Lifestyle: React.FC = () => {
             <section className="Lifestyle-section">
                 <div className="Lifestyle-section__header">
                     <h3 className="Lifestyle-section__heading">Lifestyle</h3>
-                    <a href="#" className="Lifestyle-section__more">
+                    <Link to="/lifestyle" className="Lifestyle-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Lifestyle-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'lifestyle'}/${slugify(heroArticle.title)}`}
                         className="Lifestyle-hero"
                     >
                         <div className="Lifestyle-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Lifestyle-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="lifestyle"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Lifestyle-hero__body">
                             <span className="Lifestyle-hero__category">Lifestyle</span>
@@ -88,30 +89,23 @@ const Lifestyle: React.FC = () => {
                             <p className="Lifestyle-hero__desc">{heroArticle.description}</p>
                             <span className="Lifestyle-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Lifestyle-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'lifestyle'}/${slugify(article.title)}`}
                                 className="Lifestyle-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Lifestyle-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Lifestyle-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="lifestyle"
+                                    articleUrl={article.url}
+                                    className="Lifestyle-list__thumb"
+                                />
                                 <div className="Lifestyle-list__info">
                                     <h4 className="Lifestyle-list__title">{article.title}</h4>
                                     <span className="Lifestyle-list__meta">
@@ -119,7 +113,7 @@ const Lifestyle: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

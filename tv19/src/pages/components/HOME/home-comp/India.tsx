@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/India.css';
-import { getIndia, type Article } from '../../../../services/newsService';
+import { getIndia, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const India: React.FC = () => {
@@ -9,7 +11,7 @@ const India: React.FC = () => {
     const fetchIndia = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getIndia('india', 'in', 10);
+            const response = await getIndia('india', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -26,7 +28,7 @@ const India: React.FC = () => {
 
     useEffect(() => {
         fetchIndia();
-        const interval = setInterval(fetchIndia, 180000);
+        const interval = setInterval(fetchIndia, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchIndia]);
 
@@ -62,25 +64,24 @@ const India: React.FC = () => {
             <section className="India-section">
                 <div className="India-section__header">
                     <h3 className="India-section__heading">INDIA</h3>
-                    <a href="#" className="India-section__more">
+                    <Link to="/india" className="India-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="India-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'india'}/${slugify(heroArticle.title)}`}
                         className="India-hero"
                     >
                         <div className="India-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="India-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="india"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="India-hero__body">
                             <span className="India-hero__category">INDIA</span>
@@ -88,30 +89,23 @@ const India: React.FC = () => {
                             <p className="India-hero__desc">{heroArticle.description}</p>
                             <span className="India-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="India-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'india'}/${slugify(article.title)}`}
                                 className="India-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="India-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="India-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="india"
+                                    articleUrl={article.url}
+                                    className="India-list__thumb"
+                                />
                                 <div className="India-list__info">
                                     <h4 className="India-list__title">{article.title}</h4>
                                     <span className="India-list__meta">
@@ -119,7 +113,7 @@ const India: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

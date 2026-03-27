@@ -2,7 +2,7 @@ import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Navbar.css'
 import './BreakingNews.css';
-import { getTopHeadlines, searchNews, type Article } from './services/newsService';
+import { getTopHeadlines, searchNews, slugify, type Article } from './services/newsService';
 import { useState, useEffect, useRef, useCallback } from "react";
 import { getWeatherByCity, type WeatherResponse } from "./services/weatherService";
 import { getSiteConfig, applySiteConfig, type SiteConfig } from './services/siteConfigService';
@@ -186,18 +186,39 @@ const Navbar: React.FC<BreakingNewsProps> = ({
     return `${day}, ${month} ${dateNum}, ${hours}:${mins} ${ampm}`;
   };
 
-  const navItems = [
+  interface NavItem {
+    label: string;
+    to?: string;
+    href?: string;
+    isLink: boolean;
+    subItems?: { label: string; to: string }[];
+  }
+
+  const navItems: NavItem[] = [
     { label: 'Home', to: '/', isLink: true },
     { label: 'State', to: '/state', isLink: true },
-    { label: 'India', to: '/india', isLink: true },
+    { 
+      label: 'India', to: '/india', isLink: true,
+    },
     { label: 'World', to: '/world', isLink: true },
-    { label: 'Entertainment', to: '/entertainment', isLink: true },
+    { 
+      label: 'Entertainment', to: '/entertainment', isLink: true,
+    },
     { label: 'Sports', to: '/sports', isLink: true },
-    { label: 'Politics', to: '/politics', isLink: true },
-    { label: 'Technology', to: '/technology', isLink: true },
-    { label: 'Lifestyle', to: '/lifestyle', isLink: true },
-    { label: 'Business', to: '/business', isLink: true },
+    { 
+      label: 'Politics', to: '/politics', isLink: true,
+    },
+    { 
+      label: 'Technology', to: '/technology', isLink: true,
+    },
+    { 
+      label: 'Lifestyle', to: '/lifestyle', isLink: true,
+    },
+    { 
+      label: 'Business', to: '/business', isLink: true,
+    },
     { label: 'Education', to: '/education', isLink: true },
+    { label: 'Trending', to: '/trending', isLink: true, isTrending: true },
   ];
 
   return (
@@ -252,11 +273,30 @@ const Navbar: React.FC<BreakingNewsProps> = ({
             const isActive = item.isLink
               ? (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to!))
               : false;
+            
+            if (item.subItems) {
+              return (
+                <li key={item.label} className="dropdown">
+                  <Link to={item.to!} className={`navbar-link ${isActive ? 'active' : ''}`}>
+                    {item.label} <i className="fas fa-chevron-down" style={{ fontSize: '10px', marginLeft: '4px' }}></i>
+                  </Link>
+                  <ul className="dropdown-menu">
+                    {item.subItems.map((sub) => (
+                      <li key={sub.label}>
+                        <Link to={sub.to} className="navbar-link">{sub.label}</Link>
+                      </li>
+                    ))}
+                  </ul>
+                </li>
+              );
+            }
+
             return (
               <li key={item.label}>
                 {item.isLink ? (
-                  <Link to={item.to!} className={`navbar-link ${isActive ? 'active' : ''}`}>
+                  <Link to={item.to!} className={`navbar-link ${(item as any).isTrending ? 'trending-link' : ''} ${isActive ? 'active' : ''}`}>
                     {item.label}
+                    {(item as any).isTrending && <span className="trending-badge-small">HOT</span>}
                   </Link>
                 ) : (
                   <a href={item.href} className='navbar-link'>{item.label}</a>
@@ -302,7 +342,11 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           ) : (
             <div className="breaking-news-track">
               {articles.slice(0, 8).map((article, index) => (
-                <a key={index} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                <Link 
+                  key={index} 
+                  to={`/article/${article.category || 'top'}/${slugify(article.title)}`} 
+                  className="breaking-card"
+                >
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -314,11 +358,15 @@ const Navbar: React.FC<BreakingNewsProps> = ({
                     <span className="breaking-badge">BREAKING</span>
                     <h4 className="breaking-card-title">{article.title}</h4>
                   </div>
-                </a>
+                </Link>
               ))}
               {/* Duplicate for seamless loop */}
               {articles.slice(0, 8).map((article, index) => (
-                <a key={`dup-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                <Link 
+                  key={`dup-${index}`} 
+                  to={`/article/${article.category || 'top'}/${slugify(article.title)}`} 
+                  className="breaking-card"
+                >
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -330,7 +378,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
                     <span className="breaking-badge">BREAKING</span>
                     <h4 className="breaking-card-title">{article.title}</h4>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           )}
@@ -360,7 +408,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
             <span className="side-section-label">MENU</span>
             <ul className="side-nav-list">
               {navItems.map((item) => (
-                <li key={item.label}>
+                <li key={item.label} className={item.subItems ? 'side-has-sub' : ''}>
                   <Link 
                     to={item.to!} 
                     className={`side-nav-link ${location.pathname === item.to ? 'active' : ''}`}
@@ -368,6 +416,15 @@ const Navbar: React.FC<BreakingNewsProps> = ({
                   >
                     {item.label}
                   </Link>
+                  {item.subItems && (
+                    <ul className="side-sub-nav">
+                      {item.subItems.map((sub) => (
+                        <li key={sub.label}>
+                          <Link to={sub.to} onClick={() => setIsMenuOpen(false)}>{sub.label}</Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                 </li>
               ))}
               <li className="side-dropdown-label">MORE SECTIONS</li>

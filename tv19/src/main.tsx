@@ -25,6 +25,7 @@ import LifestylePage from './pages/components/LIFESTYLE/LifestylePage.tsx'
 import BusinessPage from './pages/components/BUSINESS/BusinessPage.tsx'
 import EducationPage from './pages/components/EDUCATION/EducationPage.tsx'
 import DynamicSectionPage from './pages/components/DYNAMIC/DynamicSectionPage.tsx'
+import ArticlePage from './pages/components/ARTICLE/ArticlePage.tsx'
 
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
 
@@ -58,6 +59,7 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/lifestyle" element={<LifestylePage />} />
         <Route path="/business" element={<BusinessPage />} />
         <Route path="/education" element={<EducationPage />} />
+        <Route path="/article/:category/:slug" element={<ArticlePage />} />
         
         {/* 10 Dynamic More Sections */}
         <Route path="/art" element={<DynamicSectionPage categoryId="art" />} />

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Education.css';
-import { getEducation, type Article } from '../../../../services/newsService';
+import { getEducation, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Education: React.FC = () => {
@@ -9,7 +11,7 @@ const Education: React.FC = () => {
     const fetchEducation = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getEducation('education', 'in', 10);
+            const response = await getEducation('education', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -26,7 +28,7 @@ const Education: React.FC = () => {
 
     useEffect(() => {
         fetchEducation();
-        const interval = setInterval(fetchEducation, 180000);
+        const interval = setInterval(fetchEducation, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchEducation]);
 
@@ -62,25 +64,24 @@ const Education: React.FC = () => {
             <section className="Education-section">
                 <div className="Education-section__header">
                     <h3 className="Education-section__heading">Education</h3>
-                    <a href="#" className="Education-section__more">
+                    <Link to="/education" className="Education-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Education-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'education'}/${slugify(heroArticle.title)}`}
                         className="Education-hero"
                     >
                         <div className="Education-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Education-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="education"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Education-hero__body">
                             <span className="Education-hero__category">Education</span>
@@ -88,30 +89,23 @@ const Education: React.FC = () => {
                             <p className="Education-hero__desc">{heroArticle.description}</p>
                             <span className="Education-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Education-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'education'}/${slugify(article.title)}`}
                                 className="Education-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Education-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Education-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="education"
+                                    articleUrl={article.url}
+                                    className="Education-list__thumb"
+                                />
                                 <div className="Education-list__info">
                                     <h4 className="Education-list__title">{article.title}</h4>
                                     <span className="Education-list__meta">
@@ -119,7 +113,7 @@ const Education: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

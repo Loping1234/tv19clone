@@ -15,6 +15,9 @@ import { getConfig, updateConfig } from "./models/SiteConfig.js";
 import AdminProfile, { getProfile, updateProfile } from "./models/AdminProfile.js";
 import News from "./models/News.js";
 import RssFeed from "./models/RssFeed.js";
+import TeamMember from "./models/TeamMember.js";
+import FailedFeed from "./models/FailedFeed.js";
+import Category from "./models/Category.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 
@@ -109,6 +112,7 @@ const parser = new Parser({
 });
 
 app.use(express.json());
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Auth Middleware
 const authenticateToken = (req, res, next) => {
@@ -428,7 +432,7 @@ const RSS_FEEDS = {
   trending: [
     "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
     "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
+    "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en&when=24h",
   ],
   manufacturing: [
     "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
@@ -767,7 +771,7 @@ function mapItem(item, feedTitle) {
 // Fetch and parse multiple feed URLs, return merged articles array
 async function fetchFeeds(feedUrls, label) {
   const results = await Promise.allSettled(
-    feedUrls.map((url) => parser.parseURL(url))
+    feedUrls.map((url) => fetchWithRetry(url, 3))
   );
 
   const articles = [];
@@ -780,6 +784,57 @@ async function fetchFeeds(feedUrls, label) {
     }
   }
   return articles;
+}
+
+// Retry logic for failed RSS feeds with URL validation
+async function fetchWithRetry(url, maxRetries = 3) {
+  // Validate URL format
+  try {
+    new URL(url);
+  } catch (urlError) {
+    console.error(`Invalid URL format: ${url}`);
+    await FailedFeed.findOneAndUpdate(
+      { url },
+      { 
+        $set: { error: 'Invalid URL format', lastAttempt: new Date(), statusCode: 400 },
+        $inc: { attempts: 1 }
+      },
+      { upsert: true }
+    ).catch(() => {});
+    throw new Error('Invalid URL format');
+  }
+
+  let lastError;
+  for (let attempt = 1; attempt <= maxRetries; attempt++) {
+    try {
+      const feed = await parser.parseURL(url);
+      // Clear from failed feeds if successful
+      await FailedFeed.deleteOne({ url }).catch(() => {});
+      return feed;
+    } catch (error) {
+      lastError = error;
+      if (attempt < maxRetries) {
+        const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000); // Exponential backoff: 1s, 2s, 4s
+        console.warn(`Retry ${attempt}/${maxRetries} for ${url} after ${delay}ms`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  // Log failed feed to database
+  try {
+    const statusCode = lastError.message.includes('404') ? 404 : lastError.message.includes('503') ? 503 : 500;
+    await FailedFeed.findOneAndUpdate(
+      { url },
+      { 
+        $set: { error: lastError.message, lastAttempt: new Date(), statusCode },
+        $inc: { attempts: 1 }
+      },
+      { upsert: true }
+    );
+  } catch (logError) {
+    console.error('Failed to log failed feed:', logError.message);
+  }
+  throw lastError;
 }
 
 // GET /api/news?category=top&size=10&imagesOnly=true
@@ -800,8 +855,13 @@ app.get("/api/news", async (req, res) => {
       dbQuery.image = { $nin: [null, ""] };
     }
 
+    // Sort: prioritize articles with images, then by date
+    const sortQuery = imagesOnly 
+      ? { publishedAt: -1 }
+      : { image: -1, publishedAt: -1 };
+
     const articles = await News.find(dbQuery)
-      .sort({ publishedAt: -1 })
+      .sort(sortQuery)
       .skip(skip)
       .limit(size);
 
@@ -827,11 +887,12 @@ app.get("/api/news/state", async (req, res) => {
     }
 
     // Tier 1: Look in MongoDB for articles under this city's category
+    // Get all articles, prioritize those with images
     let articles = await News.find({ 
       status: true, 
-      category: categoryKey 
+      category: categoryKey
     })
-      .sort({ publishedAt: -1 })
+      .sort({ image: -1, publishedAt: -1 }) // Articles with images first, then by date
       .skip(skip)
       .limit(size);
 
@@ -921,6 +982,52 @@ app.get("/api/news/state", async (req, res) => {
   }
 });
 
+// GET /api/news/article/:slug - Fetch a single article by its slug
+app.get("/api/news/article/:slug", async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const categoryFilter = req.query.category?.toString().toLowerCase();
+
+    // Build a regex from the slug: "india-turns-to-iranian-lpg" -> title search
+    const words = slug.split("-").filter(Boolean);
+    const regexPattern = words.map(w => w.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join(".*");
+    
+    const query = { title: { $regex: regexPattern, $options: "i" } };
+    if (categoryFilter) query.category = categoryFilter;
+
+    const article = await News.findOne(query).sort({ publishedAt: -1 });
+
+    if (!article) {
+      return res.status(404).json({ error: "Article not found" });
+    }
+
+    // Also fetch related articles from the same category
+    const related = await News.find({
+      status: true,
+      category: article.category,
+      _id: { $ne: article._id }
+    })
+      .sort({ publishedAt: -1 })
+      .limit(6);
+
+    res.json({ article, related });
+  } catch (err) {
+    console.error("Article fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch article" });
+  }
+});
+
+// POST /api/news/view/:id - Increment view count
+app.post("/api/news/view/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    await News.findByIdAndUpdate(id, { $inc: { views: 1 } });
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update view count" });
+  }
+});
+
 // GET /api/news/scrape-image?url=...&brokenImage=...
 // Attempts to rescrape an article's webpage if the original image fails on frontend
 app.get("/api/news/scrape-image", async (req, res) => {
@@ -1005,6 +1112,16 @@ app.get("/api/rss-feeds", async (_req, res) => {
     res.json({ totalFeeds: feeds.length, feeds });
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch RSS feeds" });
+  }
+});
+
+// GET /api/rss-feeds/failed — returns failed RSS feeds for admin review
+app.get("/api/rss-feeds/failed", authenticateToken, async (_req, res) => {
+  try {
+    const failedFeeds = await FailedFeed.find().sort({ lastAttempt: -1 }).limit(100);
+    res.json({ totalFailed: failedFeeds.length, failedFeeds });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch failed feeds" });
   }
 });
 
@@ -1117,13 +1234,229 @@ app.post("/api/config/upload-icon", authenticateToken, upload.single("icon"), as
 });
 
 // ============================================================
+//  Category Management API (Hierarchical)
+// ============================================================
+
+// GET /api/categories — fetch all categories
+app.get("/api/categories", async (req, res) => {
+  try {
+    const categories = await Category.find().populate('parent').sort({ order: 1, name: 1 });
+    res.json({ totalCategories: categories.length, categories });
+  } catch (err) {
+    console.error("Categories fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+// GET /api/categories/tree — fetch hierarchical category tree
+app.get("/api/categories/tree", async (req, res) => {
+  try {
+    const allCategories = await Category.find({ status: true }).sort({ order: 1, name: 1 });
+    
+    // Build tree structure
+    const categoryMap = {};
+    const tree = [];
+    
+    // First pass: create map
+    allCategories.forEach(cat => {
+      categoryMap[cat._id.toString()] = { ...cat.toObject(), children: [] };
+    });
+    
+    // Second pass: build tree
+    allCategories.forEach(cat => {
+      const catObj = categoryMap[cat._id.toString()];
+      if (cat.parent) {
+        const parentId = cat.parent.toString();
+        if (categoryMap[parentId]) {
+          categoryMap[parentId].children.push(catObj);
+        }
+      } else {
+        tree.push(catObj);
+      }
+    });
+    
+    res.json({ tree });
+  } catch (err) {
+    console.error("Category tree fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch category tree" });
+  }
+});
+
+// GET /api/categories/:id — fetch single category
+app.get("/api/categories/:id", async (req, res) => {
+  try {
+    const category = await Category.findById(req.params.id).populate('parent');
+    if (!category) return res.status(404).json({ error: "Category not found" });
+    res.json(category);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch category" });
+  }
+});
+
+// POST /api/categories — create new category
+app.post("/api/categories", authenticateToken, async (req, res) => {
+  try {
+    const { name, slug, parent, description, icon, order, status, isMainCategory } = req.body;
+    const category = new Category({ name, slug, parent: parent || null, description, icon, order, status, isMainCategory });
+    await category.save();
+    res.json(category);
+  } catch (err) {
+    console.error("Category create error:", err.message);
+    res.status(500).json({ error: "Failed to create category" });
+  }
+});
+
+// PUT /api/categories/:id — update category
+app.put("/api/categories/:id", authenticateToken, async (req, res) => {
+  try {
+    const { name, slug, parent, description, icon, order, status, isMainCategory } = req.body;
+    const category = await Category.findByIdAndUpdate(
+      req.params.id,
+      { name, slug, parent: parent || null, description, icon, order, status, isMainCategory },
+      { returnDocument: 'after', runValidators: true }
+    );
+    if (!category) return res.status(404).json({ error: "Category not found" });
+    res.json(category);
+  } catch (err) {
+    console.error("Category update error:", err.message);
+    res.status(500).json({ error: "Failed to update category" });
+  }
+});
+
+// DELETE /api/categories/:id — delete category
+app.delete("/api/categories/:id", authenticateToken, async (req, res) => {
+  try {
+    // Check if category has children
+    const hasChildren = await Category.findOne({ parent: req.params.id });
+    if (hasChildren) {
+      return res.status(400).json({ error: "Cannot delete category with subcategories" });
+    }
+    
+    const category = await Category.findByIdAndDelete(req.params.id);
+    if (!category) return res.status(404).json({ error: "Category not found" });
+    res.json({ message: "Category deleted" });
+  } catch (err) {
+    console.error("Category delete error:", err.message);
+    res.status(500).json({ error: "Failed to delete category" });
+  }
+});
+
+// GET /api/categories/:id/subcategories — fetch subcategories
+app.get("/api/categories/:id/subcategories", async (req, res) => {
+  try {
+    const subcategories = await Category.find({ parent: req.params.id, status: true }).sort({ order: 1, name: 1 });
+    res.json({ totalSubcategories: subcategories.length, subcategories });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch subcategories" });
+  }
+});
+
+// ============================================================
+//  Team Members API
+// ============================================================
+
+// GET /api/team-members — fetch all team members
+app.get("/api/team-members", async (req, res) => {
+  try {
+    const members = await TeamMember.find().sort({ createdAt: -1 });
+    res.json({ totalMembers: members.length, members });
+  } catch (err) {
+    console.error("Team members fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch team members" });
+  }
+});
+
+// GET /api/team-members/:id — fetch single team member
+app.get("/api/team-members/:id", async (req, res) => {
+  try {
+    const member = await TeamMember.findById(req.params.id);
+    if (!member) return res.status(404).json({ error: "Team member not found" });
+    res.json(member);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch team member" });
+  }
+});
+
+// POST /api/team-members — create new team member
+app.post("/api/team-members", authenticateToken, async (req, res) => {
+  try {
+    const { name, role, description, imageUrl, status } = req.body;
+    const member = new TeamMember({ name, role, description, imageUrl, status });
+    await member.save();
+    res.json(member);
+  } catch (err) {
+    console.error("Team member create error:", err.message);
+    res.status(500).json({ error: "Failed to create team member" });
+  }
+});
+
+// PUT /api/team-members/:id — update team member
+app.put("/api/team-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const { name, role, description, imageUrl, status } = req.body;
+    const member = await TeamMember.findByIdAndUpdate(
+      req.params.id,
+      { name, role, description, imageUrl, status },
+      { returnDocument: 'after', runValidators: true }
+    );
+    if (!member) return res.status(404).json({ error: "Team member not found" });
+    res.json(member);
+  } catch (err) {
+    console.error("Team member update error:", err.message);
+    res.status(500).json({ error: "Failed to update team member" });
+  }
+});
+
+// DELETE /api/team-members/:id — delete team member
+app.delete("/api/team-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const member = await TeamMember.findByIdAndDelete(req.params.id);
+    if (!member) return res.status(404).json({ error: "Team member not found" });
+    res.json({ message: "Team member deleted" });
+  } catch (err) {
+    console.error("Team member delete error:", err.message);
+    res.status(500).json({ error: "Failed to delete team member" });
+  }
+});
+
+// POST /api/team-members/:id/upload-image — upload team member image
+app.post("/api/team-members/:id/upload-image", authenticateToken, upload.single("memberImage"), async (req, res) => {
+  try {
+    if (!req.file) return res.status(400).json({ error: "No file uploaded" });
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const member = await TeamMember.findByIdAndUpdate(
+      req.params.id,
+      { imageUrl },
+      { returnDocument: 'after' }
+    );
+    if (!member) return res.status(404).json({ error: "Team member not found" });
+    res.json({ imageUrl: member.imageUrl, message: "Team member image uploaded" });
+  } catch (err) {
+    console.error("Team member image upload error:", err.message);
+    res.status(500).json({ error: "Failed to upload team member image" });
+  }
+});
+
+// ============================================================
 //  Admin Profile API
 // ============================================================
 
-// GET /api/admin/profile — fetch admin profile
-app.get("/api/admin/profile", authenticateToken, async (_req, res) => {
+// GET /api/admin/me — fetch current admin profile for header
+app.get("/api/admin/me", authenticateToken, async (req, res) => {
   try {
-    const profile = await getProfile();
+    const profile = await getProfile(req.user.id);
+    if (!profile) return res.status(404).json({ error: "Profile not found" });
+    res.json(profile);
+  } catch (err) {
+    console.error("Profile check error:", err.message);
+    res.status(500).json({ error: "Failed to fetch profile" });
+  }
+});
+
+// GET /api/admin/profile — fetch admin profile
+app.get("/api/admin/profile", authenticateToken, async (req, res) => {
+  try {
+    const profile = await getProfile(req.user.id);
     res.json(profile);
   } catch (err) {
     console.error("Profile fetch error:", err.message);
@@ -1137,7 +1470,7 @@ app.put("/api/admin/profile", authenticateToken, async (req, res) => {
     const { name } = req.body;
     const data = {};
     if (name !== undefined) data.name = name;
-    const profile = await updateProfile(data);
+    const profile = await updateProfile(data, req.user.id);
     res.json(profile);
   } catch (err) {
     console.error("Profile update error:", err.message);
@@ -1150,7 +1483,7 @@ app.post("/api/admin/profile/upload-image", authenticateToken, upload.single("pr
   try {
     if (!req.file) return res.status(400).json({ error: "No file uploaded" });
     const imageUrl = `/uploads/${req.file.filename}`;
-    const profile = await updateProfile({ imageUrl });
+    const profile = await updateProfile({ imageUrl }, req.user.id);
     res.json({ imageUrl: profile.imageUrl, message: "Profile image uploaded" });
   } catch (err) {
     console.error("Profile image upload error:", err.message);
@@ -1160,6 +1493,21 @@ app.post("/api/admin/profile/upload-image", authenticateToken, upload.single("pr
 
 // POST /api/admin/refresh-feeds — manually trigger RSS fetch from admin panel
 app.post("/api/admin/refresh-feeds", authenticateToken, async (_req, res) => {
+  try {
+    const result = await refreshAllFeeds();
+    if (result.success) {
+      res.json({ message: "RSS feeds refreshed successfully", totalProcessed: result.totalProcessed });
+    } else {
+      res.status(500).json({ error: result.error || "Refresh failed" });
+    }
+  } catch (err) {
+    console.error("Manual refresh error:", err.message);
+    res.status(500).json({ error: "Failed to refresh feeds" });
+  }
+});
+
+// POST /api/refresh-feeds — public endpoint to trigger refresh (for testing)
+app.post("/api/refresh-feeds", async (_req, res) => {
   try {
     const result = await refreshAllFeeds();
     if (result.success) {
@@ -1190,11 +1538,11 @@ app.get("/health", async (_req, res) => {
   }
 });
 
-// Admin News API - with pagination (P1 Performance)
+// Admin News API - with pagination for stability
 app.get("/api/admin/news", authenticateToken, async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 50;
+    const limit = parseInt(req.query.limit) || 100;
     const skip = (page - 1) * limit;
 
     const news = await News.find()
@@ -1217,6 +1565,34 @@ app.get("/api/admin/news", authenticateToken, async (req, res) => {
   catch (err) {
     console.error("Admin News fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch Admin news" });
+  }
+});
+
+// PUT /api/admin/news/:id — update news article
+app.put("/api/admin/news/:id", authenticateToken, async (req, res) => {
+  try {
+    const news = await News.findByIdAndUpdate(
+      req.params.id,
+      req.body,
+      { returnDocument: 'after', runValidators: true }
+    );
+    if (!news) return res.status(404).json({ error: "News not found" });
+    res.json(news);
+  } catch (err) {
+    console.error("News update error:", err.message);
+    res.status(500).json({ error: "Failed to update news" });
+  }
+});
+
+// DELETE /api/admin/news/:id — delete news article
+app.delete("/api/admin/news/:id", authenticateToken, async (req, res) => {
+  try {
+    const news = await News.findByIdAndDelete(req.params.id);
+    if (!news) return res.status(404).json({ error: "News not found" });
+    res.json({ message: "News deleted" });
+  } catch (err) {
+    console.error("News delete error:", err.message);
+    res.status(500).json({ error: "Failed to delete news" });
   }
 });
 // --- Helpers ---
@@ -1347,26 +1723,39 @@ async function fetchOgImage(url, timeoutMs = 6000) {
 
 // Extract image from RSS item fields
 function extractImage(item) {
-  // media:thumbnail (BBC, TOI)
+  // 0. Check for og:image or similar in the item object itself (some feeds include this)
+  if (item.ogImage) return item.ogImage;
+  if (item["og:image"]) return item["og:image"];
+
+  // 1. media:thumbnail (BBC, TOI)
   if (item.mediaThumbnail?.$?.url) return item.mediaThumbnail.$.url;
   if (item["media:thumbnail"]?.$?.url) return item["media:thumbnail"].$.url;
 
-  // media:group > media:thumbnail (YouTube-style feeds)
+  // 2. media:group > media:thumbnail (YouTube-style feeds)
   if (item.mediaGroup?.["media:thumbnail"]?.[0]?.$?.url)
     return item.mediaGroup["media:thumbnail"][0].$.url;
 
-  // media:content
+  // 3. media:content
   if (item.mediaContent?.$?.url) return item.mediaContent.$.url;
   if (item["media:content"]?.$?.url) return item["media:content"].$.url;
 
-  // enclosure (podcast-style image attachments)
+  // 4. enclosure (podcast-style image attachments)
   if (item.enclosure?.url && item.enclosure.type?.startsWith("image"))
     return item.enclosure.url;
 
-  // Inline <img> in content:encoded or content HTML
+  // 5. Inline <img> in content:encoded or content HTML
   const html = item["content:encoded"] || item.content || "";
   const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (match) return match[1];
+  if (match) {
+    const src = match[1];
+    // Filter out tiny icons or tracking pixels
+    if (!src.includes('pixel') && !src.includes('statcounter')) return src;
+  }
+
+  // 6. Check description for links that look like images
+  const desc = item.contentSnippet || item.description || "";
+  const descMatch = desc.match(/(https?:\/\/[^\s"'<>]+?\.(?:jpg|jpeg|gif|png|webp))/i);
+  if (descMatch) return descMatch[1];
 
   return null;
 }
@@ -1377,6 +1766,12 @@ async function refreshAllFeeds() {
   try {
     let totalProcessed = 0;
     const allArticlesAcrossCategories = [];
+
+    // NEW: Prune articles older than 1 day to keep DB fresh with latest news
+    const oneDayAgo = new Date();
+    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    const deleteResult = await News.deleteMany({ publishedAt: { $lt: oneDayAgo } });
+    console.log(`🧹 Pruned ${deleteResult.deletedCount} old articles (older than 1 day).`);
 
     // Read active feeds from MongoDB
     const feeds = await RssFeed.find({ status: true });
@@ -1390,7 +1785,7 @@ async function refreshAllFeeds() {
     for (const [category, feedUrls] of Object.entries(feedCategories)) {
       console.log(`📡 Fetching text category: ${category}...`);
       
-      // Delay for 1 second between categories
+      // Delay for 1 second between categories to avoid rate limiting (faster refresh)
       await new Promise(resolve => setTimeout(resolve, 1000));
       
       let articles = await fetchFeeds(feedUrls, category);
@@ -1409,9 +1804,12 @@ async function refreshAllFeeds() {
               publishedAt: article.publishedAt,
               content: article.content,
             },
-            $setOnInsert: { status: false }
+            $setOnInsert: { 
+              // Auto-activate ALL articles (with or without images)
+              status: true 
+            }
           },
-          { upsert: true } // Don't return document to save memory
+          { upsert: true }
         )
       );
 
@@ -1441,8 +1839,8 @@ async function refreshAllFeeds() {
   }
 }
 
-// Background Job: Fetch all feeds every 30 minutes
-cron.schedule('*/30 * * * *', () => {
+// Background Job: Fetch all feeds every 10 minutes for fresh news
+cron.schedule('*/10 * * * *', () => {
   refreshAllFeeds();
 });
 
@@ -1475,11 +1873,57 @@ connectDB().then(async () => {
     console.error('❌ Failed to seed RSS feeds:', e);
   }
 
+  // Seed Categories from RSS_FEEDS structure
+  try {
+    const categoryCount = await Category.countDocuments();
+    if (categoryCount === 0) {
+      console.log('🌱 Seeding categories from RSS feeds...');
+      
+      // Define main categories and their subcategories
+      const categoryHierarchy = {
+        'Main Categories': ['top', 'trending', 'india', 'world', 'business', 'finance', 'markets', 'entertainment', 'health', 'science', 'sports', 'technology', 'politics', 'environment', 'lifestyle', 'education', 'crime', 'astrology', 'opinion', 'art', 'weather', 'green-future', 'manufacturing'],
+        'Indian States': ['rajasthan', 'uttar pradesh', 'maharashtra', 'madhya pradesh', 'gujarat', 'bihar', 'west bengal', 'karnataka', 'tamil nadu', 'andhra pradesh', 'telangana', 'kerala', 'punjab', 'haryana', 'jharkhand', 'odisha', 'chhattisgarh', 'uttarakhand', 'himachal pradesh', 'assam', 'goa', 'manipur', 'meghalaya', 'mizoram', 'nagaland', 'tripura', 'arunachal pradesh', 'sikkim'],
+        'Union Territories': ['delhi', 'jammu kashmir', 'ladakh', 'puducherry', 'chandigarh', 'andaman nicobar', 'lakshadweep', 'dadra daman diu'],
+        'Rajasthan Cities': ['ajmer', 'alwar', 'bagru', 'banswara', 'barmer', 'bassi', 'beawer', 'bharatpur', 'bhilwara', 'bhiwadi', 'bikaner', 'chittorgarh', 'churu', 'dausa', 'dholpur', 'dungarpur', 'hanumangarh', 'jaipur', 'jaisalmer', 'jalore', 'jhalawar', 'jhunjhunu', 'jodhpur', 'karauli', 'kishangarh', 'kota', 'nagaur', 'pali', 'pratapgarh', 'rajsamand', 'sawai madhopur', 'sikar', 'sirohi', 'sri ganganagar', 'tonk', 'udaipur'],
+        'World Regions': ['africa', 'america', 'asia pacific', 'europe', 'middle east', 'new york', 'pakistan', 'uk', 'us']
+      };
+      
+      for (const [parentName, children] of Object.entries(categoryHierarchy)) {
+        // Create parent category
+        const parent = await Category.create({
+          name: parentName,
+          slug: parentName.toLowerCase().replace(/\s+/g, '-'),
+          isMainCategory: true,
+          status: true,
+          order: Object.keys(categoryHierarchy).indexOf(parentName)
+        });
+        
+        // Create child categories
+        for (let i = 0; i < children.length; i++) {
+          const childName = children[i];
+          await Category.create({
+            name: childName.charAt(0).toUpperCase() + childName.slice(1),
+            slug: childName.toLowerCase().replace(/\s+/g, '-'),
+            parent: parent._id,
+            status: true,
+            order: i
+          });
+        }
+      }
+      
+      console.log('✅ Categories seeded successfully.');
+    }
+  } catch (e) {
+    console.error('❌ Failed to seed categories:', e);
+  }
+
   app.listen(PORT, () => {
     console.log(`📡 News RSS proxy running on http://localhost:${PORT}`);
   });
 
   // Run initial RSS fetch on startup so MongoDB has fresh data immediately
   console.log('🚀 Running initial RSS fetch on startup...');
+  console.log('⏰ Auto-refresh scheduled: Every 10 minutes');
+  console.log('🗑️ Auto-cleanup: Articles older than 1 day will be removed');
   refreshAllFeeds();
 });

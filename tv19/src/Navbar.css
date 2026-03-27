@@ -257,41 +257,44 @@
 }
 
 .dropdown-menu {
-  display: none;
+  display: block;
+  opacity: 0;
+  visibility: hidden;
   position: absolute;
   top: 100%;
   left: 0;
-  min-width: 160px;
+  min-width: 180px;
   margin: 0;
-  padding: 0.35rem 0;
+  padding: 0.5rem 0;
   list-style: none;
   background-color: #1a1d23;
-  border: 1px solid #333;
+  border-top: 3px solid #ff4500;
   z-index: 1000;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
-}
-
-.dropdown-menu li {
-  padding: 0;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.5);
+  transform: translateY(10px);
+  transition: all 0.3s ease;
 }
 
 .dropdown-menu li a {
   display: block;
-  padding: 0.45rem 1rem;
-  font-size: 0.8rem;
+  padding: 0.6rem 1.2rem;
+  font-size: 0.85rem;
   color: #ccc;
   text-decoration: none;
-  transition: background 0.2s, color 0.2s;
+  transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .dropdown-menu li a:hover {
-  background-color: #e8380d;
-  color: #fff;
+  background-color: rgba(255, 69, 0, 0.1);
+  color: #ff4500;
+  padding-left: 1.5rem;
 }
 
-.dropdown:hover .dropdown-menu,
-.dropdown:focus-within .dropdown-menu {
-  display: block;
+.dropdown:hover .dropdown-menu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
 }
 
 /* ── LOGIN / SIGN UP buttons ── */
@@ -499,6 +502,42 @@
   color: #ff4500;
 }
 
+/* ── Mobile Sub-nav ── */
+.side-sub-nav {
+  list-style: none;
+  padding: 0 0 0 1.5rem;
+  margin: 0.5rem 0 1rem 0;
+  border-left: 1px solid #eee;
+}
+
+.side-sub-nav li a {
+  display: block;
+  padding: 0.5rem 0;
+  color: #666;
+  text-decoration: none;
+  font-size: 0.95rem;
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.side-sub-nav li a:hover {
+  color: #ff4500;
+}
+
+.side-has-sub > .side-nav-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.side-has-sub > .side-nav-link::after {
+  content: '\f078';
+  font-family: 'Font Awesome 5 Free';
+  font-weight: 900;
+  font-size: 0.8rem;
+  opacity: 0.5;
+}
+
 
 
 /* ══════════════════════════════════════════════════
@@ -560,4 +599,25 @@
     height: 70px;
     padding: 0 1rem;
   }
+}
+.trending-link {
+  color: #ffca28 !important; /* Gold/Yellow for Trending */
+  position: relative;
+}
+
+.trending-badge-small {
+  background: #ff4500;
+  color: #fff;
+  font-size: 8px;
+  padding: 1px 4px;
+  border-radius: 2px;
+  margin-left: 4px;
+  vertical-align: top;
+  animation: pulse-small 2s infinite;
+}
+
+@keyframes pulse-small {
+  0% { opacity: 1; }
+  50% { opacity: 0.6; }
+  100% { opacity: 1; }
 }

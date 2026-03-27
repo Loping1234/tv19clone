@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Weather.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getTopHeadlines, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Weather: React.FC = () => {
@@ -27,7 +29,7 @@ const Weather: React.FC = () => {
 
     useEffect(() => {
         fetchWeatherNews();
-        const interval = setInterval(fetchWeatherNews, 180000);
+        const interval = setInterval(fetchWeatherNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchWeatherNews]);
 
@@ -63,25 +65,24 @@ const Weather: React.FC = () => {
             <section className="weather-section">
                 <div className="weather-section__header">
                     <h3 className="weather-section__heading">WEATHER</h3>
-                    <a href="#" className="weather-section__more">
+                    <Link to="/weather" className="weather-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="weather-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'weather'}/${slugify(heroArticle.title)}`}
                         className="weather-hero"
                     >
                         <div className="weather-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="weather-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="general"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="weather-hero__body">
                             <span className="weather-hero__category">WEATHER</span>
@@ -89,30 +90,23 @@ const Weather: React.FC = () => {
                             <p className="weather-hero__desc">{heroArticle.description}</p>
                             <span className="weather-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="weather-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'weather'}/${slugify(article.title)}`}
                                 className="weather-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="weather-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="weather-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="general"
+                                    articleUrl={article.url}
+                                    className="weather-list__thumb"
+                                />
                                 <div className="weather-list__info">
                                     <h4 className="weather-list__title">{article.title}</h4>
                                     <span className="weather-list__meta">
@@ -120,7 +114,7 @@ const Weather: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

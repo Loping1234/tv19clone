@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/NewsSection.css';
-import { getTopHeadlines, searchNews, type Article, type NewsCategory } from '../../../../services/newsService';
+import { getTopHeadlines, searchNews, slugify, type Article, type NewsCategory } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 
 interface NewsSectionProps {
     title: string;
@@ -53,6 +55,8 @@ const NewsSection: React.FC<NewsSectionProps> = ({
 
     useEffect(() => {
         fetchSectionNews();
+        const interval = setInterval(fetchSectionNews, 1800000); // 30 minutes
+        return () => clearInterval(interval);
     }, [fetchSectionNews]);
 
     const timeAgo = (dateStr: string): string => {
@@ -91,27 +95,24 @@ const NewsSection: React.FC<NewsSectionProps> = ({
         <div className="news-section-container">
             <div className="news-section-header">
                 <h2 className="news-section-heading">{title}</h2>
-                <a href={viewMoreLink} className="news-section-more">
+                <Link to={viewMoreLink === '#' ? '/' : viewMoreLink} className="news-section-more">
                     More <i className="fas fa-arrow-right"></i>
-                </a>
+                </Link>
             </div>
             <div className="news-section-grid">
                 {articles.map((article, index) => (
-                    <a
+                    <Link
                         key={index}
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                        to={`/article/${article.category || category || 'top'}/${slugify(article.title)}`}
                         className="news-card"
                     >
                         <div className="news-card-image-wrapper">
-                            <img
-                                src={article.image || 'https://via.placeholder.com/300x200?text=News'}
-                                alt={article.title}
+                            <NewsImage 
+                                src={article.image} 
+                                alt={article.title} 
+                                category={category || (article.category as NewsCategory) || 'top'}
+                                articleUrl={article.url}
                                 className="news-card-image"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200?text=TV19';
-                                }}
                             />
                             <span className="news-card-badge">{article.source || 'News'}</span>
                         </div>
@@ -119,7 +120,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                             <h3 className="news-card-title">{article.title}</h3>
                             <span className="news-card-time">{timeAgo(article.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 ))}
             </div>
         </div>

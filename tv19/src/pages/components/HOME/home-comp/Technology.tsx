@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Technology.css';
-import { getTechnology, type Article } from '../../../../services/newsService';
+import { getTechnology, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Technology: React.FC = () => {
@@ -9,7 +11,7 @@ const Technology: React.FC = () => {
     const fetchTechnology = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getTechnology('technology', 'in', 10);
+            const response = await getTechnology('technology', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -26,7 +28,7 @@ const Technology: React.FC = () => {
 
     useEffect(() => {
         fetchTechnology();
-        const interval = setInterval(fetchTechnology, 180000);
+        const interval = setInterval(fetchTechnology, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchTechnology]);
 
@@ -62,25 +64,24 @@ const Technology: React.FC = () => {
             <section className="Technology-section">
                 <div className="Technology-section__header">
                     <h3 className="Technology-section__heading">Technology</h3>
-                    <a href="#" className="Technology-section__more">
+                    <Link to="/technology" className="Technology-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Technology-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'technology'}/${slugify(heroArticle.title)}`}
                         className="Technology-hero"
                     >
                         <div className="Technology-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Technology-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="technology"
+                                articleUrl={heroArticle.url}
+                            />
                         </div>
                         <div className="Technology-hero__body">
                             <span className="Technology-hero__category">Technology</span>
@@ -88,30 +89,23 @@ const Technology: React.FC = () => {
                             <p className="Technology-hero__desc">{heroArticle.description}</p>
                             <span className="Technology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Technology-list">
                         {listArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'technology'}/${slugify(article.title)}`}
                                 className="Technology-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="Technology-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="Technology-list__thumb-placeholder" />
-                                )}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="technology"
+                                    articleUrl={article.url}
+                                    className="Technology-list__thumb"
+                                />
                                 <div className="Technology-list__info">
                                     <h4 className="Technology-list__title">{article.title}</h4>
                                     <span className="Technology-list__meta">
@@ -119,7 +113,7 @@ const Technology: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

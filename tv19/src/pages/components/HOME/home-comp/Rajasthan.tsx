@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Rajasthan.css';
-import { getStateNews, type Article } from '../../../../services/newsService';
+import { getStateNews, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Rajasthan: React.FC = () => {
@@ -25,7 +27,7 @@ const Rajasthan: React.FC = () => {
 
     useEffect(() => {
         fetchRajasthan();
-        const interval = setInterval(fetchRajasthan, 180000);
+        const interval = setInterval(fetchRajasthan, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchRajasthan]);
 
@@ -67,33 +69,24 @@ const Rajasthan: React.FC = () => {
                 {/* ── Section header ── */}
                 <div className="raj-header">
                     <h3 className="raj-heading">STATE</h3>
-                    <a href="#" className="raj-more">
+                    <Link to="/state" className="raj-more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="raj-grid">
                     {/* ── Left: Big Hero ── */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'rajasthan'}/${slugify(heroArticle.title)}`}
                         className="raj-hero"
                     >
                         <div className="raj-hero__img">
-                            {heroArticle.image ? (
-                                <img
-                                    src={heroArticle.image}
-                                    alt={heroArticle.title}
-                                    onError={(e) => {
-                                        (e.target as HTMLImageElement).src =
-                                            'https://placehold.co/500x320/cccccc/555555?text=No+Image';
-                                    }}
-                                />
-                            ) : (
-                                <div className="raj-hero__placeholder" />
-                            )}
-                            {/* Source badge overlaid on image */}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="rajasthan"
+                                articleUrl={heroArticle.url}
+                            />
                             <span className="raj-hero__badge">{getLocationLabel(heroArticle)}</span>
                         </div>
                         <div className="raj-hero__body">
@@ -105,51 +98,43 @@ const Rajasthan: React.FC = () => {
                                 STATE • {timeAgo(heroArticle.publishedAt)}
                             </span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* ── Middle: Text-list articles with location tags ── */}
                     <div className="raj-mid">
                         {midArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'rajasthan'}/${slugify(article.title)}`}
                                 className="raj-mid__item"
                             >
                                 <span className="raj-mid__location">{getLocationLabel(article)}</span>
                                 <h4 className="raj-mid__title">{article.title}</h4>
                                 <span className="raj-mid__time">{timeAgo(article.publishedAt)}</span>
-                            </a>
+                            </Link>
                         ))}
                     </div>
 
                     {/* ── Right: Mix of thumb+text articles ── */}
                     <div className="raj-right">
                         {rightArticles.map((article, idx) => (
-                            <a
+                            <Link
                                 key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                                to={`/article/${article.category || 'rajasthan'}/${slugify(article.title)}`}
                                 className="raj-right__item"
                             >
-                                {/* Show thumbnail for even-indexed items */}
-                                {article.image && idx % 2 === 1 ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="raj-right__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : null}
+                                <NewsImage 
+                                    src={article.image} 
+                                    alt={article.title} 
+                                    category="rajasthan"
+                                    articleUrl={article.url}
+                                    className="raj-right__thumb"
+                                />
                                 <div className="raj-right__info">
                                     <h4 className="raj-right__title">{article.title}</h4>
                                     <span className="raj-right__time">{timeAgo(article.publishedAt)}</span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { Link } from 'react-router-dom';
 import '../../../css/HOME/home-comp/Sports.css';
-import { getSports, type Article } from '../../../../services/newsService';
+import { getSports, slugify, type Article } from '../../../../services/newsService';
+import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Sports: React.FC = () => {
@@ -28,7 +30,7 @@ const Sports: React.FC = () => {
 
     useEffect(() => {
         fetchSportsNews();
-        const interval = setInterval(fetchSportsNews, 180000);
+        const interval = setInterval(fetchSportsNews, 1800000); // 30 minutes
         return () => clearInterval(interval);
     }, [fetchSportsNews]);
 
@@ -62,25 +64,18 @@ const Sports: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
+        <Link
             key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+            to={`/article/${article.category || 'sports'}/${slugify(article.title)}`}
             className="Sports-side-item"
         >
-            {article.image ? (
-                <img
-                    src={article.image}
-                    alt={article.title}
-                    className="Sports-side-thumb"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = 'none';
-                    }}
-                />
-            ) : (
-                <div className="Sports-side-thumb-placeholder" />
-            )}
+            <NewsImage 
+                src={article.image} 
+                alt={article.title} 
+                category="sports"
+                articleUrl={article.url}
+                className="Sports-side-thumb"
+            />
             <div className="Sports-side-info">
                 <h4 className="Sports-side-title">{article.title}</h4>
                 <span className="Sports-side-meta">
@@ -88,7 +83,7 @@ const Sports: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -96,25 +91,24 @@ const Sports: React.FC = () => {
             <section className="Sports-section">
                 <div className="Sports-section__header">
                     <h3 className="Sports-section__heading">Sports</h3>
-                    <a href="#" className="Sports-section__more">
+                    <Link to="/sports" className="Sports-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Sports-grid">
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link
+                        to={`/article/${heroArticle.category || 'sports'}/${slugify(heroArticle.title)}`}
                         className="Sports-hero"
                     >
                         <div className="Sports-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="Sports-hero__placeholder" />
-                            )}
+                            <NewsImage 
+                                src={heroArticle.image} 
+                                alt={heroArticle.title} 
+                                category="sports"
+                                articleUrl={heroArticle.url}
+                            />
                             <span className="Sports-hero__badge">{heroArticle.source}</span>
                         </div>
                         <div className="Sports-hero__body">
@@ -124,7 +118,7 @@ const Sports: React.FC = () => {
                             </div>
                             <span className="Sports-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                     {/* Left column: list with thumbnails */}
                     <div className="Sports-side-list">
                         {leftArticles.map((article, idx) => renderSideItem(article, idx))}
