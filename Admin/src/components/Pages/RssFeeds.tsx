@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import Pagination from '../Pagination'
 
 const API = 'http://localhost:5000'
 
@@ -443,49 +444,15 @@ export default function RssFeeds() {
                     </div>
 
                     {/* Pagination */}
-                    {!loading && filtered.length > 0 && (
-                        <div className="rss-pagination">
-                            <span className="rss-page-info">
-                                Showing {startIdx + 1} to {Math.min(startIdx + entriesPerPage, filtered.length)} of {filtered.length} entries
-                            </span>
-                            <div className="rss-page-btns">
-                                <button
-                                    className="rss-page-btn"
-                                    disabled={currentPage === 1}
-                                    onClick={() => setCurrentPage(p => p - 1)}
-                                >
-                                    Previous
-                                </button>
-                                {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                    let pageNum: number
-                                    if (totalPages <= 5) {
-                                        pageNum = i + 1
-                                    } else if (currentPage <= 3) {
-                                        pageNum = i + 1
-                                    } else if (currentPage >= totalPages - 2) {
-                                        pageNum = totalPages - 4 + i
-                                    } else {
-                                        pageNum = currentPage - 2 + i
-                                    }
-                                    return (
-                                        <button
-                                            key={pageNum}
-                                            className={`rss-page-btn ${currentPage === pageNum ? 'active' : ''}`}
-                                            onClick={() => setCurrentPage(pageNum)}
-                                        >
-                                            {pageNum}
-                                        </button>
-                                    )
-                                })}
-                                <button
-                                    className="rss-page-btn"
-                                    disabled={currentPage === totalPages}
-                                    onClick={() => setCurrentPage(p => p + 1)}
-                                >
-                                    Next
-                                </button>
-                            </div>
-                        </div>
+                    {!loading && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={filtered.length}
+                            itemsPerPage={entriesPerPage}
+                            startIdx={startIdx}
+                            onPageChange={setCurrentPage}
+                        />
                     )}
                 </>
             )

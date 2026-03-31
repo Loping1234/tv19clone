@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Eye, Edit } from 'react-feather';
+import Pagination from '../Pagination';
 
 const API_BASE = 'http://localhost:5000';
 
@@ -561,57 +562,15 @@ export default function News() {
                         </div>
 
                         {/* Pagination */}
-                        {!loading && filteredNews.length > 0 && (
-                            <div className="rss-pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
-                                <span className="rss-page-info" style={{ color: '#6c757d', fontSize: '14px' }}>
-                                    Showing {startIdx + 1} to {Math.min(startIdx + entries, filteredNews.length)} of {filteredNews.length} entries
-                                </span>
-                                <div className="rss-page-btns" style={{ display: 'flex', gap: '5px' }}>
-                                    <button
-                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === 1 ? '#e9ecef' : '#fff', color: currentPage === 1 ? '#6c757d' : '#e8380d', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
-                                        disabled={currentPage === 1}
-                                        onClick={() => setCurrentPage(p => p - 1)}
-                                    >
-                                        Previous
-                                    </button>
-                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                        let pageNum: number;
-                                        if (totalPages <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage >= totalPages - 2) {
-                                            pageNum = totalPages - 4 + i;
-                                        } else {
-                                            pageNum = currentPage - 2 + i;
-                                        }
-                                        const isActive = currentPage === pageNum;
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    border: '1px solid #dee2e6',
-                                                    backgroundColor: isActive ? '#e8380d' : '#fff',
-                                                    color: isActive ? '#fff' : '#495057',
-                                                    cursor: 'pointer',
-                                                    borderRadius: '4px'
-                                                }}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                    <button
-                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === totalPages ? '#e9ecef' : '#fff', color: currentPage === totalPages ? '#6c757d' : '#e8380d', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
-                                        disabled={currentPage === totalPages}
-                                        onClick={() => setCurrentPage(p => p + 1)}
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-                            </div>
+                        {!loading && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalItems={filteredNews.length}
+                                itemsPerPage={entries}
+                                startIdx={startIdx}
+                                onPageChange={setCurrentPage}
+                            />
                         )}
                     </>
                 ) : (

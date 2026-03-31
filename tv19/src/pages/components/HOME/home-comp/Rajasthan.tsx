@@ -12,11 +12,16 @@ const Rajasthan: React.FC = () => {
     const fetchRajasthan = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getStateNews('Rajasthan', 10);
-            const unique = response.articles.filter(
+            const response = await getStateNews('Rajasthan', 20);
+            const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
+            const fresh = response.articles
+                .filter(a => new Date(a.publishedAt).getTime() > twoDaysAgo)
+                .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+            const withImages = fresh.filter(a => a.image);
+            const pool = withImages.length >= 6 ? withImages : fresh;
+            const unique = pool.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
             );
-            // 1 hero + up to 5 mid + up to 4 right = 10
             setArticles(unique.slice(0, 10));
         } catch (err) {
             console.error('Error fetching state stories:', err);

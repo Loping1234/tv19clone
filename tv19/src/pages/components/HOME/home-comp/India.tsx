@@ -11,13 +11,16 @@ const India: React.FC = () => {
     const fetchIndia = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getIndia('india', 10);
-
-            const unique = response.articles.filter(
+            const response = await getIndia('india', 20);
+            const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
+            const fresh = response.articles
+                .filter(a => new Date(a.publishedAt).getTime() > twoDaysAgo)
+                .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+            const withImages = fresh.filter(a => a.image);
+            const pool = withImages.length >= 4 ? withImages : fresh;
+            const unique = pool.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
             );
-
-            // 1 hero + up to 5 list items = 6
             setArticles(unique.slice(0, 6));
         } catch (err) {
             console.error('Error fetching trending stories:', err);

@@ -4,6 +4,7 @@ import '../../../pages/css/topic_categories.css';
 import { getSports, type Article } from '../../../services/newsService';
 import NewsImage from '../common/NewsImage';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
+import AdBanner from '../common/AdBanner';
 
 const REGIONS = [
   'All Stories',
@@ -336,8 +337,7 @@ export default function SportsPage() {
               </section>
 
               <div className="sidebar-ad">
-                <div className="sidebar-ad__label">Advertisement</div>
-                <img src="https://placehold.co/300x250/fff8e1/e65100?text=ADVERTISEMENT&font=montserrat" alt="Ad" className="sidebar-ad__img" style={{border: '1px solid #e0e0e0'}} />
+                <AdBanner variant="sidebar" />
               </div>
 
               <section className="sports-sidebar-section">

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { Edit2, Trash2, Plus, X, CheckCircle, AlertCircle } from 'react-feather'
 import './Users.css'
+import Pagination from '../Pagination'
 
 const API_BASE = 'http://localhost:5000'
 
@@ -34,6 +35,8 @@ export default function Users() {
   const [formData, setFormData] = useState({ name: '', role: '', description: '', imageUrl: '', status: true })
   const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [currentPage, setCurrentPage] = useState(1)
+  const entriesPerPage = 10
 
   useEffect(() => {
     fetchMembers()
@@ -168,6 +171,10 @@ export default function Users() {
     )
   }
 
+  const totalPages = Math.ceil(members.length / entriesPerPage);
+  const startIdx = (currentPage - 1) * entriesPerPage;
+  const paginatedMembers = members.slice(startIdx, startIdx + entriesPerPage);
+
   return (
     <div className="users-page">
       {toast && (
@@ -205,7 +212,7 @@ export default function Users() {
                   </td>
                 </tr>
               ) : (
-                members.map(member => (
+                paginatedMembers.map(member => (
                   <tr key={member._id}>
                     <td>
                       <div className="users-member-image">
@@ -251,6 +258,14 @@ export default function Users() {
             </tbody>
           </table>
         </div>
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          totalItems={members.length}
+          itemsPerPage={entriesPerPage}
+          startIdx={startIdx}
+          onPageChange={setCurrentPage}
+        />
       </div>
 
       {showModal && (

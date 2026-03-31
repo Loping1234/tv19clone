@@ -23,6 +23,7 @@ import Entertainment from './home-comp/Entertainment';
 import Sports from './home-comp/Sports';
 import AdBanner from '../common/AdBanner';
 import PollWidget from './home-comp/PollWidget';
+import NewsImage from '../common/NewsImage';
 
 const Home: React.FC = () => {
   const [heroArticles, setHeroArticles] = useState<Article[]>([]);
@@ -121,9 +122,11 @@ const Home: React.FC = () => {
                     to={`/article/${article.category || 'top'}/${slugify(article.title)}`}
                     className={`carousel-slide ${index === activeSlide ? 'active' : ''}`}
                   >
-                    <img
-                      src={article.image || ''}
+                    <NewsImage
+                      src={article.image}
                       alt={article.title}
+                      category={article.category || 'top'}
+                      articleUrl={article.url}
                       className="carousel-image"
                     />
                     <div className="carousel-overlay">
@@ -174,9 +177,11 @@ const Home: React.FC = () => {
                 to={`/article/${article.category || 'top'}/${slugify(article.title)}`}
                 className="story-item"
               >
-                <img
-                  src={article.image || 'https://via.placeholder.com/120x80?text=No+Image'}
+                <NewsImage
+                  src={article.image}
                   alt={article.title}
+                  category={article.category || 'top'}
+                  articleUrl={article.url}
                   className="story-thumb"
                 />
                 <div className="story-info">

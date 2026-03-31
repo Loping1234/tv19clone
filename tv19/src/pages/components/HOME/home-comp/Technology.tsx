@@ -11,13 +11,13 @@ const Technology: React.FC = () => {
     const fetchTechnology = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getTechnology('technology', 10);
-
-            const unique = response.articles.filter(
-                (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
-            );
-
-            // 1 hero + up to 5 list items = 6
+            const response = await getTechnology('technology', 20);
+            const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
+            const fresh = response.articles
+                .filter(a => new Date(a.publishedAt).getTime() > twoDaysAgo)
+                .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+            const pool = fresh.filter(a => a.image).length >= 4 ? fresh.filter(a => a.image) : fresh;
+            const unique = pool.filter((a, i, arr) => arr.findIndex((b) => b.title === a.title) === i);
             setArticles(unique.slice(0, 6));
         } catch (err) {
             console.error('Error fetching trending stories:', err);

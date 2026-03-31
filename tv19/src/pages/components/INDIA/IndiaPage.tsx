@@ -4,6 +4,7 @@ import '../../../pages/css/topic_categories.css';
 import { getIndia, type Article } from '../../../services/newsService';
 import NewsImage from '../common/NewsImage';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
+import AdBanner from '../common/AdBanner';
 
 const REGIONS = [
     'All Stories',
@@ -323,8 +324,7 @@ export default function IndiaPage() {
                             </section>
 
                             <div className="india-sidebar-ad">
-                                <div className="india-sidebar-ad__label">Advertisement</div>
-                                <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" className="india-sidebar-ad__img" />
+                                <AdBanner variant="sidebar" />
                             </div>
                         </aside>
                     )}

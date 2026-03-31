@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Edit, Eye } from 'react-feather';
 import ViewTemplate from './ViewTemplate';
 import EditTemplate from './EditTemplate';
+import Pagination from '../Pagination';
 
 const TV19_HEADER = `<div style="text-align:center;padding:24px 20px;">
     <h2 style="font-size:24px;font-weight:800;color:#333;margin:0;">
@@ -235,6 +236,16 @@ export default function EmailTemplates() {
     const [templates, setTemplates] = useState(mockEmailTemplates as any[]);
     const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
     const [editingTemplate, setEditingTemplate] = useState<any>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const filtered = templates.filter(t =>
+        !searchTerm ||
+        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalPages = Math.ceil(filtered.length / entries);
+    const startIdx = (currentPage - 1) * entries;
+    const paginated = filtered.slice(startIdx, startIdx + entries);
 
     // Save handler — updates the template in the list so changes are reflected live
     const handleSaveTemplate = (updatedTemplate: any) => {
@@ -296,9 +307,9 @@ export default function EmailTemplates() {
                             </tr>
                         </thead>
                         <tbody>
-                            {templates.map((tpl, index) => (
+                            {paginated.map((tpl, index) => (
                                 <tr key={tpl.id}>
-                                    <td style={{ fontWeight: 500 }}>{index + 1}</td>
+                                    <td style={{ fontWeight: 500 }}>{startIdx + index + 1}</td>
                                     <td>{tpl.title}</td>
                                     <td>{tpl.subject}</td>
                                     <td>{tpl.updatedOn}</td>
@@ -314,15 +325,14 @@ export default function EmailTemplates() {
                     </table>
                 </div>
 
-                <div className="cat-pagination-row">
-                    <div className="cat-pagination">
-                        <button className="cat-page-btn default">First</button>
-                        <button className="cat-page-btn default">Previous</button>
-                        <button className="cat-page-btn active">1</button>
-                        <button className="cat-page-btn default">Next</button>
-                        <button className="cat-page-btn default">Last</button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filtered.length}
+                    itemsPerPage={entries}
+                    startIdx={startIdx}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             <footer className="profile-footer" style={{ marginTop: '20px' }}>

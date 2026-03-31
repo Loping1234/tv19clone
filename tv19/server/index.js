@@ -886,13 +886,12 @@ app.get("/api/news/state", async (req, res) => {
       return res.status(400).json({ error: "Query parameter 'state' is required" });
     }
 
-    // Tier 1: Look in MongoDB for articles under this city's category
-    // Get all articles, prioritize those with images
+    // Sort: always newest first
     let articles = await News.find({ 
       status: true, 
       category: categoryKey
     })
-      .sort({ image: -1, publishedAt: -1 }) // Articles with images first, then by date
+      .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(size);
 
@@ -1767,11 +1766,11 @@ async function refreshAllFeeds() {
     let totalProcessed = 0;
     const allArticlesAcrossCategories = [];
 
-    // NEW: Prune articles older than 1 day to keep DB fresh with latest news
+    // NEW: Prune articles older than 3 days to keep DB fresh with latest news
     const oneDayAgo = new Date();
-    oneDayAgo.setDate(oneDayAgo.getDate() - 1);
+    oneDayAgo.setDate(oneDayAgo.getDate() - 3);
     const deleteResult = await News.deleteMany({ publishedAt: { $lt: oneDayAgo } });
-    console.log(`🧹 Pruned ${deleteResult.deletedCount} old articles (older than 1 day).`);
+    console.log(`🧹 Pruned ${deleteResult.deletedCount} old articles (older than 3 days).`);
 
     // Read active feeds from MongoDB
     const feeds = await RssFeed.find({ status: true });

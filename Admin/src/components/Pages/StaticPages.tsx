@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Edit, Eye } from 'react-feather';
 import EditTemplate from './EditTemplate';
 import ViewPage from './ViewPage';
+import Pagination from '../Pagination';
 
 // Port where the TV19 frontend dev server is running
 const PREVIEW_PORT = 5175;
@@ -51,10 +52,9 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
     const [entries, setEntries] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const [pages, setPages] = useState(mockStaticPages);
-
-    // Placeholder states for future Edit/View views
     const [selectedPage, setSelectedPage] = useState<any>(null);
     const [editingPage, setEditingPage] = useState<any>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Sync selectedPage with initialView if provided
     useEffect(() => {
@@ -85,6 +85,13 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
     if (editingPage) {
         return <EditTemplate template={editingPage} onBack={() => setEditingPage(null)} onSave={handleSavePage} />;
     }
+
+    const filtered = pages.filter(p =>
+        !searchTerm || p.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalPages = Math.ceil(filtered.length / entries);
+    const startIdx = (currentPage - 1) * entries;
+    const paginated = filtered.slice(startIdx, startIdx + entries);
 
     // Main Table View
     return (
@@ -134,9 +141,9 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
                             </tr>
                         </thead>
                         <tbody>
-                            {pages.map((page, index) => (
+                            {paginated.map((page, index) => (
                                 <tr key={page.id}>
-                                    <td>{index + 1}</td>
+                                    <td>{startIdx + index + 1}</td>
                                     <td>{page.title}</td>
                                     <td>{page.updatedOn}</td>
                                     <td>
@@ -159,7 +166,7 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
                                     </td>
                                 </tr>
                             ))}
-                            {pages.length === 0 && (
+                            {filtered.length === 0 && (
                                 <tr>
                                     <td colSpan={4} className="cat-empty">No matching records found</td>
                                 </tr>
@@ -168,18 +175,14 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
                     </table>
                 </div>
 
-                <div className="cat-pagination-footer">
-                    <div className="cat-info">
-                        Showing 1 to {pages.length} of {pages.length} entries
-                    </div>
-                    <div className="cat-pagination">
-                        <button className="cat-page-btn disabled">First</button>
-                        <button className="cat-page-btn disabled">Previous</button>
-                        <button className="cat-page-btn cat-page-active">1</button>
-                        <button className="cat-page-btn disabled">Next</button>
-                        <button className="cat-page-btn disabled">Last</button>
-                    </div>
-                </div>
+                <Pagination
+                    currentPage={currentPage}
+                    totalPages={totalPages}
+                    totalItems={filtered.length}
+                    itemsPerPage={entries}
+                    startIdx={startIdx}
+                    onPageChange={setCurrentPage}
+                />
             </div>
 
             <footer className="profile-footer" style={{ marginTop: '20px' }}>

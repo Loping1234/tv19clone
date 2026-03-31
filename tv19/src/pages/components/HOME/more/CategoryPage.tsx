@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import '../../../css/HOME/CategoryPage.css';
 import { getNews, getCategoryCounts, type Article, type NewsCategory } from '../../../../services/newsService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import NewsImage from '../../common/NewsImage';
 
 /* ── All available categories for the sidebar ── */
 const ALL_CATEGORIES: { label: string; slug: NewsCategory }[] = [
@@ -238,16 +239,11 @@ const CategoryPage: React.FC = () => {
                                     className="category-article"
                                 >
                                     <div className="category-article-thumb">
-                                        <img
-                                            src={
-                                                article.image ||
-                                                'https://via.placeholder.com/220x140?text=TV19'
-                                            }
+                                        <NewsImage
+                                            src={article.image}
                                             alt={article.title}
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).src =
-                                                    'https://via.placeholder.com/220x140?text=TV19';
-                                            }}
+                                            category={currentSlug}
+                                            articleUrl={article.url}
                                         />
                                     </div>
                                     <div className="category-article-body">

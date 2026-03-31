@@ -12,14 +12,13 @@ const Business: React.FC = () => {
     const fetchBusinessNews = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getBusiness('business', 'in', 15);
-
-            // Deduplicate by title
-            const unique = response.articles.filter(
-                (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
-            );
-
-            // We need: 4 left + 1 hero + 4 right = 9 articles
+            const response = await getBusiness('business', 25);
+            const twoDaysAgo = Date.now() - 2 * 24 * 60 * 60 * 1000;
+            const fresh = response.articles
+                .filter(a => new Date(a.publishedAt).getTime() > twoDaysAgo)
+                .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime());
+            const pool = fresh.filter(a => a.image).length >= 7 ? fresh.filter(a => a.image) : fresh;
+            const unique = pool.filter((a, i, arr) => arr.findIndex((b) => b.title === a.title) === i);
             setArticles(unique.slice(0, 9));
         } catch (err) {
             console.error('Error fetching Business news:', err);

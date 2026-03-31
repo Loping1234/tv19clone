@@ -8,6 +8,7 @@ import {
 } from '@iconscout/react-unicons';
 import '../../css/ARTICLE/ArticlePage.css';
 import NewsImage from '../common/NewsImage';
+import AdBanner from '../common/AdBanner';
 
 function timeAgo(dateStr: string) {
     const diff = Date.now() - new Date(dateStr).getTime();
@@ -173,8 +174,7 @@ export default function ArticlePage() {
                         </section>
 
                         <div className="article-sidebar-ad">
-                            <div className="ad-label">ADVERTISEMENT</div>
-                            <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" />
+                            <AdBanner variant="sidebar" />
                         </div>
                     </aside>
                 </div>

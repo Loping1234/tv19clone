@@ -5,6 +5,7 @@ import '../../../pages/css/topic_categories.css';
 import { getDynamicCategoryNews, type Article } from '../../../services/newsService';
 import NewsImage from '../common/NewsImage';
 import { UilClock, UilEye, UilCommentAlt, UilAngleLeft, UilAngleRight } from '@iconscout/react-unicons';
+import AdBanner from '../common/AdBanner';
 
 export const DYNAMIC_CATEGORIES_CONFIG: Record<string, { title: string, apiCategory: string, subcategories: string[] }> = {
     'art': { title: 'Art', apiCategory: 'art', subcategories: ['All Stories', 'Art & Design', 'Book Review', 'Dance', 'Movies', 'Music', 'Television', 'Theater'] },
@@ -335,8 +336,7 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                             </section>
 
                             <div className="dynamic-sidebar-ad">
-                                <div className="dynamic-sidebar-ad__label">Advertisement</div>
-                                <img src="https://placehold.co/300x300/1e2227/ffffff?text=Tonight,+I'll+be+eating...&font=montserrat" alt="Ad" className="dynamic-sidebar-ad__img" />
+                                <AdBanner variant="sidebar" />
                             </div>
                         </aside>
                     )}

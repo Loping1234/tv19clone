@@ -5,12 +5,9 @@ import { getTopHeadlines, slugify, type Article } from '../../../../services/new
 import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-
-
 const TrendingStories: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
-
     const fetchTrendingStories = useCallback(async () => {
         try {
             setLoading(true);
