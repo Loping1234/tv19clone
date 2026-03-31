@@ -86,7 +86,7 @@ const GreenFuture: React.FC = () => {
                             />
                         </div>
                         <div className="Green-Future-hero__body">
-                            <span className="Green-Future-hero__category">TRENDING</span>
+                            
                             <h3 className="Green-Future-hero__title">{heroArticle.title}</h3>
                             <p className="Green-Future-hero__desc">{heroArticle.description}</p>
                             <span className="Green-Future-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

@@ -85,7 +85,7 @@ const Weather: React.FC = () => {
                             />
                         </div>
                         <div className="weather-hero__body">
-                            <span className="weather-hero__category">WEATHER</span>
+                            
                             <h3 className="weather-hero__title">{heroArticle.title}</h3>
                             <p className="weather-hero__desc">{heroArticle.description}</p>
                             <span className="weather-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

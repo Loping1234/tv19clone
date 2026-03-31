@@ -84,7 +84,7 @@ const Astrology: React.FC = () => {
                             />
                         </div>
                         <div className="Astrology-hero__body">
-                            <span className="Astrology-hero__category">Astrology</span>
+                            
                             <h3 className="Astrology-hero__title">{heroArticle.title}</h3>
                             <p className="Astrology-hero__desc">{heroArticle.description}</p>
                             <span className="Astrology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

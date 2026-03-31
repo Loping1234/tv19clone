@@ -84,7 +84,7 @@ const Lifestyle: React.FC = () => {
                             />
                         </div>
                         <div className="Lifestyle-hero__body">
-                            <span className="Lifestyle-hero__category">Lifestyle</span>
+                            
                             <h3 className="Lifestyle-hero__title">{heroArticle.title}</h3>
                             <p className="Lifestyle-hero__desc">{heroArticle.description}</p>
                             <span className="Lifestyle-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

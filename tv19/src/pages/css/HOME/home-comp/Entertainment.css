@@ -23,15 +23,15 @@
     color: #1a1a1a;
     margin: 0;
     padding-top: 8px;
-    border-top: 3px solid #ff4500;
+    border-top: 3px solid var(--tv19-orange, #E63900);
     display: inline-block;
     letter-spacing: 0.5px;
 }
 
 .Entertainment-section__more {
     font-size: 13px;
-    font-weight: 600;
-    color: #ff4500;
+    font-weight: 700;
+    color: var(--tv19-orange, #E63900);
     text-decoration: none;
     display: flex;
     align-items: center;
@@ -40,7 +40,7 @@
 }
 
 .Entertainment-section__more:hover {
-    color: #e03e00;
+    color: var(--tv19-orange-hover, #cc3200);
 }
 
 /* 3-column grid: Left List | Hero Center | Right List */
@@ -82,7 +82,7 @@
 }
 
 .Entertainment-side-item:hover .Entertainment-side-thumb {
-    border-left: 3px solid #ff4500;
+    border-left: 3px solid var(--tv19-orange, #E63900);
 }
 
 .Entertainment-side-thumb {
@@ -116,9 +116,9 @@
 
 .Entertainment-side-title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: #1a1a1a;
-    line-height: 1.4;
+    line-height: 1.3;
     margin: 0 0 4px;
     display: -webkit-box;
     -webkit-line-clamp: 2;
@@ -135,7 +135,7 @@
 }
 
 .Entertainment-side-meta .source {
-    color: #ff4500;
+    color: var(--tv19-orange, #E63900);
     font-weight: 700;
     margin-right: 4px;
 }
@@ -186,7 +186,7 @@
     position: absolute;
     bottom: 0;
     left: 0;
-    background: #ff4500;
+    background: var(--tv19-orange, #E63900);
     color: #fff;
     font-size: 10px;
     font-weight: 700;
@@ -207,7 +207,7 @@
 .Entertainment-hero__category {
     font-size: 11px;
     font-weight: 700;
-    color: #ff4500;
+    color: var(--tv19-orange, #E63900);
     text-transform: uppercase;
     letter-spacing: 0.4px;
     margin-bottom: 6px;
@@ -218,7 +218,7 @@
     font-weight: 700;
     color: #111;
     margin: 0 0 8px;
-    line-height: 1.35;
+    line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 2;
     line-clamp: 2;
@@ -247,7 +247,7 @@
     width: 36px;
     height: 36px;
     border: 3px solid #e0e0e0;
-    border-top-color: #ff4500;
+    border-top-color: var(--tv19-orange, #E63900);
     border-radius: 50%;
     animation: EntertainmentSpin 0.8s linear infinite;
     margin-bottom: 12px;

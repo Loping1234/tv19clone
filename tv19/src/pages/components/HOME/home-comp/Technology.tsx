@@ -84,7 +84,7 @@ const Technology: React.FC = () => {
                             />
                         </div>
                         <div className="Technology-hero__body">
-                            <span className="Technology-hero__category">Technology</span>
+                            
                             <h3 className="Technology-hero__title">{heroArticle.title}</h3>
                             <p className="Technology-hero__desc">{heroArticle.description}</p>
                             <span className="Technology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

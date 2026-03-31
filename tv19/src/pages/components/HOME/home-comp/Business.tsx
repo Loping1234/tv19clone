@@ -121,11 +121,11 @@ const Business: React.FC = () => {
                                 category="business"
                                 articleUrl={heroArticle.url}
                             />
-                            <span className="Business-hero__badge">{heroArticle.source}</span>
+                            
                         </div>
                         <div className="Business-hero__body">
                             <div>
-                                <span className="Business-hero__category">Business</span>
+                                
                                 <h3 className="Business-hero__title">{heroArticle.title}</h3>
                             </div>
                             <span className="Business-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

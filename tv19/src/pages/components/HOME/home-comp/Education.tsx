@@ -84,7 +84,7 @@ const Education: React.FC = () => {
                             />
                         </div>
                         <div className="Education-hero__body">
-                            <span className="Education-hero__category">Education</span>
+                            
                             <h3 className="Education-hero__title">{heroArticle.title}</h3>
                             <p className="Education-hero__desc">{heroArticle.description}</p>
                             <span className="Education-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

@@ -109,7 +109,7 @@ const Politics: React.FC = () => {
                             />
                         </div>
                         <div className="Politics-hero__body">
-                            <span className="Politics-hero__category">Politics</span>
+                            
                             <h3 className="Politics-hero__title">{heroArticle.title}</h3>
                             <p className="Politics-hero__desc">{heroArticle.description}</p>
                             <span className="Politics-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

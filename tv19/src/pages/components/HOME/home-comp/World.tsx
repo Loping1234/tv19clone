@@ -109,7 +109,7 @@ const World: React.FC = () => {
                             />
                         </div>
                         <div className="World-hero__body">
-                            <span className="World-hero__category">World</span>
+                            
                             <h3 className="World-hero__title">{heroArticle.title}</h3>
                             <p className="World-hero__desc">{heroArticle.description}</p>
                             <span className="World-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

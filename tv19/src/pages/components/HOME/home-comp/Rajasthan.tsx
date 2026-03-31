@@ -59,10 +59,6 @@ const Rajasthan: React.FC = () => {
     const midArticles = articles.slice(1, 6);   // 5 text items in middle
     const rightArticles = articles.slice(6, 10); // 4 items on right (some with thumb)
 
-    // Derive a short location label from source or fallback
-    const getLocationLabel = (article: Article) =>
-        article.source?.toUpperCase() || 'STATE';
-
     return (
         <div className="raj-page">
             <section className="raj-section">
@@ -87,7 +83,6 @@ const Rajasthan: React.FC = () => {
                                 category="rajasthan"
                                 articleUrl={heroArticle.url}
                             />
-                            <span className="raj-hero__badge">{getLocationLabel(heroArticle)}</span>
                         </div>
                         <div className="raj-hero__body">
                             <h2 className="raj-hero__title">{heroArticle.title}</h2>
@@ -108,7 +103,6 @@ const Rajasthan: React.FC = () => {
                                 to={`/article/${article.category || 'rajasthan'}/${slugify(article.title)}`}
                                 className="raj-mid__item"
                             >
-                                <span className="raj-mid__location">{getLocationLabel(article)}</span>
                                 <h4 className="raj-mid__title">{article.title}</h4>
                                 <span className="raj-mid__time">{timeAgo(article.publishedAt)}</span>
                             </Link>

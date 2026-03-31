@@ -712,7 +712,7 @@ const RSS_FEEDS = {
   ],
   "pakistan": [
     "https://news.google.com/rss/search?q=Pakistan+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/south_asia/rss.xml",
+    "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
   ],
   "uk": [
     "https://news.google.com/rss/search?q=UK+United+Kingdom+news&hl=en-IN&gl=IN&ceid=IN:en",
@@ -1853,22 +1853,22 @@ connectDB().then(async () => {
     const count = await RssFeed.countDocuments();
     const expectedCount = Object.values(RSS_FEEDS).reduce((sum, urls) => sum + urls.length, 0);
 
-    if (count < expectedCount) {
-      console.log('🌱 New feeds detected, re-seeding RSS Feeds...');
-
-      // Insert only feeds that do not already exist
-      for (const [category, urls] of Object.entries(RSS_FEEDS)) {
-        for (const url of urls) {
-          await RssFeed.findOneAndUpdate(
-            { url },
-            { url, category, status: true },
-            { upsert: true }
-          );
-        }
+    // Always sync: upsert all known feeds and remove dead ones
+    console.log('🌱 Syncing RSS feeds...');
+    const knownUrls = [];
+    for (const [category, urls] of Object.entries(RSS_FEEDS)) {
+      for (const url of urls) {
+        knownUrls.push(url);
+        await RssFeed.findOneAndUpdate(
+          { url },
+          { url, category, status: true },
+          { upsert: true }
+        );
       }
-
-      console.log('✅ RSS feeds synced.');
     }
+    // Remove any DB feeds no longer in RSS_FEEDS (e.g. dead URLs)
+    await RssFeed.deleteMany({ url: { $nin: knownUrls } });
+    console.log('✅ RSS feeds synced.');
   } catch (e) {
     console.error('❌ Failed to seed RSS feeds:', e);
   }

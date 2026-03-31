@@ -85,7 +85,7 @@ const Crime: React.FC = () => {
                             />
                         </div>
                         <div className="Crime-hero__body">
-                            <span className="Crime-hero__category">Crime</span>
+                            
                             <h3 className="Crime-hero__title">{heroArticle.title}</h3>
                             <p className="Crime-hero__desc">{heroArticle.description}</p>
                             <span className="Crime-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

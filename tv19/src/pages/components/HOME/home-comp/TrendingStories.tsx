@@ -5,7 +5,7 @@ import { getTopHeadlines, slugify, type Article } from '../../../../services/new
 import NewsImage from '../../common/NewsImage';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
-const categoryLabels = ['INDUSTRY', 'JODHPUR', 'TENNIS', 'MOVIES', 'SPORTS', 'WORLD'];
+
 
 const TrendingStories: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -72,9 +72,6 @@ const TrendingStories: React.FC = () => {
                             </div>
 
                             <div className="ts-card__body">
-                                <span className="ts-card__badge">
-                                    #{idx + 1} {categoryLabels[idx] || article.source?.toUpperCase() || 'NEWS'}
-                                </span>
                                 <h4 className="ts-card__title">{article.title}</h4>
                                 <span className="ts-card__views">
                                     <i className="far fa-eye"></i> {article.views || 0} VIEWS

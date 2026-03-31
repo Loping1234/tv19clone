@@ -21,6 +21,8 @@ import Arts from './home-comp/Arts';
 import Business from './home-comp/Business';
 import Entertainment from './home-comp/Entertainment';
 import Sports from './home-comp/Sports';
+import AdBanner from '../common/AdBanner';
+import PollWidget from './home-comp/PollWidget';
 
 const Home: React.FC = () => {
   const [heroArticles, setHeroArticles] = useState<Article[]>([]);
@@ -125,7 +127,6 @@ const Home: React.FC = () => {
                       className="carousel-image"
                     />
                     <div className="carousel-overlay">
-                      <span className="carousel-category">{article.source}</span>
                       <h2 className="carousel-title">{article.title}</h2>
                       <span className="carousel-timestamp">
                         {article.source} &bull; {timeAgo(article.publishedAt)}
@@ -195,17 +196,22 @@ const Home: React.FC = () => {
         <Rajasthan />
         {/* Categories */}
         <TrendingStories />
+        <PollWidget />
         <India />
+        <AdBanner variant="horizontal" />
         <World />
         <Business />
         <Sports />
+        <AdBanner variant="horizontal" />
         <Politics />
         <Technology />
         <Lifestyle />
+        <AdBanner variant="horizontal" />
         <Finance />
         <Entertainment />
         <Weather />
         <Crime />
+        <AdBanner variant="horizontal" />
         <GreenFuture />
         <Education />
         <Astrology />

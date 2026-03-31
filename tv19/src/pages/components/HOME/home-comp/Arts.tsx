@@ -84,7 +84,7 @@ const Arts: React.FC = () => {
                             />
                         </div>
                         <div className="Arts-hero__body">
-                            <span className="Arts-hero__category">Arts</span>
+                            
                             <h3 className="Arts-hero__title">{heroArticle.title}</h3>
                             <p className="Arts-hero__desc">{heroArticle.description}</p>
                             <span className="Arts-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

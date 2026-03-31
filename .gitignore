@@ -2,3 +2,12 @@ claude_code
 .amazonq
 Image_Logo.png
 patch.js
+.env
+node_modules
+.claude
+.vscode
+.agent
+status.txt
+diff.txt
+cached_diff.txt
+.claude

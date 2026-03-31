@@ -84,7 +84,7 @@ const India: React.FC = () => {
                             />
                         </div>
                         <div className="India-hero__body">
-                            <span className="India-hero__category">INDIA</span>
+                            
                             <h3 className="India-hero__title">{heroArticle.title}</h3>
                             <p className="India-hero__desc">{heroArticle.description}</p>
                             <span className="India-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

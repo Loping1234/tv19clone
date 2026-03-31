@@ -114,11 +114,11 @@ const Finance: React.FC = () => {
                                 category="finance"
                                 articleUrl={heroArticle.url}
                             />
-                            <span className="finance-hero__badge">{heroArticle.source}</span>
+                            
                         </div>
                         <div className="finance-hero__body">
                             <div>
-                                <span className="finance-hero__category">FINANCE</span>
+                                
                                 <h3 className="finance-hero__title">{heroArticle.title}</h3>
                             </div>
                             <span className="finance-hero__time">{timeAgo(heroArticle.publishedAt)}</span>

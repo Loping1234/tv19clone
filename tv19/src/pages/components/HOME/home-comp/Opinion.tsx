@@ -84,7 +84,7 @@ const Opinion: React.FC = () => {
                             />
                         </div>
                         <div className="Opinion-hero__body">
-                            <span className="Opinion-hero__category">Opinion</span>
+                            
                             <h3 className="Opinion-hero__title">{heroArticle.title}</h3>
                             <p className="Opinion-hero__desc">{heroArticle.description}</p>
                             <span className="Opinion-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
