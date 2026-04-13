@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/topheadlines.css';
 import { getTopHeadlines, type Article } from '../../../../services/newsService';
@@ -49,19 +50,13 @@ const TrendingStories: React.FC = () => {
                 {/* Section header */}
                 <div className="ts-header">
                     <h3 className="ts-heading">TRENDING STORIES</h3>
-                    <a href="#" className="ts-more">MORE <i className="fas fa-arrow-right"></i></a>
+                    <Link to="/category/trending" className="ts-more">MORE <i className="fas fa-arrow-right"></i></Link>
                 </div>
 
                 {/* 4-column card row */}
                 <div className="ts-grid">
                     {articles.map((article, idx) => (
-                        <a
-                            key={idx}
-                            href={article.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="ts-card"
-                        >
+                        <Link key={idx} to={`/article/${article._id}`} className="ts-card">
                             {/* Thumbnail */}
                             <div className="ts-card__img">
                                 {article.image ? (
@@ -86,10 +81,10 @@ const TrendingStories: React.FC = () => {
                                 </span>
                                 <h4 className="ts-card__title">{article.title}</h4>
                                 <span className="ts-card__views">
-                                    <i className="far fa-eye"></i> 1 VIEWS
+                                    <i className="far fa-eye"></i> {article.views || 0} VIEWS
                                 </span>
                             </div>
-                        </a>
+                        </Link>
                     ))}
                 </div>
             </section>

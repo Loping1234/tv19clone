@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Entertainment.css';
 import { getEntertainment, type Article } from '../../../../services/newsService';
@@ -62,11 +63,9 @@ const Entertainment: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
-            key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+        <Link key={idx} to={`/article/${article._id}`}
+            
+            
             className="Entertainment-side-item"
         >
             {article.image ? (
@@ -88,7 +87,7 @@ const Entertainment: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -115,10 +114,9 @@ const Entertainment: React.FC = () => {
                     </div>
 
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Entertainment-hero"
                     >
                         <div className="Entertainment-hero__img">
@@ -136,7 +134,7 @@ const Entertainment: React.FC = () => {
                             </div>
                             <span className="Entertainment-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

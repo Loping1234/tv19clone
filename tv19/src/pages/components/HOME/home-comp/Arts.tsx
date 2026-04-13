@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Arts.css';
 import { getArts, type Article } from '../../../../services/newsService';
@@ -69,10 +70,9 @@ const Arts: React.FC = () => {
 
                 <div className="Arts-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Arts-hero"
                     >
                         <div className="Arts-hero__img">
@@ -88,16 +88,14 @@ const Arts: React.FC = () => {
                             <p className="Arts-hero__desc">{heroArticle.description}</p>
                             <span className="Arts-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Arts-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Arts-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Arts: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

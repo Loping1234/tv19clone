@@ -1,9 +1,24 @@
 
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
 import { UilFacebook, UilTwitter, UilYoutube, UilInstagram, UilWhatsapp, UilTelegram } from '@iconscout/react-unicons';
 import '../../css/Footer/Footer.css';
 
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+
 export default function Footer() {
+  const [email, setEmail] = useState('');
+  const [status, setStatus] = useState<{ type: 'idle' | 'loading' | 'success' | 'error', msg: string }>({ type: 'idle', msg: '' });
+  const [showTopBtn, setShowTopBtn] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      setShowTopBtn(window.scrollY > 300);
+    };
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
   const scrollToTop = () => {
     window.scrollTo({
       top: 0,
@@ -66,10 +81,39 @@ export default function Footer() {
           <div className="footer-col subscribe-col">
             <h4 className="footer-col-title">SUBSCRIBE</h4>
             <p className="footer-sub-text">Get the latest news delivered directly to your inbox.</p>
-            <form className="footer-subscribe-form" onSubmit={(e) => e.preventDefault()}>
-              <input type="email" placeholder="Email Address" required />
-              <button type="submit">GO</button>
+            <form className="footer-subscribe-form" onSubmit={async (e) => {
+              e.preventDefault();
+              if (!email) return;
+              
+              setStatus({ type: 'loading', msg: 'Subscribing...' });
+              try {
+                const res = await axios.post(`${API_URL}/newsletter/subscribe`, { email });
+                setStatus({ type: 'success', msg: res.data.message });
+                setEmail('');
+              } catch (err: any) {
+                setStatus({ 
+                  type: 'error', 
+                  msg: err.response?.data?.error || 'Failed to subscribe. Please try again.' 
+                });
+              }
+            }}>
+              <input 
+                type="email" 
+                placeholder="Email Address" 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required 
+                disabled={status.type === 'loading'}
+              />
+              <button type="submit" disabled={status.type === 'loading'}>
+                {status.type === 'loading' ? '...' : 'GO'}
+              </button>
             </form>
+            {status.msg && (
+              <p style={{ marginTop: '10px', fontSize: '12px', color: status.type === 'success' ? '#4ade80' : '#f87171' }}>
+                {status.msg}
+              </p>
+            )}
           </div>
 
         </div>
@@ -91,9 +135,11 @@ export default function Footer() {
       </div>
 
       {/* Floating Back-to-Top Button */}
-      <button className="back-to-top-btn" onClick={scrollToTop} aria-label="Scroll to top">
-        ↑
-      </button>
+      {showTopBtn && (
+        <button className="back-to-top-btn" onClick={scrollToTop} aria-label="Scroll to top">
+          ↑
+        </button>
+      )}
 
     </footer>
   );

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Lifestyle.css';
 import { getLifestyle, type Article } from '../../../../services/newsService';
@@ -9,7 +10,7 @@ const Lifestyle: React.FC = () => {
     const fetchLifestyle = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getLifestyle('lifestyle', 'in', 10);
+            const response = await getLifestyle('lifestyle', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -69,10 +70,9 @@ const Lifestyle: React.FC = () => {
 
                 <div className="Lifestyle-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Lifestyle-hero"
                     >
                         <div className="Lifestyle-hero__img">
@@ -88,16 +88,14 @@ const Lifestyle: React.FC = () => {
                             <p className="Lifestyle-hero__desc">{heroArticle.description}</p>
                             <span className="Lifestyle-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Lifestyle-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Lifestyle-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Lifestyle: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

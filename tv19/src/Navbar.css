@@ -245,6 +245,26 @@
   border-radius: 3px;
 }
 
+/* ── Pulse Badge ── */
+.pulse-badge {
+  position: absolute;
+  top: 10px;
+  right: -20px;
+  background-color: #ff3b3b;
+  color: #fff;
+  font-size: 8px;
+  padding: 2px 4px;
+  border-radius: 10px;
+  animation: pulse 1.5s infinite;
+  pointer-events: none;
+}
+
+@keyframes pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 59, 0.7); }
+  70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(255, 59, 59, 0); }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(255, 59, 59, 0); }
+}
+
 /* ── Dropdown ── */
 .dropdown {
   position: relative;

@@ -14,6 +14,7 @@ import connectDB from "./db.js";
 import { getConfig, updateConfig } from "./models/SiteConfig.js";
 import AdminProfile, { getProfile, updateProfile } from "./models/AdminProfile.js";
 import News from "./models/News.js";
+import Newsletter from "./models/Newsletter.js";
 import RssFeed from "./models/RssFeed.js";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
@@ -217,20 +218,6 @@ app.post("/api/admin/login", async (req, res) => {
   }
 });
 
-app.post("/api/admin/signup", async (req, res) => {
-  try {
-    const { name, email, password } = req.body;
-    const existingAdmin = await AdminProfile.findOne({ email });
-    if (existingAdmin) return res.status(400).json({ error: "Admin with this email already exists" });
-    const admin = new AdminProfile({ name, email, password });
-    await admin.save();
-    res.json({ message: "Signup successful" });
-  } catch (err) {
-    console.error("Signup error:", err.message);
-    res.status(500).json({ error: "Failed to create admin" });
-  }
-});
-
 // GET /api/admin/me - Verify token and get current admin
 app.get("/api/admin/me", authenticateToken, async (req, res) => {
   try {
@@ -274,15 +261,79 @@ app.put("/api/admin/reset-password", authenticateToken, async (req, res) => {
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Multer config for file uploads
+const UPLOADS_DIR = path.join(__dirname, "uploads");
+const ALLOWED_FIELDNAMES = ["favicon", "icon", "profileImage"];
+const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/gif", "image/webp", "image/svg+xml"];
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, path.join(__dirname, "uploads")),
+  destination: (_req, _file, cb) => cb(null, UPLOADS_DIR),
   filename: (_req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    const name = file.fieldname + "-" + Date.now() + ext;
-    cb(null, name);
+    const ext = path.extname(file.originalname).toLowerCase().replace(/[^.a-z0-9]/g, "");
+    const safeName = crypto.randomBytes(16).toString("hex") + "-" + Date.now() + ext;
+    cb(null, safeName);
   },
 });
-const upload = multer({ storage, limits: { fileSize: 5 * 1024 * 1024 } });
+const upload = multer({
+  storage,
+  limits: { fileSize: 5 * 1024 * 1024 },
+  fileFilter: (_req, file, cb) => {
+    if (!ALLOWED_MIME_TYPES.includes(file.mimetype)) {
+      return cb(new Error("Only image files are allowed"));
+    }
+    cb(null, true);
+  },
+});
+
+// ============================================================
+//  In-memory TTL cache for hot /api/news queries
+// ============================================================
+const newsCache = new Map();
+const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+
+function getCached(key) {
+  const entry = newsCache.get(key);
+  if (entry && Date.now() < entry.expiresAt) return entry.data;
+  newsCache.delete(key);
+  return null;
+}
+
+function setCache(key, data) {
+  newsCache.set(key, { data, expiresAt: Date.now() + CACHE_TTL });
+}
+
+function invalidateCache(category) {
+  for (const key of newsCache.keys()) {
+    if (key.startsWith(category + ":") || key.startsWith("top:") || key.startsWith("trending:")) {
+      newsCache.delete(key);
+    }
+  }
+}
+
+// ============================================================
+//  Allowed domains for SSRF protection in fetchOgImage
+// ============================================================
+const ALLOWED_SCRAPE_DOMAINS = [
+  "timesofindia.indiatimes.com",
+  "economictimes.indiatimes.com",
+  "feeds.bbci.co.uk",
+  "www.bbc.com",
+  "www.thehindu.com",
+  "news.google.com",
+  "rss.nytimes.com",
+  "www.nytimes.com",
+  "indianexpress.com",
+  "www.ndtv.com",
+  "www.hindustantimes.com",
+];
+
+function isAllowedUrl(urlStr) {
+  try {
+    const { hostname, protocol } = new URL(urlStr);
+    if (protocol !== "https:" && protocol !== "http:") return false;
+    return ALLOWED_SCRAPE_DOMAINS.some(d => hostname === d || hostname.endsWith("." + d));
+  } catch {
+    return false;
+  }
+}
 
 // ============================================================
 //  News & Category Counts
@@ -307,6 +358,36 @@ app.get("/api/counts/categories", async (_req, res) => {
   } catch (err) {
     console.error("Category counts error:", err.message);
     res.status(500).json({ error: "Failed to fetch category counts" });
+  }
+});
+
+// POST /api/newsletter/subscribe — add user email to newsletter list
+app.post("/api/newsletter/subscribe", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ error: "Email is required" });
+    }
+
+    const existing = await Newsletter.findOne({ email });
+    if (existing) {
+      if (!existing.active) {
+        existing.active = true;
+        await existing.save();
+        return res.json({ message: "Welcome back! You've been re-subscribed." });
+      }
+      return res.status(400).json({ error: "Email is already subscribed" });
+    }
+
+    const newSub = new Newsletter({ email });
+    await newSub.save();
+    res.json({ message: "Successfully subscribed to the newsletter!" });
+  } catch (err) {
+    if (err.name === 'ValidationError') {
+      return res.status(400).json({ error: "Invalid email format" });
+    }
+    console.error("Newsletter subscribe error:", err.message);
+    res.status(500).json({ error: "Server error. Please try again later." });
   }
 });
 
@@ -441,7 +522,6 @@ const RSS_FEEDS = {
   "rajasthan": [
     "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
     "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-    "https://www.thehindu.com/news/national/other-states/feeder/default.rss",
   ],
   "uttar pradesh": [
     "https://news.google.com/rss/search?q=Uttar+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
@@ -786,9 +866,13 @@ async function fetchFeeds(feedUrls, label) {
 app.get("/api/news", async (req, res) => {
   try {
     const categoryQuery = (req.query.category || "top").toString().toLowerCase();
-    const size = parseInt(req.query.size) || 20;
-    const skip = parseInt(req.query.skip) || 0;
+    const size = Math.min(Math.max(parseInt(req.query.size) || 20, 1), 50);
+    const skip = Math.max(parseInt(req.query.skip) || 0, 0);
     const imagesOnly = req.query.imagesOnly === "true";
+
+    const cacheKey = `${categoryQuery}:${size}:${skip}:${imagesOnly}`;
+    const cached = getCached(cacheKey);
+    if (cached) return res.json(cached);
 
     const dbQuery = { status: true };
 
@@ -805,9 +889,9 @@ app.get("/api/news", async (req, res) => {
       .skip(skip)
       .limit(size);
 
-    const totalResults = await News.countDocuments(dbQuery);
-
-    res.json({ totalResults, articles });
+    const result = { totalResults: articles.length, articles };
+    setCache(cacheKey, result);
+    res.json(result);
   } catch (err) {
     console.error("News fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch news from database" });
@@ -818,8 +902,8 @@ app.get("/api/news", async (req, res) => {
 app.get("/api/news/state", async (req, res) => {
   try {
     const stateName = (req.query.state || req.query.category || "Rajasthan").toString().trim();
-    const size = parseInt(req.query.size) || 15;
-    const skip = parseInt(req.query.skip) || 0;
+    const size = Math.min(Math.max(parseInt(req.query.size) || 15, 1), 50);
+    const skip = Math.max(parseInt(req.query.skip) || 0, 0);
     const categoryKey = stateName.toLowerCase();
 
     if (!stateName) {
@@ -835,19 +919,28 @@ app.get("/api/news/state", async (req, res) => {
       .skip(skip)
       .limit(size);
 
-    if (articles.length > 0) {
-      const missingImages = articles.filter((article) => !article.image);
-
-      if (missingImages.length > 0) {
-        // Run image scraping completely in the BACKGROUND. DO NOT block API response.
-        enrichAndSaveRemainingImages(missingImages).catch(console.error);
+    let needsRefresh = false;
+    if (skip === 0) {
+      if (articles.length < 5) {
+        needsRefresh = true;
+      } else if (articles.length > 0) {
+        // Sort first before checking staleness so articles[0] is actually the latest
+        const sorted = [...articles].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
+        const latestArticleDate = new Date(sorted[0].publishedAt || sorted[0].createdAt);
+        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
+        if (latestArticleDate < fourHoursAgo) {
+          needsRefresh = true;
+        }
       }
+    }
 
+    if (articles.length > 0 && !needsRefresh) {
       articles = sortArticlesForCover(articles);
     }
 
-    // Tier 2: Live fetch from Google News RSS for this city (strictly FIRST page load)
-    if (articles.length === 0 && skip === 0) {
+    // Tier 2: Live fetch from Google News RSS for this city
+    let tier2Executed = false;
+    if (needsRefresh && skip === 0) {
       const liveUrls = RSS_FEEDS[categoryKey] || [
         `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`
       ];
@@ -870,7 +963,7 @@ app.get("/api/news/state", async (req, res) => {
                 publishedAt: article.publishedAt,
                 content: article.content,
               },
-              $setOnInsert: { status: false }
+              $setOnInsert: { status: true } // Must be true so they appear natively on next page view
             },
             { upsert: true }
           )
@@ -878,20 +971,16 @@ app.get("/api/news/state", async (req, res) => {
         await Promise.allSettled(saveOps);
 
         // Return the prioritised mapped articles immediately for the first load
-        articles = prioritizedMapped;
-
-        // SILENT BACKGROUND MAGIC: Now that the user's request is satisfied natively from the DB,
-        // fire off the image scraping engine into the background without awaiting it. Next time
-        // they refresh, images will be there.
-        enrichAndSaveRemainingImages(prioritizedMapped).catch(console.error);
+        articles = prioritizedMapped.slice(0, size);
+        tier2Executed = true;
 
       } catch (feedErr) {
         console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
       }
     }
 
-    // Tier 3: Strict text search — fallback
-    if (articles.length === 0 && skip === 0) {
+    // Tier 3: Strict text search — fallback (Only if no articles found natively AND Tier 2 didn't yield anything)
+    if (articles.length === 0 && !tier2Executed && skip === 0) {
       articles = await News.find({
         status: true,
         $or: [
@@ -903,11 +992,6 @@ app.get("/api/news/state", async (req, res) => {
         .limit(size);
 
       if (articles.length > 0) {
-        const missingImages = articles.filter((article) => !article.image);
-        if (missingImages.length > 0) {
-          // Fire background scrape. NEVER block the API response.
-          enrichAndSaveRemainingImages(missingImages).catch(console.error);
-        }
         articles = sortArticlesForCover(articles);
       }
     }
@@ -923,7 +1007,7 @@ app.get("/api/news/state", async (req, res) => {
 
 // GET /api/news/scrape-image?url=...&brokenImage=...
 // Attempts to rescrape an article's webpage if the original image fails on frontend
-app.get("/api/news/scrape-image", async (req, res) => {
+app.get("/api/news/scrape-image", scrapeLimiter, async (req, res) => {
   try {
     const articleUrl = (req.query.url || "").toString().trim();
     const brokenImage = (req.query.brokenImage || "").toString().trim();
@@ -932,22 +1016,21 @@ app.get("/api/news/scrape-image", async (req, res) => {
       return res.status(400).json({ error: "Query parameter 'url' is required" });
     }
 
-    // 1. Try to fetch og:image or twitter:image
+    // SSRF protection: only allow known news domains
+    if (!isAllowedUrl(articleUrl)) {
+      return res.status(400).json({ error: "URL not allowed" });
+    }
+
     const scrapedImage = await fetchOgImage(articleUrl);
-    
-    // 2. We could also parse regular <img> tags, but fetchOgImage returns the primary meta tags.
+
     if (scrapedImage && scrapedImage !== brokenImage && !GENERIC_IMAGE_PATTERNS.some(pat => scrapedImage.includes(pat))) {
-      
-      // Update the database with the working image so it fixes it for future users
-      await News.updateMany(
+      await News.updateOne(
         { url: articleUrl },
         { $set: { image: scrapedImage } }
       );
-      
       return res.json({ imageUrl: scrapedImage });
     }
 
-    // No valid fallback found
     return res.status(404).json({ error: "No valid fallback image found on the article page" });
   } catch (err) {
     console.error("Scrape fallback image error:", err.message);
@@ -992,8 +1075,38 @@ app.get("/api/news/search", async (req, res) => {
 });
 
 // GET /api/news/categories — returns list of all supported categories
+// MUST be before /:id to avoid Express matching "categories" as an id param
 app.get("/api/news/categories", (_req, res) => {
   res.json({ categories: Object.keys(RSS_FEEDS) });
+});
+
+// GET /api/news/:id - Fetch single article
+app.get("/api/news/:id", async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return next();
+    }
+    const article = await News.findById(req.params.id);
+    if (!article) return res.status(404).json({ error: "Article not found" });
+    res.json({ article });
+  } catch (err) {
+    console.error("Fetch article error:", err.message);
+    res.status(500).json({ error: "Failed to fetch article" });
+  }
+});
+
+// POST /api/news/:id/view - Increment view count
+app.post("/api/news/:id/view", async (req, res, next) => {
+  try {
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return next();
+    }
+    await News.findByIdAndUpdate(req.params.id, { $inc: { views: 1 } });
+    res.json({ success: true });
+  } catch (err) {
+    console.error("Update view error:", err.message);
+    res.status(500).json({ error: "Failed to update article view" });
+  }
 });
 
 
@@ -1244,53 +1357,7 @@ function sortArticlesForCover(articles) {
   });
 }
 
-/**
- * Helper strictly used internally (now deprecated actively but kept for edge logic).
- * Use `enrichAndSaveRemainingImages` for bulk decoupled processing.
- */
-async function enrichArticlesWithImages(articles) {
-  await Promise.allSettled(
-    articles.map(async (article) => {
-      if (!article.image && article.url) {
-        const scrapedImage = await fetchOgImage(article.url);
-        if (
-          scrapedImage &&
-          !GENERIC_IMAGE_PATTERNS.some((pat) => scrapedImage.includes(pat))
-        ) {
-          article.image = scrapedImage;
-        }
-      }
-    })
-  );
-}
 
-/**
- * NEW DECOUPLED BACKGROUND PROCESSOR
- * Automatically drops articles into chunks of 10 to protect Node.js and external websites
- * from being DDoS'd with 10k parallel requests. When an image is found, instantly writes to DB.
- */
-async function enrichAndSaveRemainingImages(articles) {
-  const missingImages = articles.filter(a => !a.image && a.url);
-  if (missingImages.length === 0) return;
-
-  const chunkSize = 10;
-  for (let i = 0; i < missingImages.length; i += chunkSize) {
-    const chunk = missingImages.slice(i, i + chunkSize);
-    await Promise.allSettled(
-      chunk.map(async (article) => {
-        const scrapedImage = await fetchOgImage(article.url);
-        if (scrapedImage && !GENERIC_IMAGE_PATTERNS.some(pat => scrapedImage.includes(pat))) {
-          article.image = scrapedImage;
-          await News.findOneAndUpdate(
-            { url: article.url },
-            { $set: { image: scrapedImage } },
-            { upsert: false } // only update if existing, though DB is guaranteed populated at this stage
-          );
-        }
-      })
-    );
-  }
-}
 
 // Scrape og:image (or twitter:image fallback) from an article URL
 async function fetchOgImage(url, timeoutMs = 6000) {
@@ -1316,8 +1383,9 @@ async function fetchOgImage(url, timeoutMs = 6000) {
     const resp = await fetch(resolvedUrl, {
       signal: controller.signal,
       headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36",
-        Accept: "text/html,application/xhtml+xml",
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
       },
     });
     clearTimeout(timer);
@@ -1326,7 +1394,7 @@ async function fetchOgImage(url, timeoutMs = 6000) {
     const reader = resp.body.getReader();
     let html = "";
     let done = false;
-    while (!done && html.length < 50000) {
+    while (!done && html.length < 10000) {
       const { value, done: readerDone } = await reader.read();
       done = readerDone;
       if (value) html += new TextDecoder().decode(value);
@@ -1345,30 +1413,69 @@ async function fetchOgImage(url, timeoutMs = 6000) {
   }
 }
 
-// Extract image from RSS item fields
+// Extract image from RSS item fields — prioritises native RSS image fields.
+// Only falls back to inline HTML img as last resort. Never does network calls.
 function extractImage(item) {
-  // media:thumbnail (BBC, TOI)
+  // 1. media:thumbnail (BBC, TOI — highest quality, always prefer)
   if (item.mediaThumbnail?.$?.url) return item.mediaThumbnail.$.url;
   if (item["media:thumbnail"]?.$?.url) return item["media:thumbnail"].$.url;
 
-  // media:group > media:thumbnail (YouTube-style feeds)
+  // 2. media:group > media:thumbnail (YouTube-style feeds)
   if (item.mediaGroup?.["media:thumbnail"]?.[0]?.$?.url)
     return item.mediaGroup["media:thumbnail"][0].$.url;
 
-  // media:content
-  if (item.mediaContent?.$?.url) return item.mediaContent.$.url;
-  if (item["media:content"]?.$?.url) return item["media:content"].$.url;
+  // 3. media:content with type image
+  const mc = item.mediaContent || item["media:content"];
+  if (mc?.$?.url) {
+    const type = mc.$?.type || "";
+    if (!type || type.startsWith("image")) return mc.$.url;
+  }
 
-  // enclosure (podcast-style image attachments)
+  // 4. enclosure (podcast-style image attachments)
   if (item.enclosure?.url && item.enclosure.type?.startsWith("image"))
     return item.enclosure.url;
 
-  // Inline <img> in content:encoded or content HTML
+  // 5. Inline <img> in content:encoded — last resort, no network call needed
   const html = item["content:encoded"] || item.content || "";
-  const match = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (match) return match[1];
+  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
+  if (imgMatch) return imgMatch[1];
 
   return null;
+}
+
+// Background worker: Scrape og:images for articles missing images.
+// Only runs for articles where RSS itself provided no image.
+// Capped at MAX_SCRAPE_PER_RUN to prevent OOM on large batches.
+// Uses SSRF-safe isAllowedUrl check before any network call.
+const MAX_SCRAPE_PER_RUN = 50;
+async function enrichAndSaveRemainingImages(articles) {
+  const missingImages = articles
+    .filter(a => !a.image && a.url && isAllowedUrl(a.url))
+    .slice(0, MAX_SCRAPE_PER_RUN);
+  if (missingImages.length === 0) return;
+
+  console.log(`🖼️ Processing ${missingImages.length} missing images in background...`);
+
+  const BATCH_SIZE = 3;
+  for (let i = 0; i < missingImages.length; i += BATCH_SIZE) {
+    const batch = missingImages.slice(i, i + BATCH_SIZE);
+
+    await Promise.allSettled(batch.map(async (article) => {
+      const ogImage = await fetchOgImage(article.url);
+      if (ogImage && !GENERIC_IMAGE_PATTERNS.some(pat => ogImage.includes(pat))) {
+        article.image = ogImage;
+        await News.updateOne(
+          { url: article.url },
+          { $set: { image: ogImage } }
+        );
+      }
+    }));
+
+    if (i + BATCH_SIZE < missingImages.length) {
+      await new Promise(r => setTimeout(r, 1000));
+    }
+  }
+  console.log('✅ Background image enrichment complete.');
 }
 
 // Reusable function: Fetch all active RSS feeds and save/overwrite to MongoDB
@@ -1386,41 +1493,50 @@ async function refreshAllFeeds() {
       feedCategories[feed.category].push(feed.url);
     }
 
-    // Phase 1: FAST FETCH -> Save TEXT news for ALL categories immediately!
-    for (const [category, feedUrls] of Object.entries(feedCategories)) {
-      console.log(`📡 Fetching text category: ${category}...`);
-      
-      // Delay for 1 second between categories
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      let articles = await fetchFeeds(feedUrls, category);
-      
-      // Map all MongoDB text updates asynchronously for extreme speed
-      const saveOps = articles.map(article => 
+    // Phase 1: FAST FETCH -> Fetch all categories in parallel batches of 5
+    const categoryEntries = Object.entries(feedCategories);
+    const FETCH_BATCH = 5;
+
+    async function fetchAndSaveCategory(category, feedUrls) {
+      console.log(`📡 Fetching category: ${category}...`);
+      const articles = deduplicateByTitle(await fetchFeeds(feedUrls, category));
+
+      const saveOps = articles.map(article =>
         News.findOneAndUpdate(
           { url: article.url },
           {
             $set: {
               title: article.title,
               description: article.description,
-              image: article.image,
+              // Only update image if RSS provided one — never overwrite a good image with null
+              ...(article.image ? { image: article.image } : {}),
               source: article.source,
-              category: category,
+              category,
               publishedAt: article.publishedAt,
               content: article.content,
             },
-            $setOnInsert: { status: false }
+            $setOnInsert: { status: false },
           },
-          { upsert: true } // Don't return document to save memory
+          { upsert: true }
         )
       );
 
-      // Await all Upserts for this category so the category becomes live instantly!
       await Promise.allSettled(saveOps);
-      totalProcessed += articles.length;
-      
-      // Push text references into array for background image processing
-      allArticlesAcrossCategories.push(...articles);
+      invalidateCache(category);
+      return articles;
+    }
+
+    for (let i = 0; i < categoryEntries.length; i += FETCH_BATCH) {
+      const batch = categoryEntries.slice(i, i + FETCH_BATCH);
+      const results = await Promise.allSettled(
+        batch.map(([category, feedUrls]) => fetchAndSaveCategory(category, feedUrls))
+      );
+      for (const r of results) {
+        if (r.status === "fulfilled") {
+          totalProcessed += r.value.length;
+          allArticlesAcrossCategories.push(...r.value);
+        }
+      }
     }
     
     // Phase 2: BACKGROUND PASSIVE SCRAPE -> Retrieve images missing from text payload.

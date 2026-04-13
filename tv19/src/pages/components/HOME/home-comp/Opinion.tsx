@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Opinion.css';
 import { getOpinion, type Article } from '../../../../services/newsService';
@@ -69,10 +70,9 @@ const Opinion: React.FC = () => {
 
                 <div className="Opinion-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Opinion-hero"
                     >
                         <div className="Opinion-hero__img">
@@ -88,16 +88,14 @@ const Opinion: React.FC = () => {
                             <p className="Opinion-hero__desc">{heroArticle.description}</p>
                             <span className="Opinion-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Opinion-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Opinion-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Opinion: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

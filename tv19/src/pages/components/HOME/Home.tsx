@@ -1,4 +1,4 @@
-﻿import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../../css/HOME/Home.css';
 import { getTopHeadlines, searchNews, type Article } from '../../../services/newsService';
@@ -21,6 +21,7 @@ import Arts from './home-comp/Arts';
 import Business from './home-comp/Business';
 import Entertainment from './home-comp/Entertainment';
 import Sports from './home-comp/Sports';
+import PollWidget from './home-comp/PollWidget';
 
 const Home: React.FC = () => {
   const [heroArticles, setHeroArticles] = useState<Article[]>([]);
@@ -109,11 +110,9 @@ const Home: React.FC = () => {
             <>
               <div className="carousel-viewport">
                 {heroArticles.map((article, index) => (
-                  <a
-                    key={index}
-                    href={article.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                  <Link key={index} to={`/article/${article._id}`}
+                    
+                    
                     className={`carousel-slide ${index === activeSlide ? 'active' : ''}`}
                   >
                     <img
@@ -128,7 +127,7 @@ const Home: React.FC = () => {
                         {article.source} &bull; {timeAgo(article.publishedAt)}
                       </span>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
 
@@ -163,15 +162,13 @@ const Home: React.FC = () => {
               More <i className="fas fa-arrow-right" />
             </Link>
           </div>
+
+          <PollWidget />
+
           <div className="top-stories-list">
             {topStories.map((article, index) => (
-              <a
-                key={index}
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="story-item"
-              >
+              <Link key={index} to={`/article/${article._id}`} className="story-item" style={{ position: 'relative' }}>
+                <div style={{ position: 'absolute', top: '5px', left: '5px', background: '#e8380d', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', zIndex: 2 }}>{index + 1}</div>
                 <img
                   src={article.image || 'https://via.placeholder.com/120x80?text=No+Image'}
                   alt={article.title}
@@ -182,7 +179,7 @@ const Home: React.FC = () => {
                   <h6 className="story-title">{article.title}</h6>
                   <span className="story-time">{timeAgo(article.publishedAt)}</span>
                 </div>
-              </a>
+              </Link>
             ))}
           </div>
         </div>

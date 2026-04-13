@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/India.css';
 import { getIndia, type Article } from '../../../../services/newsService';
@@ -9,7 +10,7 @@ const India: React.FC = () => {
     const fetchIndia = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getIndia('india', 'in', 10);
+            const response = await getIndia('india', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -69,10 +70,9 @@ const India: React.FC = () => {
 
                 <div className="India-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="India-hero"
                     >
                         <div className="India-hero__img">
@@ -88,16 +88,14 @@ const India: React.FC = () => {
                             <p className="India-hero__desc">{heroArticle.description}</p>
                             <span className="India-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="India-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="India-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const India: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

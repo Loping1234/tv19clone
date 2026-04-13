@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import { useParams, Navigate } from 'react-router-dom';
 import '../../../pages/css/DYNAMIC/DynamicSectionPage.css';
@@ -234,7 +235,7 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                 )}
 
                                 {heroArticle && (
-                                    <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="dynamic-hero-card">
+                                    <Link to={`/article/${heroArticle._id}`}   className="dynamic-hero-card">
                                         <div className="dynamic-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                                             {heroArticle.image && !failedImages.has(heroArticle.image) ? (
                                                 <img src={heroArticle.image} alt={heroArticle.title} className="dynamic-hero-card__image" onError={() => handleImageError(heroArticle)} />
@@ -255,12 +256,12 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                                 </div>
                                             </div>
                                         </div>
-                                    </a>
+                                    </Link>
                                 )}
 
                                 <div className="dynamic-story-list">
                                     {mainListArticles.map((article, index) => (
-                                        <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="dynamic-story-item">
+                                        <Link key={`${article.title}-${index}`} to={`/article/${article._id}`}   className="dynamic-story-item">
                                             <div className="dynamic-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                                                 {article.image && !failedImages.has(article.image) ? (
                                                     <img src={article.image} alt={article.title} className="dynamic-story-item__thumb" onError={() => handleImageError(article)} />
@@ -277,7 +278,7 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                                     <span><UilCommentAlt className="meta-icon" />0 Comments</span>
                                                 </div>
                                             </div>
-                                        </a>
+                                        </Link>
                                     ))}
                                 </div>
 
@@ -306,7 +307,7 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                 <div className="dynamic-trending-list">
                                     {trendingArticles.map((article, idx) => (
                                         idx === 0 ? (
-                                            <a key={idx} href={article.url} className="dynamic-trending-item-top" target="_blank" rel="noopener noreferrer">
+                                            <Link key={idx} to={`/article/${article._id}`} className="dynamic-trending-item-top"  >
                                                 <div className="dynamic-trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                                                     {article.image && !failedImages.has(article.image) && (
                                                         <img src={article.image} className="dynamic-trending-item-top__image" onError={() => handleImageError(article)} />
@@ -317,9 +318,9 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                                 <div className="dynamic-story-item__meta">
                                                     <span><UilEye className="meta-icon" />0 Views</span>
                                                 </div>
-                                            </a>
+                                            </Link>
                                         ) : (
-                                            <a key={idx} href={article.url} className="dynamic-trending-item-small" target="_blank" rel="noopener noreferrer">
+                                            <Link key={idx} to={`/article/${article._id}`} className="dynamic-trending-item-small"  >
                                                 <div className="dynamic-trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                                                     {article.image && !failedImages.has(article.image) && (
                                                         <img src={article.image} className="dynamic-trending-item-small__image" onError={() => handleImageError(article)} />
@@ -329,7 +330,7 @@ export default function DynamicSectionPage({ categoryId: propCategoryId }: Props
                                                     <span className="dynamic-trending-rank">#{idx + 1} Trending</span>
                                                     <h4 className="dynamic-trending-item-small__title">{article.title}</h4>
                                                 </div>
-                                            </a>
+                                            </Link>
                                         )
                                     ))}
                                 </div>

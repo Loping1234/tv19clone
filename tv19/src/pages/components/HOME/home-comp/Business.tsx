@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Business.css';
 import { getBusiness, type Article } from '../../../../services/newsService';
@@ -10,7 +11,7 @@ const Business: React.FC = () => {
     const fetchBusinessNews = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getBusiness('business', 'in', 15);
+            const response = await getBusiness('business', 15);
 
             // Deduplicate by title
             const unique = response.articles.filter(
@@ -62,11 +63,9 @@ const Business: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
-            key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+        <Link key={idx} to={`/article/${article._id}`}
+            
+            
             className="Business-side-item"
         >
             {article.image ? (
@@ -88,7 +87,7 @@ const Business: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -115,10 +114,9 @@ const Business: React.FC = () => {
                     </div>
 
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Business-hero"
                     >
                         <div className="Business-hero__img">
@@ -136,7 +134,7 @@ const Business: React.FC = () => {
                             </div>
                             <span className="Business-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

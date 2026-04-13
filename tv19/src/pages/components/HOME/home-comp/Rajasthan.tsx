@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Rajasthan.css';
 import { getStateNews, type Article } from '../../../../services/newsService';
@@ -33,11 +34,12 @@ const Rajasthan: React.FC = () => {
         const diff = Date.now() - new Date(dateStr).getTime();
         const mins = Math.floor(diff / 60000);
         if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
+        if (mins < 60) return `${mins}m ago`;
         const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
+        if (hours < 24) return `${hours}h ago`;
         const days = Math.floor(hours / 24);
-        return `${days} days ago`;
+        if (days === 1) return '1d ago';
+        return `${days}d ago`;
     };
 
     if (loading) {
@@ -53,13 +55,18 @@ const Rajasthan: React.FC = () => {
 
     if (articles.length === 0) return null;
 
+    // Gracefully handle partial data
     const heroArticle = articles[0];
-    const midArticles = articles.slice(1, 6);   // 5 text items in middle
-    const rightArticles = articles.slice(6, 10); // 4 items on right (some with thumb)
+    const midArticles = articles.slice(1, 6);   // up to 5 text items in middle
+    const rightArticles = articles.slice(6, 10); // up to 4 items on right (some with thumb)
 
     // Derive a short location label from source or fallback
-    const getLocationLabel = (article: Article) =>
-        article.source?.toUpperCase() || 'STATE';
+    const getLocationLabel = (article: Article) => {
+        let label = article.source || 'RAJASTHAN';
+        if (label.toLowerCase() === 'google news') return 'RAJASTHAN';
+        if (label.length > 20) return label.substring(0, 17) + '...';
+        return label.toUpperCase();
+    };
 
     return (
         <div className="raj-page">
@@ -74,10 +81,9 @@ const Rajasthan: React.FC = () => {
 
                 <div className="raj-grid">
                     {/* ── Left: Big Hero ── */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="raj-hero"
                     >
                         <div className="raj-hero__img">
@@ -105,53 +111,49 @@ const Rajasthan: React.FC = () => {
                                 STATE • {timeAgo(heroArticle.publishedAt)}
                             </span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* ── Middle: Text-list articles with location tags ── */}
-                    <div className="raj-mid">
-                        {midArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="raj-mid__item"
-                            >
-                                <span className="raj-mid__location">{getLocationLabel(article)}</span>
-                                <h4 className="raj-mid__title">{article.title}</h4>
-                                <span className="raj-mid__time">{timeAgo(article.publishedAt)}</span>
-                            </a>
-                        ))}
-                    </div>
+                    {midArticles.length > 0 && (
+                        <div className="raj-mid">
+                            {midArticles.map((article, idx) => (
+                                <Link key={idx} to={`/article/${article._id}`}
+                                    className="raj-mid__item"
+                                >
+                                    <span className="raj-mid__location">{getLocationLabel(article)}</span>
+                                    <h4 className="raj-mid__title">{article.title}</h4>
+                                    <span className="raj-mid__time">{timeAgo(article.publishedAt)}</span>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
 
                     {/* ── Right: Mix of thumb+text articles ── */}
-                    <div className="raj-right">
-                        {rightArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="raj-right__item"
-                            >
-                                {/* Show thumbnail for even-indexed items */}
-                                {article.image && idx % 2 === 1 ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="raj-right__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : null}
-                                <div className="raj-right__info">
-                                    <h4 className="raj-right__title">{article.title}</h4>
-                                    <span className="raj-right__time">{timeAgo(article.publishedAt)}</span>
-                                </div>
-                            </a>
-                        ))}
-                    </div>
+                    {rightArticles.length > 0 && (
+                        <div className="raj-right">
+                            {rightArticles.map((article, idx) => (
+                                <Link key={idx} to={`/article/${article._id}`}
+                                    className="raj-right__item"
+                                >
+                                    {/* Show thumbnail for even-indexed items */}
+                                    {article.image && idx % 2 === 1 ? (
+                                        <img
+                                            src={article.image}
+                                            alt={article.title}
+                                            className="raj-right__thumb"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).style.display = 'none';
+                                            }}
+                                        />
+                                    ) : null}
+                                    <div className="raj-right__info">
+                                        <h4 className="raj-right__title">{article.title}</h4>
+                                        <span className="raj-right__time">{timeAgo(article.publishedAt)}</span>
+                                    </div>
+                                </Link>
+                            ))}
+                        </div>
+                    )}
                 </div>
             </section>
         </div>

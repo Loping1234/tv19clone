@@ -10,6 +10,7 @@ const newsSchema = new mongoose.Schema(
         category: { type: String, default: "top", index: true },
         publishedAt: { type: Date, default: Date.now, index: true },
         content: { type: String, default: "" },
+        views: { type: Number, default: 0 },
 
         // Admin Toggles
         status: { type: Boolean, default: false, index: true }, // active/inactive on the main site

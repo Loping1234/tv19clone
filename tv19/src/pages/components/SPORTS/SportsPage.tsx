@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useCallback, useEffect, useMemo, useState, useRef } from 'react';
 import '../../../pages/css/SPORTS/SportsPage.css';
 import '../../../pages/css/topic_categories.css';
@@ -238,7 +239,7 @@ export default function SportsPage() {
                 )}
 
                 {heroArticle && (
-                  <a href={heroArticle.url} target="_blank" rel="noopener noreferrer" className="sports-hero-card">
+                  <Link to={`/article/${heroArticle._id}`}   className="sports-hero-card">
                     <div className="sports-hero-card__image-wrap" style={!heroArticle.image || failedImages.has(heroArticle.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                       {heroArticle.image && !failedImages.has(heroArticle.image) ? (
                         <img src={heroArticle.image} alt={heroArticle.title} className="sports-hero-card__image" onError={() => handleImageError(heroArticle)} />
@@ -256,12 +257,12 @@ export default function SportsPage() {
                         </div>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 )}
 
                 <div className="sports-story-list">
                   {mainListArticles.map((article, index) => (
-                    <a key={`${article.title}-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="sports-story-item">
+                    <Link key={`${article.title}-${index}`} to={`/article/${article._id}`}   className="sports-story-item">
                       <div className="sports-story-item__thumb-wrap" style={!article.image || failedImages.has(article.image) ? { background: 'linear-gradient(135deg, #e8e8e8, #f0f0f0)' } : undefined}>
                         {article.image && !failedImages.has(article.image) ? (
                           <img src={article.image} alt={article.title} className="sports-story-item__thumb" onError={() => handleImageError(article)} />
@@ -278,7 +279,7 @@ export default function SportsPage() {
                           <span><UilCommentAlt className="meta-icon" />0 Comments</span>
                         </div>
                       </div>
-                    </a>
+                    </Link>
                   ))}
                 </div>
                 
@@ -307,7 +308,7 @@ export default function SportsPage() {
                 <div className="trending-list">
                   {trendingArticles.map((article, idx) => (
                     idx === 0 ? (
-                      <a key={`trend-top-${idx}`} href={article.url} className="trending-item-top" target="_blank" rel="noopener noreferrer">
+                      <Link key={`trend-top-${idx}`} to={`/article/${article._id}`} className="trending-item-top"  >
                         <div className="trending-item-top__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                           {article.image && !failedImages.has(article.image) && (
                             <img src={article.image} className="trending-item-top__image" onError={() => handleImageError(article)} />
@@ -318,9 +319,9 @@ export default function SportsPage() {
                         <div className="sports-story-item__meta">
                           <span><UilEye className="meta-icon" />0 Views</span>
                         </div>
-                      </a>
+                      </Link>
                     ) : (
-                      <a key={`trend-sm-${idx}`} href={article.url} className="trending-item-small" target="_blank" rel="noopener noreferrer">
+                      <Link key={`trend-sm-${idx}`} to={`/article/${article._id}`} className="trending-item-small"  >
                         <div className="trending-item-small__image-wrap" style={!article.image || failedImages.has(article.image) ? { background: '#f5f5f5' } : undefined}>
                           {article.image && !failedImages.has(article.image) && (
                             <img src={article.image} className="trending-item-small__image" onError={() => handleImageError(article)} />
@@ -330,7 +331,7 @@ export default function SportsPage() {
                           <span className="trending-rank">#{idx + 1} Trending</span>
                           <h4 className="trending-item-small__title">{article.title}</h4>
                         </div>
-                      </a>
+                      </Link>
                     )
                   ))}
                 </div>

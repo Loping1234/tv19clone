@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/NewsSection.css';
 import { getTopHeadlines, searchNews, type Article, type NewsCategory } from '../../../../services/newsService';
@@ -97,11 +98,9 @@ const NewsSection: React.FC<NewsSectionProps> = ({
             </div>
             <div className="news-section-grid">
                 {articles.map((article, index) => (
-                    <a
-                        key={index}
-                        href={article.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link key={index} to={`/article/${article._id}`}
+                        
+                        
                         className="news-card"
                     >
                         <div className="news-card-image-wrapper">
@@ -119,7 +118,7 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                             <h3 className="news-card-title">{article.title}</h3>
                             <span className="news-card-time">{timeAgo(article.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 ))}
             </div>
         </div>

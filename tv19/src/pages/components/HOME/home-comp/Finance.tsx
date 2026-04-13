@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Finance.css';
 import { getTopHeadlines, type Article } from '../../../../services/newsService';
@@ -62,11 +63,9 @@ const Finance: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
-            key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+        <Link key={idx} to={`/article/${article._id}`}
+            
+            
             className="finance-side-item"
         >
             {article.image ? (
@@ -88,7 +87,7 @@ const Finance: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -108,10 +107,9 @@ const Finance: React.FC = () => {
                     </div>
 
                     {/* Center column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="finance-hero"
                     >
                         <div className="finance-hero__img">
@@ -129,7 +127,7 @@ const Finance: React.FC = () => {
                             </div>
                             <span className="finance-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right column: list with thumbnails */}
                     <div className="finance-side-list">

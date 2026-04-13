@@ -2,6 +2,7 @@ import axios from "axios";
 const BASE_URL = "/api/news";
 
 export interface Article {
+  _id: string;
   source: string;
   author: string | null;
   title: string;
@@ -10,6 +11,7 @@ export interface Article {
   image: string | null;
   publishedAt: string;
   content: string | null;
+  views?: number;
 }
 
 export interface NewsResponse {
@@ -534,6 +536,43 @@ export const scrapeFallbackImage = async (url: string, brokenImage: string): Pro
   } catch (error) {
     // We ignore errors here since it's a silent fallback mechanism
     return null;
+  }
+};
+
+// --- Single Article & Views ---
+
+export const getArticleById = async (id: string): Promise<Article> => {
+  try {
+    const response = await axios.get<{ article: Article }>(`${BASE_URL}/${id}`);
+    return response.data.article;
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+export const recordArticleView = async (id: string): Promise<void> => {
+  try {
+    await axios.post(`${BASE_URL}/${id}/view`);
+  } catch (error) {
+    // Silently handle view tracking errors
+    console.error("Failed to record view", error);
+  }
+};
+
+export const getRelatedArticles = async (
+  category: string,
+  excludeId: string,
+  limit: number = 4
+): Promise<Article[]> => {
+  try {
+    const response = await axios.get<NewsResponse>(BASE_URL, {
+      params: { category, size: limit + 1 }, // fetch one extra in case we filter out the current one
+    });
+    return response.data.articles.filter((a) => a._id !== excludeId).slice(0, limit);
+  } catch (error) {
+    handleApiError(error);
+    throw error;
   }
 };
 

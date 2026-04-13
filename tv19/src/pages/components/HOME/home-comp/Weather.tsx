@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Weather.css';
 import { getTopHeadlines, type Article } from '../../../../services/newsService';
@@ -70,10 +71,9 @@ const Weather: React.FC = () => {
 
                 <div className="weather-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="weather-hero"
                     >
                         <div className="weather-hero__img">
@@ -89,16 +89,14 @@ const Weather: React.FC = () => {
                             <p className="weather-hero__desc">{heroArticle.description}</p>
                             <span className="weather-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="weather-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="weather-list__item"
                             >
                                 {article.image ? (
@@ -120,7 +118,7 @@ const Weather: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

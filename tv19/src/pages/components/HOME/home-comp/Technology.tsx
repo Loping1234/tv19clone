@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Technology.css';
 import { getTechnology, type Article } from '../../../../services/newsService';
@@ -9,7 +10,7 @@ const Technology: React.FC = () => {
     const fetchTechnology = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getTechnology('technology', 'in', 10);
+            const response = await getTechnology('technology', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -69,10 +70,9 @@ const Technology: React.FC = () => {
 
                 <div className="Technology-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Technology-hero"
                     >
                         <div className="Technology-hero__img">
@@ -88,16 +88,14 @@ const Technology: React.FC = () => {
                             <p className="Technology-hero__desc">{heroArticle.description}</p>
                             <span className="Technology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Technology-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Technology-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Technology: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

@@ -1,9 +1,8 @@
-import React from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import './Navbar.css'
 import './BreakingNews.css';
 import { getTopHeadlines, searchNews, type Article } from './services/newsService';
-import { useState, useEffect, useRef, useCallback } from "react";
 import { getWeatherByCity, type WeatherResponse } from "./services/weatherService";
 import { getSiteConfig, applySiteConfig, type SiteConfig } from './services/siteConfigService';
 import {
@@ -237,10 +236,10 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           <Link to='/advertise' className='header-link'>ADVERTISE WITH US</Link>
           <div className="header-divider"></div>
           <div className="social-icons">
-            <a href="#facebook" className="social-icon-box"><i className="fab fa-facebook-f"></i></a>
-            <a href="#twitter" className="social-icon-box"><i className="fab fa-twitter"></i></a>
-            <a href="#youtube" className="social-icon-box"><i className="fab fa-youtube"></i></a>
-            <a href="#instagram" className="social-icon-box"><i className="fab fa-instagram"></i></a>
+            <a href="https://facebook.com/tv19news" target="_blank" rel="noreferrer" className="social-icon-box"><i className="fab fa-facebook-f"></i></a>
+            <a href="https://twitter.com/tv19news" target="_blank" rel="noreferrer" className="social-icon-box"><i className="fab fa-twitter"></i></a>
+            <a href="https://youtube.com/c/tv19news" target="_blank" rel="noreferrer" className="social-icon-box"><i className="fab fa-youtube"></i></a>
+            <a href="https://instagram.com/tv19news" target="_blank" rel="noreferrer" className="social-icon-box"><i className="fab fa-instagram"></i></a>
           </div>
           <button className="search-btn" aria-label="Search"><UilSearch size={18} /></button>
         </div>
@@ -255,11 +254,14 @@ const Navbar: React.FC<BreakingNewsProps> = ({
             return (
               <li key={item.label}>
                 {item.isLink ? (
-                  <Link to={item.to!} className={`navbar-link ${isActive ? 'active' : ''}`}>
+                  <Link to={item.to!} className={`navbar-link ${isActive ? 'active' : ''}`} style={{ position: 'relative' }}>
                     {item.label}
+                    {item.label === 'Sports' && (
+                      <span className="pulse-badge">IPL 2026</span>
+                    )}
                   </Link>
                 ) : (
-                  <a href={item.href} className='navbar-link'>{item.label}</a>
+                  <a href={(item as React.AnchorHTMLAttributes<HTMLAnchorElement>).href} className='navbar-link'>{item.label}</a>
                 )}
               </li>
             );
@@ -302,7 +304,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           ) : (
             <div className="breaking-news-track">
               {articles.slice(0, 8).map((article, index) => (
-                <a key={index} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                <Link key={index} to={`/article/${article._id}`}   className="breaking-card">
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -314,11 +316,11 @@ const Navbar: React.FC<BreakingNewsProps> = ({
                     <span className="breaking-badge">BREAKING</span>
                     <h4 className="breaking-card-title">{article.title}</h4>
                   </div>
-                </a>
+                </Link>
               ))}
               {/* Duplicate for seamless loop */}
               {articles.slice(0, 8).map((article, index) => (
-                <a key={`dup-${index}`} href={article.url} target="_blank" rel="noopener noreferrer" className="breaking-card">
+                <Link key={`dup-${index}`} to={`/article/${article._id}`}   className="breaking-card">
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -330,7 +332,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
                     <span className="breaking-badge">BREAKING</span>
                     <h4 className="breaking-card-title">{article.title}</h4>
                   </div>
-                </a>
+                </Link>
               ))}
             </div>
           )}

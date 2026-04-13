@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Sports.css';
 import { getSports, type Article } from '../../../../services/newsService';
@@ -62,11 +63,9 @@ const Sports: React.FC = () => {
     const rightArticles = articles.slice(5, 9);
 
     const renderSideItem = (article: Article, idx: number) => (
-        <a
-            key={idx}
-            href={article.url}
-            target="_blank"
-            rel="noopener noreferrer"
+        <Link key={idx} to={`/article/${article._id}`}
+            
+            
             className="Sports-side-item"
         >
             {article.image ? (
@@ -88,7 +87,7 @@ const Sports: React.FC = () => {
                     • {timeAgo(article.publishedAt)}
                 </span>
             </div>
-        </a>
+        </Link>
     );
 
     return (
@@ -103,10 +102,9 @@ const Sports: React.FC = () => {
 
                 <div className="Sports-grid">
                     {/* Right column: hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Sports-hero"
                     >
                         <div className="Sports-hero__img">
@@ -124,7 +122,7 @@ const Sports: React.FC = () => {
                             </div>
                             <span className="Sports-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                     {/* Left column: list with thumbnails */}
                     <div className="Sports-side-list">
                         {leftArticles.map((article, idx) => renderSideItem(article, idx))}

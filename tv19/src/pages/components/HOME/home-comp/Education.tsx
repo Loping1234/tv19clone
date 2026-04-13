@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Education.css';
 import { getEducation, type Article } from '../../../../services/newsService';
@@ -9,7 +10,7 @@ const Education: React.FC = () => {
     const fetchEducation = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getEducation('education', 'in', 10);
+            const response = await getEducation('education', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -69,10 +70,9 @@ const Education: React.FC = () => {
 
                 <div className="Education-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Education-hero"
                     >
                         <div className="Education-hero__img">
@@ -88,16 +88,14 @@ const Education: React.FC = () => {
                             <p className="Education-hero__desc">{heroArticle.description}</p>
                             <span className="Education-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Education-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Education-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Education: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>

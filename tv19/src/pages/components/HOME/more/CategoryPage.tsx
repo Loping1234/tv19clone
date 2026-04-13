@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useSearchParams } from 'react-router-dom';
 import '../../../css/HOME/CategoryPage.css';
 import { getNews, getCategoryCounts, type Article, type NewsCategory } from '../../../../services/newsService';
 import '@fortawesome/fontawesome-free/css/all.min.css';
@@ -25,6 +25,15 @@ const ALL_CATEGORIES: { label: string; slug: NewsCategory }[] = [
     { label: 'World', slug: 'world' },
 ];
 
+/* ── Sub-tabs mapping ── */
+const CATEGORY_SUBTABS: Record<string, string[]> = {
+    sports: ['Cricket', 'Football', 'Tennis', 'Olympics', 'IPL'],
+    india: ['Politics', 'Defense', 'Courts', 'Elections'],
+    world: ['US', 'Europe', 'Middle East', 'Asia'],
+    entertainment: ['Bollywood', 'Hollywood', 'TV', 'Reviews'],
+    technology: ['Gadgets', 'AI', 'Startups', 'Apps']
+};
+
 /* ── Quick nav bar categories ── */
 const MENU_CATEGORIES: { label: string; slug: string }[] = [
     { label: 'Home', slug: '' },
@@ -48,6 +57,9 @@ const POPULAR_TAGS = ['Astrology', 'World', 'India', 'Politics'];
 
 const CategoryPage: React.FC = () => {
     const { categorySlug } = useParams<{ categorySlug: string }>();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const activeSubTab = searchParams.get('sub');
+    
     const [articles, setArticles] = useState<Article[]>([]);
     const [loading, setLoading] = useState(true);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -166,6 +178,15 @@ const CategoryPage: React.FC = () => {
         });
     };
 
+    /* ── Filter articles based on sub-tab ── */
+    const filteredArticles = activeSubTab 
+        ? articles.filter(a => 
+            a.title.toLowerCase().includes(activeSubTab.toLowerCase()) || 
+            (a.description && a.description.toLowerCase().includes(activeSubTab.toLowerCase())) ||
+            (a.source && a.source.toLowerCase().includes(activeSubTab.toLowerCase()))
+          )
+        : articles;
+
     /* ── Total count across all categories ── */
     const totalArticles = Object.values(categoryCounts).reduce(
         (sum, c) => sum + c,
@@ -190,7 +211,7 @@ const CategoryPage: React.FC = () => {
                         </h1>
                         {!loading && (
                             <span className="category-feed-count">
-                                {articles.length} article{articles.length !== 1 ? 's' : ''}
+                                {filteredArticles.length} article{filteredArticles.length !== 1 ? 's' : ''}
                             </span>
                         )}
                     </div>
@@ -217,26 +238,40 @@ const CategoryPage: React.FC = () => {
                         )}
                     </div>
 
+                    {CATEGORY_SUBTABS[currentSlug] && CATEGORY_SUBTABS[currentSlug].length > 0 && (
+                        <div className="category-subtabs" style={{ display: 'flex', gap: '10px', margin: '15px 0', overflowX: 'auto', paddingBottom: '5px' }}>
+                            <button 
+                                onClick={() => setSearchParams({})}
+                                style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid #ccc', background: !activeSubTab ? '#e8380d' : '#f5f5f5', color: !activeSubTab ? '#fff' : '#333', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                            >
+                                All
+                            </button>
+                            {CATEGORY_SUBTABS[currentSlug].map(sub => (
+                                <button 
+                                    key={sub}
+                                    onClick={() => setSearchParams({ sub })}
+                                    style={{ padding: '6px 16px', borderRadius: '20px', border: '1px solid #ccc', background: activeSubTab === sub ? '#e8380d' : '#f5f5f5', color: activeSubTab === sub ? '#fff' : '#333', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                                >
+                                    {sub}
+                                </button>
+                            ))}
+                        </div>
+                    )}
+
                     {loading ? (
                         <div className="category-loading">
                             <div className="category-spinner" />
                             <p>Loading {getCategoryLabel(currentSlug)} news…</p>
                         </div>
-                    ) : articles.length === 0 ? (
-                        <div className="category-empty">
-                            <i className="fas fa-newspaper"></i>
-                            <p>No articles found for this category.</p>
+                    ) : filteredArticles.length === 0 ? (
+                        <div className="category-empty" style={{ padding: '40px 0', textAlign: 'center' }}>
+                            <i className="fas fa-newspaper" style={{ fontSize: '3rem', color: '#ccc', marginBottom: '15px' }}></i>
+                            <p>No articles match this sub-category right now.</p>
                         </div>
                     ) : (
                         <>
-                            {articles.map((article, index) => (
-                                <a
-                                    key={index}
-                                    href={article.url}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="category-article"
-                                >
+                            {filteredArticles.map((article, index) => (
+                                <Link key={index} to={`/article/${article._id}`} className="category-article">
                                     <div className="category-article-thumb">
                                         <img
                                             src={
@@ -271,7 +306,7 @@ const CategoryPage: React.FC = () => {
                                             <span>{formatDate(article.publishedAt)}</span>
                                         </div>
                                     </div>
-                                </a>
+                                </Link>
                             ))}
                             
                             {/* Infinite Scroll Load More target */}

@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/World.css';
 import { getWorld, type Article } from '../../../../services/newsService';
@@ -71,11 +72,9 @@ const World: React.FC = () => {
                     {/* Left: List with thumbnails */}
                     <div className="World-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="World-list__item"
                             >
                                 {article.image ? (
@@ -97,14 +96,13 @@ const World: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     {/* Right: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="World-hero"
                     >
                         <div className="World-hero__img">
@@ -120,7 +118,7 @@ const World: React.FC = () => {
                             <p className="World-hero__desc">{heroArticle.description}</p>
                             <span className="World-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

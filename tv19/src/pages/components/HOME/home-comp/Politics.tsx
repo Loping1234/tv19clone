@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Politics.css';
 import { getPolitics, type Article } from '../../../../services/newsService';
@@ -9,7 +10,7 @@ const Politics: React.FC = () => {
     const fetchPolitics = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getPolitics('politics', 'in', 10);
+            const response = await getPolitics('politics', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -71,11 +72,9 @@ const Politics: React.FC = () => {
                     {/* Left: List with thumbnails */}
                     <div className="Politics-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Politics-list__item"
                             >
                                 {article.image ? (
@@ -97,14 +96,13 @@ const Politics: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                     {/* Right: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Politics-hero"
                     >
                         <div className="Politics-hero__img">
@@ -120,7 +118,7 @@ const Politics: React.FC = () => {
                             <p className="Politics-hero__desc">{heroArticle.description}</p>
                             <span className="Politics-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
                 </div>
             </section>
         </div>

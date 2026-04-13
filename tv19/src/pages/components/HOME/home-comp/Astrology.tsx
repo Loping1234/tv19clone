@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Astrology.css';
 import { getAstrology, type Article } from '../../../../services/newsService';
@@ -69,10 +70,9 @@ const Astrology: React.FC = () => {
 
                 <div className="Astrology-grid">
                     {/* Left: Hero article */}
-                    <a
-                        href={heroArticle.url}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                    <Link to={`/article/${heroArticle._id}`}
+                        
+                        
                         className="Astrology-hero"
                     >
                         <div className="Astrology-hero__img">
@@ -88,16 +88,14 @@ const Astrology: React.FC = () => {
                             <p className="Astrology-hero__desc">{heroArticle.description}</p>
                             <span className="Astrology-hero__time">{timeAgo(heroArticle.publishedAt)}</span>
                         </div>
-                    </a>
+                    </Link>
 
                     {/* Right: List with thumbnails */}
                     <div className="Astrology-list">
                         {listArticles.map((article, idx) => (
-                            <a
-                                key={idx}
-                                href={article.url}
-                                target="_blank"
-                                rel="noopener noreferrer"
+                            <Link key={idx} to={`/article/${article._id}`}
+                                
+                                
                                 className="Astrology-list__item"
                             >
                                 {article.image ? (
@@ -119,7 +117,7 @@ const Astrology: React.FC = () => {
                                         • {timeAgo(article.publishedAt)}
                                     </span>
                                 </div>
-                            </a>
+                            </Link>
                         ))}
                     </div>
                 </div>
