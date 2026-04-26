@@ -1,8 +1,75 @@
 import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Weather.css';
-import { getTopHeadlines, type Article } from '../../../../services/newsService';
+import { getWeather, type Article, scrapeFallbackImage } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+
+// Image component with fallback handling
+interface ArticleImageProps {
+    article: Article;
+    className: string;
+    thumb?: boolean;
+}
+
+const ArticleImage: React.FC<ArticleImageProps> = ({ article, className }) => {
+    const [imgSrc, setImgSrc] = useState<string | null>(article.image);
+    const [hasError, setHasError] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        setImgSrc(article.image);
+        setHasError(false);
+        setIsLoading(true);
+    }, [article.image, article._id]);
+
+    const handleError = async () => {
+        if (hasError) return; // Prevent infinite loop
+        setHasError(true);
+
+        // Try to scrape a fallback image from the article URL
+        if (article.url && article.image) {
+            try {
+                const fallbackUrl = await scrapeFallbackImage(article.url, article.image);
+                if (fallbackUrl) {
+                    setImgSrc(fallbackUrl);
+                    setHasError(false);
+                    return;
+                }
+            } catch {
+                // Fallback failed, will show placeholder
+            }
+        }
+
+        setImgSrc(null);
+    };
+
+    const handleLoad = () => {
+        setIsLoading(false);
+    };
+
+    if (!imgSrc) {
+        return (
+            <div className={`${className} image-fallback`}>
+                <i className="fas fa-image"></i>
+            </div>
+        );
+    }
+
+    return (
+        <>
+            {isLoading && <div className={`${className} image-skeleton`} />}
+            <img
+                src={imgSrc}
+                alt={article.title}
+                className={className}
+                onError={handleError}
+                onLoad={handleLoad}
+                style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.3s' }}
+            />
+        </>
+    );
+};
 
 const Weather: React.FC = () => {
     const [articles, setArticles] = useState<Article[]>([]);
@@ -11,7 +78,7 @@ const Weather: React.FC = () => {
     const fetchWeatherNews = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getTopHeadlines('weather', 'in', 10);
+            const response = await getWeather('weather', 'in', 10);
 
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
@@ -32,16 +99,7 @@ const Weather: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchWeatherNews]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -64,24 +122,21 @@ const Weather: React.FC = () => {
             <section className="weather-section">
                 <div className="weather-section__header">
                     <h3 className="weather-section__heading">WEATHER</h3>
-                    <a href="#" className="weather-section__more">
+                    <Link to="/category/weather" className="weather-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="weather-grid">
                     {/* Left: Hero article */}
                     <Link to={`/article/${heroArticle._id}`}
-                        
-                        
+
+
                         className="weather-hero"
                     >
                         <div className="weather-hero__img">
-                            {heroArticle.image ? (
-                                <img src={heroArticle.image} alt={heroArticle.title} />
-                            ) : (
-                                <div className="weather-hero__placeholder" />
-                            )}
+                            <ArticleImage article={heroArticle} className="weather-hero__image" />
+                            <span className="weather-hero__badge">{heroArticle.source || 'WEATHER'}</span>
                         </div>
                         <div className="weather-hero__body">
                             <span className="weather-hero__category">WEATHER</span>
@@ -95,22 +150,11 @@ const Weather: React.FC = () => {
                     <div className="weather-list">
                         {listArticles.map((article, idx) => (
                             <Link key={idx} to={`/article/${article._id}`}
-                                
-                                
+
+
                                 className="weather-list__item"
                             >
-                                {article.image ? (
-                                    <img
-                                        src={article.image}
-                                        alt={article.title}
-                                        className="weather-list__thumb"
-                                        onError={(e) => {
-                                            (e.target as HTMLImageElement).style.display = 'none';
-                                        }}
-                                    />
-                                ) : (
-                                    <div className="weather-list__thumb-placeholder" />
-                                )}
+                                <ArticleImage article={article} className="weather-list__thumb" thumb />
                                 <div className="weather-list__info">
                                     <h4 className="weather-list__title">{article.title}</h4>
                                     <span className="weather-list__meta">

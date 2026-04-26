@@ -19,8 +19,7 @@ for (const { dir, file, prefix, label } of filesToUpdate) {
     }
 
     let content = fs.readFileSync(filePath, 'utf8');
-
-    // 1. Add CSS import if not present
+    
     if (!content.includes("import '../../../pages/css/topic_categories.css';")) {
         content = content.replace(
             /import '..\/..\/..\/pages\/css\/.+?\.css';/,

@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Politics.css';
 import { getPolitics, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Politics: React.FC = () => {
@@ -31,16 +32,7 @@ const Politics: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchPolitics]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -63,9 +55,9 @@ const Politics: React.FC = () => {
             <section className="Politics-section">
                 <div className="Politics-section__header">
                     <h3 className="Politics-section__heading">Politics</h3>
-                    <a href="#" className="Politics-section__more">
+                    <Link to="/category/politics" className="Politics-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Politics-grid">             
@@ -111,6 +103,7 @@ const Politics: React.FC = () => {
                             ) : (
                                 <div className="Politics-hero__placeholder" />
                             )}
+                            <span className="Politics-hero__badge">{heroArticle.source || 'POLITICS'}</span>
                         </div>
                         <div className="Politics-hero__body">
                             <span className="Politics-hero__category">Politics</span>

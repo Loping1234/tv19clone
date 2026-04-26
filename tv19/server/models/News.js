@@ -11,6 +11,8 @@ const newsSchema = new mongoose.Schema(
         publishedAt: { type: Date, default: Date.now, index: true },
         content: { type: String, default: "" },
         views: { type: Number, default: 0 },
+        imageCheckedAt: { type: Date, default: null },
+        imageCheckAttempts: { type: Number, default: 0 },
 
         // Admin Toggles
         status: { type: Boolean, default: false, index: true }, // active/inactive on the main site
@@ -18,6 +20,7 @@ const newsSchema = new mongoose.Schema(
         trending: { type: Boolean, default: false },
         top: { type: Boolean, default: false },
         breaking: { type: Boolean, default: false },
+        priority: { type: Number, default: 0 },
     },
     { timestamps: true }
 );

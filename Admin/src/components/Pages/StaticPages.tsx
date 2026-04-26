@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Edit, Eye } from 'react-feather';
 import EditTemplate from './EditTemplate';
 import ViewPage from './ViewPage';
+import Pagination from '../Pagination';
 
 // Port where the TV19 frontend dev server is running
 const PREVIEW_PORT = 5175;
@@ -51,10 +52,9 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
     const [entries, setEntries] = useState(10);
     const [searchTerm, setSearchTerm] = useState('');
     const [pages, setPages] = useState(mockStaticPages);
-
-    // Placeholder states for future Edit/View views
     const [selectedPage, setSelectedPage] = useState<any>(null);
     const [editingPage, setEditingPage] = useState<any>(null);
+    const [currentPage, setCurrentPage] = useState(1);
 
     // Sync selectedPage with initialView if provided
     useEffect(() => {
@@ -86,105 +86,107 @@ export default function StaticPages({ initialView }: { initialView?: { title: st
         return <EditTemplate template={editingPage} onBack={() => setEditingPage(null)} onSave={handleSavePage} />;
     }
 
+    const filtered = pages.filter(p =>
+        !searchTerm || p.title.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalPages = Math.ceil(filtered.length / entries);
+    const startIdx = (currentPage - 1) * entries;
+    const paginated = filtered.slice(startIdx, startIdx + entries);
+
     // Main Table View
     return (
-        <div className="categories-page">
-            <div className="cat-header-container">
-                <h1 className="cat-page-title">PAGES</h1>
-                <div className="cat-breadcrumb">
-                    <span>Static</span> <span className="cat-bc-sep">›</span> <span>Pages</span>
+        <div className="rss-page">
+            <div className="rss-page-header">
+                <h1 className="rss-page-title">STATIC PAGES</h1>
+                <nav className="rss-breadcrumb">
+                    <span className="rss-bc-item">Static</span>
+                    <span className="rss-bc-sep">›</span>
+                    <span className="rss-bc-active">Pages</span>
+                </nav>
+            </div>
+
+            <div className="rss-controls">
+                <div className="rss-entries-control">
+                    Show
+                    <select
+                        value={entries}
+                        onChange={(e) => setEntries(Number(e.target.value))}
+                        className="rss-select"
+                    >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                    entries
+                </div>
+                <div className="rss-search-control">
+                    Search:
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="rss-search-input"
+                        placeholder="Search pages..."
+                    />
                 </div>
             </div>
 
-            <div className="cat-card">
-                <div className="cat-controls">
-                    <div className="cat-show-entries">
-                        <span>Show</span>
-                        <select
-                            value={entries}
-                            onChange={(e) => setEntries(Number(e.target.value))}
-                            className="cat-select"
-                        >
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                            <option value={100}>100</option>
-                        </select>
-                        <span>entries</span>
-                    </div>
-                    <div className="cat-search">
-                        <span>Search:</span>
-                        <input
-                            type="text"
-                            className="cat-search-input"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="cat-table-wrapper">
-                    <table className="cat-table">
-                        <thead>
-                            <tr>
-                                <th>S No. <span className="sort-icon">⇅</span></th>
-                                <th>Title <span className="sort-icon">⇅</span></th>
-                                <th>Updated On <span className="sort-icon">⇅</span></th>
-                                <th>Action</th>
+            <div className="rss-table-wrap">
+                <table className="rss-table">
+                    <thead>
+                        <tr>
+                            <th className="rss-th-num"># S No.</th>
+                            <th className="rss-th-cat">📁 Title <span className="sort-icon">⇅</span></th>
+                            <th className="rss-th-date">📅 Updated On <span className="sort-icon">⇅</span></th>
+                            <th className="rss-th-action">⚙️ Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {paginated.map((page, index) => (
+                            <tr key={page.id} className="rss-row">
+                                <td className="rss-cell-num">{startIdx + index + 1}</td>
+                                <td className="rss-cell-cat">
+                                    <span className="rss-cat-badge">{page.title}</span>
+                                </td>
+                                <td className="rss-cell-date">{page.updatedOn}</td>
+                                <td className="rss-cell-action">
+                                    <div className="rss-action-btns">
+                                        <button
+                                            className="rss-edit-btn-new"
+                                            title="Edit"
+                                            onClick={() => setEditingPage(page)}
+                                        >
+                                            📝
+                                        </button>
+                                        <button
+                                            className="rss-delete-btn-new"
+                                            title="View"
+                                            onClick={() => setSelectedPage(page)}
+                                        >
+                                            👁️
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {pages.map((page, index) => (
-                                <tr key={page.id}>
-                                    <td>{index + 1}</td>
-                                    <td>{page.title}</td>
-                                    <td>{page.updatedOn}</td>
-                                    <td>
-                                        <div className="cat-actions">
-                                            <button
-                                                className="cat-action-btn edit-btn"
-                                                title="Edit"
-                                                onClick={() => setEditingPage(page)}
-                                            >
-                                                <Edit size={14} />
-                                            </button>
-                                            <button
-                                                className="cat-action-btn view-btn"
-                                                title="View"
-                                                onClick={() => setSelectedPage(page)}
-                                            >
-                                                <Eye size={14} />
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                            {pages.length === 0 && (
-                                <tr>
-                                    <td colSpan={4} className="cat-empty">No matching records found</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="cat-pagination-footer">
-                    <div className="cat-info">
-                        Showing 1 to {pages.length} of {pages.length} entries
-                    </div>
-                    <div className="cat-pagination">
-                        <button className="cat-page-btn disabled">First</button>
-                        <button className="cat-page-btn disabled">Previous</button>
-                        <button className="cat-page-btn cat-page-active">1</button>
-                        <button className="cat-page-btn disabled">Next</button>
-                        <button className="cat-page-btn disabled">Last</button>
-                    </div>
-                </div>
+                        ))}
+                        {filtered.length === 0 && (
+                            <tr>
+                                <td colSpan={4} className="rss-empty-cell">No matching records found</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
-            <footer className="profile-footer" style={{ marginTop: '20px' }}>
-                2026 © TV19.
-            </footer>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={entries}
+                startIdx={startIdx}
+                onPageChange={setCurrentPage}
+            />
         </div>
     );
 }

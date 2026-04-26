@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Education.css';
 import { getEducation, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Education: React.FC = () => {
@@ -31,16 +32,7 @@ const Education: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchEducation]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -63,9 +55,9 @@ const Education: React.FC = () => {
             <section className="Education-section">
                 <div className="Education-section__header">
                     <h3 className="Education-section__heading">Education</h3>
-                    <a href="#" className="Education-section__more">
+                    <Link to="/category/education" className="Education-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Education-grid">
@@ -81,6 +73,7 @@ const Education: React.FC = () => {
                             ) : (
                                 <div className="Education-hero__placeholder" />
                             )}
+                            <span className="Education-hero__badge">{heroArticle.source || 'EDUCATION'}</span>
                         </div>
                         <div className="Education-hero__body">
                             <span className="Education-hero__category">Education</span>

@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Edit, Eye } from 'react-feather';
 import ViewTemplate from './ViewTemplate';
 import EditTemplate from './EditTemplate';
+import Pagination from '../Pagination';
 
 const TV19_HEADER = `<div style="text-align:center;padding:24px 20px;">
     <h2 style="font-size:24px;font-weight:800;color:#333;margin:0;">
@@ -235,6 +236,16 @@ export default function EmailTemplates() {
     const [templates, setTemplates] = useState(mockEmailTemplates as any[]);
     const [selectedTemplate, setSelectedTemplate] = useState<any>(null);
     const [editingTemplate, setEditingTemplate] = useState<any>(null);
+    const [currentPage, setCurrentPage] = useState(1);
+
+    const filtered = templates.filter(t =>
+        !searchTerm ||
+        t.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        t.subject.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalPages = Math.ceil(filtered.length / entries);
+    const startIdx = (currentPage - 1) * entries;
+    const paginated = filtered.slice(startIdx, startIdx + entries);
 
     // Save handler — updates the template in the list so changes are reflected live
     const handleSaveTemplate = (updatedTemplate: any) => {
@@ -255,79 +266,100 @@ export default function EmailTemplates() {
     }
 
     return (
-        <div className="categories-page">
-            <div className="cat-header-container">
-                <h1 className="cat-page-title">EMAIL TEMPLATES</h1>
-                <div className="cat-breadcrumb">
-                    <span>Emails</span> <span className="cat-bc-sep">›</span> <span>Email Templates</span>
+        <div className="rss-page">
+            <div className="rss-page-header">
+                <h1 className="rss-page-title">EMAIL TEMPLATES</h1>
+                <nav className="rss-breadcrumb">
+                    <span className="rss-bc-item">Emails</span>
+                    <span className="rss-bc-sep">›</span>
+                    <span className="rss-bc-active">Email Templates</span>
+                </nav>
+            </div>
+
+            <div className="rss-controls">
+                <div className="rss-entries-control">
+                    Show
+                    <select
+                        value={entries}
+                        onChange={(e) => setEntries(Number(e.target.value))}
+                        className="rss-select"
+                    >
+                        <option value={10}>10</option>
+                        <option value={25}>25</option>
+                        <option value={50}>50</option>
+                        <option value={100}>100</option>
+                    </select>
+                    entries
+                </div>
+                <div className="rss-search-control">
+                    Search:
+                    <input
+                        type="text"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="rss-search-input"
+                        placeholder="Search templates..."
+                    />
                 </div>
             </div>
 
-            <div className="cat-card email-tpl-card">
-                <div className="cat-controls-row">
-                    <div className="cat-show-entries">
-                        <span>Show</span>
-                        <select value={entries} onChange={(e) => setEntries(Number(e.target.value))}>
-                            <option value={10}>10</option>
-                            <option value={25}>25</option>
-                            <option value={50}>50</option>
-                        </select>
-                        <span>entries</span>
-                    </div>
-                    <div className="cat-search">
-                        <span>Search:</span>
-                        <input
-                            type="text"
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                        />
-                    </div>
-                </div>
-
-                <div className="cat-table-responsive">
-                    <table className="cat-table">
-                        <thead>
-                            <tr>
-                                <th style={{ width: '60px' }}>S No.</th>
-                                <th><span className="th-content">Title <span className="sort-icon">⇅</span></span></th>
-                                <th><span className="th-content">Subject <span className="sort-icon">⇅</span></span></th>
-                                <th><span className="th-content">Updated On <span className="sort-icon">⇅</span></span></th>
-                                <th style={{ width: '100px' }}>Action</th>
+            <div className="rss-table-wrap">
+                <table className="rss-table">
+                    <thead>
+                        <tr>
+                            <th className="rss-th-num"># S No.</th>
+                            <th className="rss-th-cat">📁 Title <span className="sort-icon">⇅</span></th>
+                            <th className="rss-th-sub">💬 Subject <span className="sort-icon">⇅</span></th>
+                            <th className="rss-th-date">📅 Updated On <span className="sort-icon">⇅</span></th>
+                            <th className="rss-th-action">⚙️ Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {paginated.map((tpl, index) => (
+                            <tr key={tpl.id} className="rss-row">
+                                <td className="rss-cell-num">{startIdx + index + 1}</td>
+                                <td className="rss-cell-cat">
+                                    <span className="rss-cat-badge">{tpl.title}</span>
+                                </td>
+                                <td className="rss-cell-sub">{tpl.subject}</td>
+                                <td className="rss-cell-date">{tpl.updatedOn}</td>
+                                <td className="rss-cell-action">
+                                    <div className="rss-action-btns">
+                                        <button
+                                            className="rss-edit-btn-new"
+                                            title="Edit"
+                                            onClick={() => setEditingTemplate(tpl)}
+                                        >
+                                            📝
+                                        </button>
+                                        <button
+                                            className="rss-delete-btn-new"
+                                            title="View"
+                                            onClick={() => setSelectedTemplate(tpl)}
+                                        >
+                                            👁️
+                                        </button>
+                                    </div>
+                                </td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {templates.map((tpl, index) => (
-                                <tr key={tpl.id}>
-                                    <td style={{ fontWeight: 500 }}>{index + 1}</td>
-                                    <td>{tpl.title}</td>
-                                    <td>{tpl.subject}</td>
-                                    <td>{tpl.updatedOn}</td>
-                                    <td>
-                                        <div className="cat-action-btns">
-                                            <button className="cat-action-btn edit-btn" onClick={() => setEditingTemplate(tpl)}><Edit size={14} /></button>
-                                            <button className="cat-action-btn view-btn" onClick={() => setSelectedTemplate(tpl)}><Eye size={14} /></button>
-                                        </div>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
-                <div className="cat-pagination-row">
-                    <div className="cat-pagination">
-                        <button className="cat-page-btn default">First</button>
-                        <button className="cat-page-btn default">Previous</button>
-                        <button className="cat-page-btn active">1</button>
-                        <button className="cat-page-btn default">Next</button>
-                        <button className="cat-page-btn default">Last</button>
-                    </div>
-                </div>
+                        ))}
+                        {filtered.length === 0 && (
+                            <tr>
+                                <td colSpan={5} className="rss-empty-cell">No templates found.</td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
 
-            <footer className="profile-footer" style={{ marginTop: '20px' }}>
-                2026 © TV19.
-            </footer>
+            <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                totalItems={filtered.length}
+                itemsPerPage={entries}
+                startIdx={startIdx}
+                onPageChange={setCurrentPage}
+            />
         </div>
     );
 }

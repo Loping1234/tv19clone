@@ -105,11 +105,11 @@ const NewsSection: React.FC<NewsSectionProps> = ({
                     >
                         <div className="news-card-image-wrapper">
                             <img
-                                src={article.image || 'https://via.placeholder.com/300x200?text=News'}
+                                src={article.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' fill='%23e2e8f0'%3E%3Crect width='300' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='Arial' font-size='16' font-weight='bold'%3ETV19 News%3C/text%3E%3C/svg%3E"}
                                 alt={article.title}
                                 className="news-card-image"
                                 onError={(e) => {
-                                    (e.target as HTMLImageElement).src = 'https://via.placeholder.com/300x200?text=TV19';
+                                    (e.target as HTMLImageElement).src = "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200' fill='%23e2e8f0'%3E%3Crect width='300' height='200'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='Arial' font-size='16' font-weight='bold'%3ETV19 News%3C/text%3E%3C/svg%3E";
                                 }}
                             />
                             <span className="news-card-badge">{article.source || 'News'}</span>

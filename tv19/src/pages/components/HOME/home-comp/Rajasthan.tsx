@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Rajasthan.css';
 import { getStateNews, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Rajasthan: React.FC = () => {
@@ -11,12 +12,12 @@ const Rajasthan: React.FC = () => {
     const fetchRajasthan = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getStateNews('Rajasthan', 10);
+            const response = await getStateNews('Rajasthan', 15);
             const unique = response.articles.filter(
                 (a, i, arr) => arr.findIndex((b) => b.title === a.title) === i
             );
-            // 1 hero + up to 5 mid + up to 4 right = 10
-            setArticles(unique.slice(0, 10));
+            // 1 hero + up to 7 mid + up to 7 right = 15
+            setArticles(unique.slice(0, 15));
         } catch (err) {
             console.error('Error fetching state stories:', err);
         } finally {
@@ -30,17 +31,7 @@ const Rajasthan: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchRajasthan]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins}m ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours}h ago`;
-        const days = Math.floor(hours / 24);
-        if (days === 1) return '1d ago';
-        return `${days}d ago`;
-    };
+
 
     if (loading) {
         return (
@@ -57,8 +48,8 @@ const Rajasthan: React.FC = () => {
 
     // Gracefully handle partial data
     const heroArticle = articles[0];
-    const midArticles = articles.slice(1, 6);   // up to 5 text items in middle
-    const rightArticles = articles.slice(6, 10); // up to 4 items on right (some with thumb)
+    const midArticles = articles.slice(1, 8);   // up to 7 text items in middle
+    const rightArticles = articles.slice(8, 15); // up to 7 items on right (some with thumb)
 
     // Derive a short location label from source or fallback
     const getLocationLabel = (article: Article) => {
@@ -74,16 +65,16 @@ const Rajasthan: React.FC = () => {
                 {/* ── Section header ── */}
                 <div className="raj-header">
                     <h3 className="raj-heading">STATE</h3>
-                    <a href="#" className="raj-more">
+                    <Link to="/category/state" className="raj-more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="raj-grid">
                     {/* ── Left: Big Hero ── */}
                     <Link to={`/article/${heroArticle._id}`}
-                        
-                        
+
+
                         className="raj-hero"
                     >
                         <div className="raj-hero__img">

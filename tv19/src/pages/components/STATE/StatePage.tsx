@@ -129,8 +129,6 @@ export default function StatePage() {
 
       if (isLoadMore) {
         setArticles(prev => {
-          // On load more, we just append to the end. Re-sorting the whole array 
-          // might mess up the existing UI flow, so we only dedupe.
           const combined = dedupeByTitle([...prev, ...newUnique]);
           return combined;
         });
@@ -144,7 +142,6 @@ export default function StatePage() {
         skipRef.current = 0;
         setHasMore(sortedUnique.length >= 30);
         
-        // Show notice only if no articles found
         if (sortedUnique.length === 0) {
           setError(`No stories found for ${region}. Try another region.`);
         }
@@ -194,6 +191,18 @@ export default function StatePage() {
   useEffect(() => {
     fetchRegionNews(activeRegion, false);
   }, [activeRegion, fetchRegionNews]);
+
+  // Proactive Hero Image Scrape: if the top story has no image, try to fetch it
+  useEffect(() => {
+    if (articles.length > 0 && !articles[0].image && articles[0].url) {
+      const hero = articles[0];
+      scrapeFallbackImage(hero.url, '').then(newImg => {
+        if (newImg) {
+          setArticles(prev => prev.map((a, idx) => idx === 0 ? { ...a, image: newImg } : a));
+        }
+      });
+    }
+  }, [articles]);
 
   const heroArticle = useMemo(() => articles[0], [articles]);
   const trendingArticles = useMemo(() => articles.slice(11, 16), [articles]);
@@ -289,7 +298,6 @@ export default function StatePage() {
                   ))}
                 </div>
                 
-                {/* Infinite Scroll Load More target */}
                 <div ref={observerTarget} className="infinite-scroll-loading" style={{ margin: '30px 0', textAlign: 'center' }}>
                   {loadingMore && (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>

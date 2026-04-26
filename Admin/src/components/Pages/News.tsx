@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { PlusCircle, Trash2, Eye, Edit } from 'react-feather';
+import Pagination from '../Pagination';
 
 const API_BASE = 'http://localhost:5000';
 
@@ -54,12 +55,14 @@ export default function News() {
 
     const fetchNews = async () => {
         try {
-            const res = await fetch(`${API_BASE}/api/admin/news`, {
+            const page = 1;
+            const limit = 1000; // Fetch first 1000 for admin panel
+            const res = await fetch(`${API_BASE}/api/admin/news?page=${page}&limit=${limit}`, {
                 headers: { 'Authorization': `Bearer ${getToken()}` }
             });
             if (res.ok) {
                 const data = await res.json();
-                setNews(data);
+                setNews(data.news || []);
             }
         } catch (error) {
             console.error('Failed to fetch news', error);
@@ -234,16 +237,16 @@ export default function News() {
     );
 
     return (
-        <div className="news-list-page">
+        <div className="rss-page">
             {/* Header & Breadcrumb */}
-            <div className="news-header-top">
-                <h1 className="news-page-title">{editingNews ? (editingNews._id ? 'EDIT NEWS' : 'ADD NEWS') : viewingNews ? 'NEWS INFORMATION' : 'NEWS LIST'}</h1>
-                <div className="news-breadcrumb">
-                    <span>News</span> <span className="sep">›</span> <span>{editingNews ? (editingNews._id ? 'Edit News' : 'Add News') : viewingNews ? 'News Information' : 'News List'}</span>
-                </div>
+            <div className="rss-page-header">
+                <h1 className="rss-page-title">{editingNews ? (editingNews._id ? 'EDIT NEWS' : 'ADD NEWS') : viewingNews ? 'NEWS INFORMATION' : 'NEWS LIST'}</h1>
+                <nav className="rss-breadcrumb">
+                    <span className="rss-bc-item">News</span>
+                    <span className="rss-bc-sep">›</span>
+                    <span className="rss-bc-active">{editingNews ? (editingNews._id ? 'Edit News' : 'Add News') : viewingNews ? 'News Information' : 'News List'}</span>
+                </nav>
             </div>
-
-            <div className="news-card">
                 {editingNews ? (
                     <div className="news-edit-container">
                         <form className="news-edit-form" onSubmit={handleUpdateNews}>
@@ -390,161 +393,133 @@ export default function News() {
                 ) : !viewingNews ? (
                     <>
                         {/* Action Buttons */}
-                        <div className="news-actions-bar">
-                            <button className="btn-add" onClick={handleAddNewsClick}>
-                                <PlusCircle size={16} /> Add News
+                        <div className="rss-actions-final">
+                            <button className="rss-btn-delete-final" onClick={handleDelete}>
+                                <span className="rss-btn-icon-v2">🗑️</span> Delete News
                             </button>
-                            <button className="btn-delete" onClick={handleDelete}>
-                                <Trash2 size={16} /> Delete News
+                            <button className="rss-btn-add-final" onClick={handleAddNewsClick}>
+                                <span className="rss-btn-icon-v2">⊕</span> Add News
                             </button>
                         </div>
 
-                        {/* Filters */}
-                        <div className="news-filters-bar">
-                            <div className="entries-select">
+                        {/* Controls */}
+                        <div className="rss-controls">
+                            <div className="rss-entries-control">
                                 Show
-                                <select value={entries} onChange={(e) => setEntries(Number(e.target.value))}>
+                                <select
+                                    value={entries}
+                                    onChange={(e) => setEntries(Number(e.target.value))}
+                                    className="rss-select"
+                                >
                                     <option value={10}>10</option>
                                     <option value={20}>20</option>
                                     <option value={50}>50</option>
+                                    <option value={100}>100</option>
                                 </select>
                                 entries
                             </div>
-
-                            <div className="right-filters">
-                                <select
-                                    value={categoryFilter}
-                                    onChange={(e) => setCategoryFilter(e.target.value)}
-                                    className="filter-select"
-                                >
-                                    <option value="">All Categories</option>
-                                    <option value="politics">Politics</option>
-                                    <option value="top">Top</option>
-                                    <option value="trending">Trending</option>
-                                </select>
-                                <select className="filter-select">
-                                    <option value="">Select Subheading</option>
-                                </select>
-                                <div className="search-box">
-                                    Search:
-                                    <input
-                                        type="text"
-                                        value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
-                                    />
-                                </div>
+                            <div className="rss-search-control">
+                                Search:
+                                <input
+                                    type="text"
+                                    value={searchQuery}
+                                    onChange={(e) => setSearchQuery(e.target.value)}
+                                    className="rss-search-input"
+                                    placeholder="Search news..."
+                                />
                             </div>
                         </div>
 
                         {/* Data Table */}
-                        <div className="news-table-wrap">
-                            <table className="news-table">
+                        <div className="rss-table-wrap">
+                            <table className="rss-table">
                                 <thead>
                                     <tr>
-                                        <th># S No.</th>
-                                        <th>
+                                        <th className="rss-th-num"># S No.</th>
+                                        <th className="rss-th-check">
                                             <input
                                                 type="checkbox"
                                                 onChange={handleSelectAll}
                                                 checked={filteredNews.length > 0 && selectedRows.size === filteredNews.length}
                                             />
                                         </th>
-                                        <th>Category <span className="sort-icon">⇅</span></th>
-                                        <th>Image</th>
-                                        <th>Video</th>
-                                        <th>Published At <span className="sort-icon">⇅</span></th>
-                                        <th>Status</th>
-                                        <th>Featured</th>
-                                        <th>Trending</th>
-                                        <th>Top</th>
-                                        <th>Breaking</th>
-                                        <th>Action</th>
+                                        <th className="rss-th-cat">📁 Category <span className="sort-icon">⇅</span></th>
+                                        <th className="rss-th-link">🖼️ Image</th>
+                                        <th className="rss-th-sub">📅 Published <span className="sort-icon">⇅</span></th>
+                                        <th className="rss-th-status">⚡ Status</th>
+                                        <th className="rss-th-action">⚙️ Action</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {loading ? (
                                         <tr>
-                                            <td colSpan={12} style={{ textAlign: 'center', padding: '20px' }}>Loading news...</td>
+                                            <td colSpan={7} className="rss-loading-cell">
+                                                <div className="rss-spinner" />
+                                                Loading news...
+                                            </td>
                                         </tr>
                                     ) : paginatedNews.length === 0 ? (
                                         <tr>
-                                            <td colSpan={12} style={{ textAlign: 'center', padding: '20px' }}>No news found.</td>
+                                            <td colSpan={7} className="rss-empty-cell">No news found.</td>
                                         </tr>
                                     ) : (
                                         paginatedNews.map((item, index) => {
                                             const isExpanded = expandedRows.has(item._id);
                                             return (
                                                 <React.Fragment key={item._id}>
-                                                    <tr>
-                                                        <td className="sno-cell">
+                                                    <tr className="rss-row">
+                                                        <td className="rss-cell-num">
                                                             <span className={`expand-icon ${isExpanded ? 'minus' : ''}`} onClick={() => toggleExpand(item._id)}>
                                                                 {isExpanded ? '−' : '+'}
                                                             </span> {startIdx + index + 1}
                                                         </td>
-                                                        <td>
+                                                        <td className="rss-cell-check">
                                                             <input
                                                                 type="checkbox"
                                                                 checked={selectedRows.has(item._id)}
                                                                 onChange={() => toggleSelectRow(item._id)}
                                                             />
                                                         </td>
-                                                        <td className="capitalize">{item.category}</td>
-                                                        <td>
+                                                        <td className="rss-cell-cat">
+                                                            <span className="rss-cat-badge">{item.category}</span>
+                                                        </td>
+                                                        <td className="rss-cell-link">
                                                             {item.image ? (
-                                                                <img src={item.image} alt="Thumbnail" className="news-thumbnail" />
+                                                                <img src={item.image} alt="Thumbnail" style={{ width: '60px', height: '40px', objectFit: 'cover', borderRadius: '4px' }} />
                                                             ) : (
                                                                 <span className="no-img">No Image</span>
                                                             )}
                                                         </td>
-                                                        <td><span className="no-video">No Video</span></td>
-                                                        <td className="date-cell">{new Date(item.publishedAt).toLocaleString()}</td>
-
-                                                        {/* Toggles */}
-                                                        <td>
-                                                            <ToggleSwitch checked={item.status} onChange={() => handleToggle(item._id, 'status', item.status)} />
+                                                        <td className="rss-cell-date">{new Date(item.publishedAt).toLocaleString()}</td>
+                                                        <td className="rss-cell-status">
+                                                            <div className={`rss-toggle ${item.status ? 'active' : ''}`} onClick={() => handleToggle(item._id, 'status', item.status)}>
+                                                                <div className="rss-toggle-label">{item.status ? 'On' : 'Off'}</div>
+                                                                <div className="rss-toggle-handle"></div>
+                                                            </div>
                                                         </td>
-                                                        <td>
-                                                            <ToggleSwitch checked={item.featured} onChange={() => handleToggle(item._id, 'featured', item.featured)} />
-                                                        </td>
-                                                        <td>
-                                                            <ToggleSwitch checked={item.trending} onChange={() => handleToggle(item._id, 'trending', item.trending)} />
-                                                        </td>
-                                                        <td>
-                                                            <ToggleSwitch checked={item.top} onChange={() => handleToggle(item._id, 'top', item.top)} />
-                                                        </td>
-                                                        <td>
-                                                            <ToggleSwitch checked={item.breaking} onChange={() => handleToggle(item._id, 'breaking', item.breaking)} />
-                                                        </td>
-
-                                                        {/* Actions */}
-                                                        <td className="action-btns">
-                                                            <button className="btn-icon btn-view" title="View" onClick={() => setViewingNews(item)}>
-                                                                <Eye size={14} />
-                                                            </button>
-                                                            <button className="btn-icon btn-edit" title="Edit" onClick={() => setEditingNews(item)}>
-                                                                <Edit size={14} />
-                                                            </button>
+                                                        <td className="rss-cell-action">
+                                                            <div className="rss-action-btns">
+                                                                <button className="rss-edit-btn-new" title="View" onClick={() => setViewingNews(item)}>
+                                                                    👁️
+                                                                </button>
+                                                                <button className="rss-delete-btn-new" title="Edit" onClick={() => setEditingNews(item)}>
+                                                                    📝
+                                                                </button>
+                                                            </div>
                                                         </td>
                                                     </tr>
                                                     {isExpanded && (
-                                                        <tr key={`${item._id}-detail`} className="expanded-row">
-                                                            <td colSpan={12}>
-                                                                <div className="expanded-detail">
-                                                                    <div className="detail-section">
-                                                                        <h4 className="detail-label">Title</h4>
-                                                                        <p className="detail-value">{item.title}</p>
+                                                        <tr key={`${item._id}-detail`} className="rss-row">
+                                                            <td colSpan={7} style={{ background: '#f8f9fa' }}>
+                                                                <div className="expanded-detail" style={{ padding: '16px' }}>
+                                                                    <div style={{ marginBottom: '12px' }}>
+                                                                        <strong>Title:</strong> {item.title}
                                                                     </div>
-                                                                    <div className="detail-section">
-                                                                        <h4 className="detail-label">Content</h4>
-                                                                        <p className="detail-value">{item.description || item.content || 'No content available'}</p>
+                                                                    <div style={{ marginBottom: '12px' }}>
+                                                                        <strong>Description:</strong> {item.description || 'No description'}
                                                                     </div>
-                                                                    <div className="detail-section">
-                                                                        <h4 className="detail-label">🏷 Tags</h4>
-                                                                        <p className="detail-value">{item.category}</p>
-                                                                    </div>
-                                                                    <div className="detail-section">
-                                                                        <h4 className="detail-label">Author</h4>
-                                                                        <p className="detail-value">{item.source || 'TV19 News'}</p>
+                                                                    <div>
+                                                                        <strong>Source:</strong> {item.source || 'TV19 News'}
                                                                     </div>
                                                                 </div>
                                                             </td>
@@ -558,58 +533,15 @@ export default function News() {
                             </table>
                         </div>
 
-                        {/* Pagination */}
-                        {!loading && filteredNews.length > 0 && (
-                            <div className="rss-pagination" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 20px', backgroundColor: '#fff', borderTop: '1px solid #eee' }}>
-                                <span className="rss-page-info" style={{ color: '#6c757d', fontSize: '14px' }}>
-                                    Showing {startIdx + 1} to {Math.min(startIdx + entries, filteredNews.length)} of {filteredNews.length} entries
-                                </span>
-                                <div className="rss-page-btns" style={{ display: 'flex', gap: '5px' }}>
-                                    <button
-                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === 1 ? '#e9ecef' : '#fff', color: currentPage === 1 ? '#6c757d' : '#e8380d', cursor: currentPage === 1 ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
-                                        disabled={currentPage === 1}
-                                        onClick={() => setCurrentPage(p => p - 1)}
-                                    >
-                                        Previous
-                                    </button>
-                                    {Array.from({ length: Math.min(totalPages, 5) }, (_, i) => {
-                                        let pageNum: number;
-                                        if (totalPages <= 5) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage <= 3) {
-                                            pageNum = i + 1;
-                                        } else if (currentPage >= totalPages - 2) {
-                                            pageNum = totalPages - 4 + i;
-                                        } else {
-                                            pageNum = currentPage - 2 + i;
-                                        }
-                                        const isActive = currentPage === pageNum;
-                                        return (
-                                            <button
-                                                key={pageNum}
-                                                style={{
-                                                    padding: '6px 12px',
-                                                    border: '1px solid #dee2e6',
-                                                    backgroundColor: isActive ? '#e8380d' : '#fff',
-                                                    color: isActive ? '#fff' : '#495057',
-                                                    cursor: 'pointer',
-                                                    borderRadius: '4px'
-                                                }}
-                                                onClick={() => setCurrentPage(pageNum)}
-                                            >
-                                                {pageNum}
-                                            </button>
-                                        );
-                                    })}
-                                    <button
-                                        style={{ padding: '6px 12px', border: '1px solid #dee2e6', backgroundColor: currentPage === totalPages ? '#e9ecef' : '#fff', color: currentPage === totalPages ? '#6c757d' : '#e8380d', cursor: currentPage === totalPages ? 'not-allowed' : 'pointer', borderRadius: '4px' }}
-                                        disabled={currentPage === totalPages}
-                                        onClick={() => setCurrentPage(p => p + 1)}
-                                    >
-                                        Next
-                                    </button>
-                                </div>
-                            </div>
+                        {!loading && (
+                            <Pagination
+                                currentPage={currentPage}
+                                totalPages={totalPages}
+                                totalItems={filteredNews.length}
+                                itemsPerPage={entries}
+                                startIdx={startIdx}
+                                onPageChange={setCurrentPage}
+                            />
                         )}
                     </>
                 ) : (
@@ -677,13 +609,12 @@ export default function News() {
                         </div>
 
                         <div className="detail-back-actions">
-                            <button className="btn-back" onClick={() => setViewingNews(null)}>
+                            <button className="rss-btn-back-link" onClick={() => setViewingNews(null)}>
                                 ← Back to News List
                             </button>
                         </div>
                     </div>
                 )}
-            </div>
         </div>
     );
 }

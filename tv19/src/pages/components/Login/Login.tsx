@@ -6,21 +6,68 @@ import {
     UilSignInAlt, UilBolt, UilUser, UilBookmark,
     UilCommentAlt, UilShieldCheck
 } from '@iconscout/react-unicons';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../../../services/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 import '../../css/Login/Login.css';
 
 const Login: React.FC = () => {
+    const { login } = useAuth();
+    const navigate = useNavigate();
+    const location = useLocation();
     const [showPassword, setShowPassword] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [error, setError] = useState('');
+    const [loading, setLoading] = useState(false);
+    const queryParams = new URLSearchParams(location.search);
+    const verified = queryParams.get('verified');
 
     useEffect(() => {
         window.scrollTo(0, 0);
     }, []);
 
-    const handleLogin = (e: React.FormEvent) => {
+    const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Login attempt:', { email, password });
+        setError('');
+        setLoading(true);
+        try {
+            const res = await fetch('http://localhost:5000/api/user/login', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email, password })
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data.error || 'Login failed');
+            login(data.token, data.user);
+            navigate('/');
+        } catch (err: any) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
     };
+
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                setLoading(true);
+                const res = await fetch('http://localhost:5000/api/user/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Google login failed');
+                login(data.token, data.user);
+                navigate('/');
+            } catch (err: any) {
+                setError(err.message);
+                setLoading(false);
+            }
+        },
+        onError: () => setError('Google Login Failed')
+    });
 
     return (
         <div className="login-page-container">
@@ -92,6 +139,9 @@ const Login: React.FC = () => {
                             <p>Sign in to continue to your account</p>
                         </div>
 
+                        {verified && <div style={{ color: '#006600', backgroundColor: '#e6ffe6', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem', textAlign: 'center', border: '1px solid #ccffcc' }}>Account verified! You can now login.</div>}
+                        {error && <div style={{ color: '#e63e00', backgroundColor: '#fff5f2', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem', textAlign: 'center', border: '1px solid #ffccbc' }}>{error}</div>}
+
                         <form className="login-form" onSubmit={handleLogin}>
                             <div className="form-group">
                                 <label>EMAIL ADDRESS</label>
@@ -136,15 +186,15 @@ const Login: React.FC = () => {
                                 <Link to="/forgot-password">Forgot Password?</Link>
                             </div>
 
-                            <button type="submit" className="login-submit-btn">
-                                <UilSignInAlt size={18} /> LOGIN
+                            <button type="submit" className="login-submit-btn" disabled={loading}>
+                                <UilSignInAlt size={18} /> {loading ? 'PROCESSING...' : 'LOGIN'}
                             </button>
 
                             <div className="login-divider">
                                 <span>OR CONTINUE WITH</span>
                             </div>
 
-                            <button type="button" className="google-login-btn">
+                            <button type="button" className="google-login-btn" onClick={() => googleLogin()}>
                                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
                                 <span className="google-letter g-red">G</span>
                             </button>

@@ -45,112 +45,26 @@ export type NewsCategory =
   | "environment"
   | "world";
 
+// ============================================================
+//  Two generic fetchers — all named exports delegate to these
+// ============================================================
 
 /**
- * Fetch latest news by category.
- * Hits our Express backend which fetches from RSS feeds.
- * @param imagesOnly - If true, only returns articles that have images (default: true)
+ * Fetch by category from `/api/news` (MongoDB-only, no RSS fallback).
+ * Best for categories that are regularly ingested by the cron job.
  */
-
-export const getNews = async (
-  category: string = "top",
+const fetchByCategory = async (
+  category: string,
   size: number = 20,
   imagesOnly: boolean = false,
   skip: number = 0
 ): Promise<NewsResponse> => {
   try {
     const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: { 
-        category, 
-        size, 
-        imagesOnly: imagesOnly ? "true" : undefined, 
-        skip 
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-export const getTopHeadlines = async (
-  category: NewsCategory = "top",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
       params: {
         category,
-        size: pageSize,
+        size,
         imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-export const getRajasthan = async (
-  category: NewsCategory = "rajasthan",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-
-export const getOpinion = async (
-  category: NewsCategory = "opinion",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-
-export const getSports = async (
-  category: NewsCategory | string = "sports",
-  _country?: string,
-  pageSize: number = 20,
-  _imagesOnly: boolean = true,
-  skip: number = 0
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: category,
-        size: pageSize,
         skip,
       },
     });
@@ -161,19 +75,19 @@ export const getSports = async (
   }
 };
 
-export const getCrime = async (
-  category: NewsCategory = "crime",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
+/**
+ * Fetch by state/category from `/api/news/state` (MongoDB + RSS fallback).
+ * Preferred for most categories — if DB is empty or stale, Tier 2 kicks in
+ * and fetches live from RSS feeds.
+ */
+const fetchByState = async (
+  state: string,
+  size: number = 15,
+  skip: number = 0
 ): Promise<NewsResponse> => {
   try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
+      params: { state, size, skip },
     });
     return response.data;
   } catch (error) {
@@ -182,46 +96,103 @@ export const getCrime = async (
   }
 };
 
-export const getAstrology = async (
-  category: NewsCategory = "astrology",
+// ============================================================
+//  Named exports (kept for backward-compatible component imports)
+// ============================================================
+
+/** Generic news fetch — delegates to fetchByCategory */
+export const getNews = async (
+  category: string = "top",
+  size: number = 20,
+  imagesOnly: boolean = false,
+  skip: number = 0
+): Promise<NewsResponse> => fetchByCategory(category, size, imagesOnly, skip);
+
+/** Top headlines */
+export const getTopHeadlines = async (
+  category: NewsCategory = "top",
   _country?: string,
   pageSize: number = 20,
   imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
+): Promise<NewsResponse> => fetchByCategory(category, pageSize, imagesOnly);
+
+/** Trending */
+export const getTrending = async (
+  category: NewsCategory = "trending",
+  _country?: string,
+  pageSize: number = 20,
+  imagesOnly: boolean = true
+): Promise<NewsResponse> => fetchByCategory(category, pageSize, imagesOnly);
+
+/** Rajasthan (via state endpoint for RSS fallback) */
+export const getRajasthan = async (
+  category: NewsCategory = "rajasthan",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+// --- Categories now routed through state endpoint (RSS fallback) ---
+
+/** Finance — switched to state endpoint so RSS fallback works */
+export const getFinance = async (
+  category: string = "finance",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** Weather — switched to state endpoint so RSS fallback works */
+export const getWeather = async (
+  category: string = "weather",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** Crime — switched to state endpoint so RSS fallback works */
+export const getCrime = async (
+  category: string = "crime",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** Opinion — switched to state endpoint so RSS fallback works */
+export const getOpinion = async (
+  category: string = "opinion",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** Astrology — switched to state endpoint so RSS fallback works */
+export const getAstrology = async (
+  category: string = "astrology",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** Arts — switched to state endpoint so RSS fallback works */
+export const getArts = async (
+  category: string = "arts",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+/** GreenFuture (environment) — switched to state endpoint so RSS fallback works */
+export const getGreenFuture = async (
+  category: string = "environment",
+  _country?: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => fetchByState(category, pageSize);
+
+// --- Categories already on state endpoint ---
 
 export const getIndia = async (
   region: string = "india",
   pageSize: number = 20,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const query = region === "All Stories" ? "india" : `${region} India`;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  // FIX: Don't concatenate "India" — just pass the region directly.
+  // Previously: `${region} India` produced "india India" → "india+India" in URL.
+  const query = region === "All Stories" ? "india" : region;
+  return fetchByState(query, pageSize, skip);
 };
 
 export const getPolitics = async (
@@ -229,91 +200,17 @@ export const getPolitics = async (
   pageSize: number = 20,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const query = subCategory === "All Stories" ? "politics" : subCategory;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const query = subCategory === "All Stories" ? "politics" : subCategory;
+  return fetchByState(query, pageSize, skip);
 };
 
-
-
-export const getGreenFuture = async (
-  category: NewsCategory = "green-future",
+export const getSports = async (
+  category: NewsCategory | string = "sports",
   _country?: string,
   pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-
-/**
- * Search news articles by keyword query.
- * Hits our Express backend /api/news/search endpoint.
- */
-export const searchNews = async (
-  query: string,
-  pageSize: number = 20
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/search`, {
-      params: {
-        q: query,
-        size: pageSize,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-/**
- * Fetch state-specific news based on detected state name.
- * Hits our Express backend /api/news/state endpoint (Google News RSS).
- */
-export const getStateNews = async (
-  stateName: string = "Rajasthan",
-  pageSize: number = 15,
+  _imagesOnly: boolean = true,
   skip: number = 0
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: stateName,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
+): Promise<NewsResponse> => fetchByState(category, pageSize, skip);
 
 export const getWorld = async (
   category: NewsCategory | string = "world",
@@ -321,64 +218,7 @@ export const getWorld = async (
   pageSize: number = 20,
   _imagesOnly: boolean = true,
   skip: number = 0
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: category,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-
-export const getArts = async (
-  category: NewsCategory = "arts",
-  _country?: string,
-  pageSize: number = 20,
-  imagesOnly: boolean = true
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
-
-export const getTechnology = async (
-  subCategory: string = "technology",
-  pageSize: number = 20,
-  skip: number = 0
-): Promise<NewsResponse> => {
-  try {
-    const query = subCategory === "All Stories" ? "technology" : subCategory;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
+): Promise<NewsResponse> => fetchByState(category, pageSize, skip);
 
 export const getEntertainment = async (
   category: NewsCategory | string = "entertainment",
@@ -386,41 +226,15 @@ export const getEntertainment = async (
   pageSize: number = 20,
   _imagesOnly: boolean = true,
   skip: number = 0
-): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: category,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
-};
+): Promise<NewsResponse> => fetchByState(category, pageSize, skip);
 
 export const getBusiness = async (
   subCategory: string = "business",
   pageSize: number = 20,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const query = subCategory === "All Stories" ? "business" : subCategory;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const query = subCategory === "All Stories" ? "business" : subCategory;
+  return fetchByState(query, pageSize, skip);
 };
 
 export const getLifestyle = async (
@@ -428,20 +242,8 @@ export const getLifestyle = async (
   pageSize: number = 20,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const query = subCategory === "All Stories" ? "lifestyle" : subCategory;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const query = subCategory === "All Stories" ? "lifestyle" : subCategory;
+  return fetchByState(query, pageSize, skip);
 };
 
 export const getEducation = async (
@@ -449,42 +251,24 @@ export const getEducation = async (
   pageSize: number = 20,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const query = subCategory === "All Stories" ? "education" : subCategory;
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, {
-      params: {
-        state: query,
-        size: pageSize,
-        skip,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const query = subCategory === "All Stories" ? "education" : subCategory;
+  return fetchByState(query, pageSize, skip);
 };
 
-export const getTrending = async (
-  category: NewsCategory = "trending",
-  _country?: string,
+export const getTechnology = async (
+  subCategory: string = "technology",
   pageSize: number = 20,
-  imagesOnly: boolean = true
+  skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const response = await axios.get<NewsResponse>(BASE_URL, {
-      params: {
-        category,
-        size: pageSize,
-        imagesOnly: imagesOnly ? "true" : undefined,
-      },
-    });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const query = subCategory === "All Stories" ? "technology" : subCategory;
+  return fetchByState(query, pageSize, skip);
 };
+
+export const getStateNews = async (
+  stateName: string = "Rajasthan",
+  pageSize: number = 15,
+  skip: number = 0
+): Promise<NewsResponse> => fetchByState(stateName, pageSize, skip);
 
 // --- Generic Dynamic Category Fetcher ---
 export const getDynamicCategoryNews = async (
@@ -493,20 +277,8 @@ export const getDynamicCategoryNews = async (
   pageSize: number = 30,
   skip: number = 0
 ): Promise<NewsResponse> => {
-  try {
-    const params: Record<string, string | number> = {
-      category,
-      size: pageSize,
-      skip,
-      state: (subCategory && subCategory !== "All Stories") ? subCategory : category
-    };
-
-    const response = await axios.get<NewsResponse>(`${BASE_URL}/state`, { params });
-    return response.data;
-  } catch (error) {
-    handleApiError(error);
-    throw error;
-  }
+  const state = (subCategory && subCategory !== "All Stories") ? subCategory : category;
+  return fetchByState(state, pageSize, skip);
 };
 
 // --- Category Counts ---
@@ -570,6 +342,28 @@ export const getRelatedArticles = async (
       params: { category, size: limit + 1 }, // fetch one extra in case we filter out the current one
     });
     return response.data.articles.filter((a) => a._id !== excludeId).slice(0, limit);
+  } catch (error) {
+    handleApiError(error);
+    throw error;
+  }
+};
+
+/**
+ * Search news articles by keyword query.
+ * Hits our Express backend /api/news/search endpoint.
+ */
+export const searchNews = async (
+  query: string,
+  pageSize: number = 20
+): Promise<NewsResponse> => {
+  try {
+    const response = await axios.get<NewsResponse>(`${BASE_URL}/search`, {
+      params: {
+        q: query,
+        size: pageSize,
+      },
+    });
+    return response.data;
   } catch (error) {
     handleApiError(error);
     throw error;

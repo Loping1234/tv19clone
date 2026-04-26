@@ -47,13 +47,13 @@
 
 .footer-logo .logo-tv {
   color: #ffffff;
-  background-color: #ff5722;
+  background-color: #e8380d;
   padding: 2px 6px;
   border-radius: 3px 0 0 3px;
 }
 
 .footer-logo .logo-19 {
-  color: #ff5722;
+  color: #e8380d;
   background-color: transparent;
   padding: 2px 6px 2px 2px;
 }
@@ -92,7 +92,7 @@
 }
 
 .f-icon:hover {
-  background-color: #ff5722;
+  background-color: #e8380d;
   color: #fff;
 }
 
@@ -116,7 +116,7 @@
   bottom: -6px;
   height: 2px;
   width: 30px;
-  background-color: #ff5722;
+  background-color: #e8380d;
 }
 
 .footer-link-list {
@@ -137,7 +137,7 @@
 }
 
 .footer-link-list li a:hover {
-  color: #ff5722;
+  color: #e8380d;
 }
 
 
@@ -171,7 +171,7 @@
 }
 
 .footer-subscribe-form button {
-  background: #ff5722;
+  background: #e8380d;
   color: #fff;
   border: none;
   padding: 0 16px;
@@ -182,7 +182,7 @@
 }
 
 .footer-subscribe-form button:hover {
-  background: #e64a19;
+  background: #c72e09;
 }
 
 
@@ -220,7 +220,7 @@
   bottom: 20px; /* Align near copyright */
   width: 44px;
   height: 44px;
-  background-color: #ff5722;
+  background-color: #e8380d;
   color: #fff;
   border: none;
   border-radius: 50%;
@@ -235,7 +235,7 @@
 }
 
 .back-to-top-btn:hover {
-  background-color: #e64a19;
+  background-color: #c72e09;
   transform: translateY(-3px);
 }
 

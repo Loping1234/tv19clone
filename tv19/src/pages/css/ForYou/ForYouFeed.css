@@ -1,0 +1,247 @@
+/* ============================================================
+   For You Feed Page
+   ============================================================ */
+
+.foryou-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 280px 24px 80px;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+}
+
+.foryou-header {
+  margin-bottom: 40px;
+}
+
+.foryou-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0 0 8px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.foryou-header h1 i {
+  color: #e8380d;
+}
+
+.foryou-header p {
+  font-size: 1rem;
+  color: #64748b;
+  margin: 0 0 16px;
+}
+
+.foryou-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.foryou-tag {
+  padding: 5px 14px;
+  background: #fef2f2;
+  color: #e8380d;
+  border-radius: 20px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  text-transform: capitalize;
+}
+
+/* Grid */
+.foryou-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.foryou-card {
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.foryou-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.foryou-card.featured {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+
+.foryou-card.featured .foryou-card-image {
+  height: 100%;
+  min-height: 300px;
+}
+
+.foryou-card-image {
+  width: 100%;
+  height: 200px;
+  object-fit: cover;
+}
+
+.foryou-card-placeholder {
+  width: 100%;
+  height: 200px;
+  background: linear-gradient(135deg, #f1f5f9, #e2e8f0);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  color: #94a3b8;
+}
+
+.foryou-card-body {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.foryou-card-category {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #e8380d;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.foryou-card-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #1e293b;
+  margin: 8px 0 10px;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.foryou-card.featured .foryou-card-title {
+  font-size: 1.3rem;
+  -webkit-line-clamp: 3;
+}
+
+.foryou-card-desc {
+  font-size: 0.9rem;
+  color: #64748b;
+  line-height: 1.5;
+  margin: 0 0 14px;
+}
+
+.foryou-card-meta {
+  display: flex;
+  gap: 16px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  margin-top: auto;
+}
+
+/* Load More */
+.foryou-load-more {
+  text-align: center;
+  margin-top: 40px;
+}
+
+.foryou-load-btn {
+  padding: 12px 40px;
+  background: #f1f5f9;
+  border: 2px solid #e2e8f0;
+  border-radius: 10px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.foryou-load-btn:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
+}
+
+.foryou-load-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Setup / Empty */
+.foryou-setup,
+.foryou-empty {
+  text-align: center;
+  padding: 60px 20px;
+  color: #94a3b8;
+}
+
+.foryou-setup i,
+.foryou-empty i {
+  font-size: 3.5rem;
+  color: #cbd5e1;
+  margin-bottom: 20px;
+}
+
+.foryou-setup h2,
+.foryou-empty h2 {
+  font-size: 1.3rem;
+  color: #475569;
+  margin: 0 0 12px;
+  font-weight: 800;
+}
+
+.foryou-setup p,
+.foryou-empty p {
+  font-size: 1rem;
+  max-width: 450px;
+  margin: 0 auto;
+  line-height: 1.6;
+}
+
+/* Loading */
+.foryou-loading {
+  text-align: center;
+  padding: 100px 20px;
+  color: #94a3b8;
+}
+
+.foryou-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e2e8f0;
+  border-top-color: #e8380d;
+  border-radius: 50%;
+  animation: foryou-spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+
+@keyframes foryou-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .foryou-page {
+    padding: 240px 16px 60px;
+  }
+
+  .foryou-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .foryou-card.featured {
+    grid-template-columns: 1fr;
+  }
+
+  .foryou-card.featured .foryou-card-image {
+    min-height: 200px;
+  }
+}

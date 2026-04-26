@@ -7,14 +7,22 @@ import News from './components/Pages/News'
 import RssFeeds from './components/Pages/RssFeeds'
 import Profile from './components/Pages/Profile'
 import Login from './components/Pages/Login'
-import Categories from './components/Pages/Categories'
+import Categories from './components/Pages/CategoriesNew'
+import Users from './components/Pages/Users'
+import Polls from './components/Pages/Polls'
 import ResetPassword from './components/Pages/ResetPassword'
 import EmailTemplates from './components/Pages/EmailTemplates'
 import StaticPages from './components/Pages/StaticPages'
+import Subheadings from './components/Pages/Subheadings'
+import Authors from './components/Pages/Authors'
+import Jobs from './components/Pages/Jobs'
+import JobApplicants from './components/Pages/JobApplicants'
+import AdInquiry from './components/Pages/AdInquiry'
+import Subscribers from './components/Pages/Subscribers'
 import './App.css'
 
-export type Page = 'dashboard' | 'news' | 'categories' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password'
-| 'about-us' | 'contact-us' | 'disclaimer' | 'privacy-policy' | 'advertise'
+export type Page = 'dashboard' | 'news' | 'polls' | 'categories' | 'users' | 'email-templates' | 'pages' | 'rss-feeds' | 'trending' | 'authors' | 'comments' | 'ads' | 'subscribers' | 'settings' | 'configuration' | 'social' | 'profile' | 'reset-password' | 'subheadings'
+| 'about-us' | 'contact-us' | 'disclaimer' | 'privacy-policy' | 'advertise' | 'jobs' | 'job-applicants' | 'ad-inquiry'
 
 function App() {
   const [token, setToken] = useState<string | null>(localStorage.getItem('adminToken'))
@@ -76,7 +84,9 @@ function App() {
       case 'configuration': return <Configuration />
       case 'social': return <Social />
       case 'news': return <News />
+      case 'polls': return <Polls />
       case 'categories': return <Categories />
+      case 'users': return <Users />
       case 'email-templates': return <EmailTemplates />
       case 'pages': return <StaticPages />
       case 'about-us': return <StaticPages initialView={{ title: 'About Us' }} />
@@ -85,8 +95,14 @@ function App() {
       case 'privacy-policy': return <StaticPages initialView={{ title: 'Privacy Policy' }} />
       case 'advertise': return <StaticPages initialView={{ title: 'Advertise With Us' }} />
       case 'rss-feeds': return <RssFeeds />
-      case 'profile': return <Profile />
+      case 'subheadings': return <Subheadings />
+      case 'authors': return <Authors />
+      case 'profile': return <Profile onProfileUpdate={(name, imageUrl) => { setAdminName(name); setAdminImage(imageUrl); }} />
       case 'reset-password': return <ResetPassword />
+      case 'jobs': return <Jobs />
+      case 'job-applicants': return <JobApplicants />
+      case 'ad-inquiry': return <AdInquiry />
+      case 'subscribers': return <Subscribers />
       default: return (
         <div className="coming-soon">
           <div className="coming-soon-icon">🚧</div>

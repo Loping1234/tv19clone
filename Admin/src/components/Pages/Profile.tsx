@@ -15,7 +15,11 @@ function authHeaders(contentType?: string) {
     return headers
 }
 
-export default function Profile() {
+interface ProfileProps {
+    onProfileUpdate?: (name: string, imageUrl: string) => void
+}
+
+export default function Profile({ onProfileUpdate }: ProfileProps) {
     const [name, setName] = useState('')
     const [email, setEmail] = useState('')
     const [imageUrl, setImageUrl] = useState<string>('')
@@ -86,6 +90,7 @@ export default function Profile() {
             setSelectedFileName('No file chosen')
             if (fileRef.current) fileRef.current.value = ''
             setToast({ type: 'success', msg: 'Profile image uploaded!' })
+            onProfileUpdate?.(name, data.imageUrl)
         } catch (err) {
             console.error('Upload error:', err)
             setToast({ type: 'error', msg: 'Failed to upload image' })
@@ -102,6 +107,7 @@ export default function Profile() {
             })
             if (!res.ok) throw new Error('Save failed')
             setToast({ type: 'success', msg: 'Profile updated successfully!' })
+            onProfileUpdate?.(name, imageUrl)
         } catch (err) {
             console.error('Save error:', err)
             setToast({ type: 'error', msg: 'Failed to update profile' })

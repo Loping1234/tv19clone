@@ -56,7 +56,7 @@
     display: grid;
     grid-template-columns: 1.3fr 1fr 0.9fr;
     gap: 20px;
-    align-items: start;
+    align-items: stretch;
 }
 
 /* ═══════════════════════════
@@ -73,6 +73,7 @@
     border: 1px solid #e8e8e8;
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
     transition: box-shadow 0.25s ease, transform 0.25s ease;
+    height: 100%;
 }
 
 .raj-hero:hover {
@@ -82,9 +83,10 @@
 
 .raj-hero__img {
     position: relative;
-    height: 300px;
+    min-height: 280px;
+    flex: 1;
     overflow: hidden;
-    background: #e0e0e0;
+    background: linear-gradient(135deg, #e0e0e0, #bdbdbd);
     flex-shrink: 0;
 }
 
@@ -172,6 +174,7 @@
     border-radius: 6px;
     border: 1px solid #e8e8e8;
     overflow: hidden;
+    height: 100%;
 }
 
 .raj-mid__item {
@@ -231,6 +234,7 @@
     border-radius: 6px;
     border: 1px solid #e8e8e8;
     overflow: hidden;
+    height: 100%;
 }
 
 .raj-right__item {

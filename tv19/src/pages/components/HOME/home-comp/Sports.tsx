@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Sports.css';
 import { getSports, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Sports: React.FC = () => {
@@ -33,16 +34,7 @@ const Sports: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchSportsNews]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -95,9 +87,9 @@ const Sports: React.FC = () => {
             <section className="Sports-section">
                 <div className="Sports-section__header">
                     <h3 className="Sports-section__heading">Sports</h3>
-                    <a href="#" className="Sports-section__more">
+                    <Link to="/category/sports" className="Sports-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Sports-grid">

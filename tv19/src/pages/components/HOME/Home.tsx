@@ -2,7 +2,9 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import '../../css/HOME/Home.css';
 import { getTopHeadlines, searchNews, type Article } from '../../../services/newsService';
+import { timeAgo } from '../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
+import LazySection from '../../../components/LazySection';
 import Rajasthan from './home-comp/Rajasthan';
 import TrendingStories from './home-comp/TrendingStories';
 import Lifestyle from './home-comp/Lifestyle';
@@ -79,16 +81,7 @@ const Home: React.FC = () => {
   const nextSlide = () =>
     setActiveSlide((prev) => (prev + 1) % heroArticles.length);
 
-  const timeAgo = (dateStr: string): string => {
-    const diff = Date.now() - new Date(dateStr).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 1) return 'Just now';
-    if (mins < 60) return `${mins} min ago`;
-    const hours = Math.floor(mins / 60);
-    if (hours < 24) return `${hours}h ago`;
-    const days = Math.floor(hours / 24);
-    return `${days}d ago`;
-  };
+
 
   if (loading) {
     return (
@@ -170,7 +163,7 @@ const Home: React.FC = () => {
               <Link key={index} to={`/article/${article._id}`} className="story-item" style={{ position: 'relative' }}>
                 <div style={{ position: 'absolute', top: '5px', left: '5px', background: '#e8380d', color: '#fff', width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 'bold', zIndex: 2 }}>{index + 1}</div>
                 <img
-                  src={article.image || 'https://via.placeholder.com/120x80?text=No+Image'}
+                  src={article.image || "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='80' fill='%23e2e8f0'%3E%3Crect width='120' height='80'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' fill='%2394a3b8' font-family='Arial' font-size='10' font-weight='bold'%3ETV19%3C/text%3E%3C/svg%3E"}
                   alt={article.title}
                   className="story-thumb"
                 />
@@ -187,26 +180,27 @@ const Home: React.FC = () => {
 
       {/* ===== News Sections ===== */}
       <div className="home-sections">
-        {/* State */}
+        {/* State — above fold, eagerly loaded */}
         <Rajasthan />
-        {/* Categories */}
+        {/* Categories — eagerly loaded (visible early) */}
         <TrendingStories />
-        <India />
-        <World />
-        <Business />
-        <Sports />
-        <Politics />
-        <Technology />
-        <Lifestyle />
-        <Finance />
-        <Entertainment />
-        <Weather />
-        <Crime />
-        <GreenFuture />
-        <Education />
-        <Astrology />
-        <Opinion />
-        <Arts />
+        {/* Below-fold sections — lazy loaded via IntersectionObserver */}
+        <LazySection><India /></LazySection>
+        <LazySection><World /></LazySection>
+        <LazySection><Business /></LazySection>
+        <LazySection><Sports /></LazySection>
+        <LazySection><Politics /></LazySection>
+        <LazySection><Technology /></LazySection>
+        <LazySection><Lifestyle /></LazySection>
+        <LazySection><Finance /></LazySection>
+        <LazySection><Entertainment /></LazySection>
+        <LazySection><Weather /></LazySection>
+        <LazySection><Crime /></LazySection>
+        <LazySection><GreenFuture /></LazySection>
+        <LazySection><Education /></LazySection>
+        <LazySection><Astrology /></LazySection>
+        <LazySection><Opinion /></LazySection>
+        <LazySection><Arts /></LazySection>
       </div>
     </div>
   );

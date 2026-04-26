@@ -6,14 +6,20 @@ import {
     UilSignInAlt, UilBolt, UilUser, UilBookmark,
     UilCommentAlt, UilShieldCheck
 } from '@iconscout/react-unicons';
+import { useGoogleLogin } from '@react-oauth/google';
+import { useAuth } from '../../../services/AuthContext';
+import { useNavigate } from 'react-router-dom';
 import '../../css/Signup/Signup.css';
 
 const Signup: React.FC = () => {
+    const { login } = useAuth();
+    const navigate = useNavigate();
     const [showPassword, setShowPassword] = useState(false);
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState('');
+    const [message, setMessage] = useState('');
     const [loading, setLoading] = useState(false);
 
     useEffect(() => {
@@ -23,17 +29,17 @@ const Signup: React.FC = () => {
     const handleSignup = async (e: React.FormEvent) => {
         e.preventDefault();
         setError('');
+        setMessage('');
         setLoading(true);
         try {
-            const response = await fetch('http://localhost:5000/api/admin/signup', {
+            const response = await fetch('http://localhost:5000/api/user/signup', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, password }),
             });
             const data = await response.json();
             if (!response.ok) throw new Error(data.error || 'Signup failed');
-            alert('Signup successful! You can now log in.');
-            // Redirect or switch to login? For now just alert
+            setMessage(data.message);
         } catch (err: any) {
             setError(err.message);
         } finally {
@@ -41,16 +47,38 @@ const Signup: React.FC = () => {
         }
     };
 
+    const googleLogin = useGoogleLogin({
+        onSuccess: async (tokenResponse) => {
+            try {
+                setLoading(true);
+                const res = await fetch('http://localhost:5000/api/user/google', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ access_token: tokenResponse.access_token }),
+                });
+                const data = await res.json();
+                if (!res.ok) throw new Error(data.error || 'Google login failed');
+                login(data.token, data.user);
+                navigate('/');
+            } catch (err: any) {
+                setError(err.message);
+                setLoading(false);
+            }
+        },
+        onError: () => setError('Google Login Failed')
+    });
+
     return (
         <div className="Signup-page-container">
             <div className="Signup-card">
                 {/* Left Panel: Features */}
                 <div className="Signup-left-panel">
                     <div className="Signup-left-content">
-                        <h2>STAY INFORMED, <span className="highlight">STAY AHEAD</span></h2>
+                        <h2>STAY INFORMED, <span className="highlight">STAY<br/>AHEAD</span></h2>
                         <p className="Signup-description">
-                            Join thousands of readers who trust TV19 News for accurate, unbiased reporting. 
-                            Create your free account and unlock a personalized news experience.
+                            Join thousands of readers who trust TV19 News for<br/>
+                            accurate, unbiased reporting. Create your free account<br/>
+                            and unlock a personalized news experience.
                         </p>
 
                         <div className="feature-list">
@@ -112,6 +140,7 @@ const Signup: React.FC = () => {
                         </div>
 
                         {error && <div style={{ color: '#e63e00', backgroundColor: '#fff5f2', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem', textAlign: 'center', border: '1px solid #ffccbc' }}>{error}</div>}
+                        {message && <div style={{ color: '#006600', backgroundColor: '#e6ffe6', padding: '10px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.9rem', textAlign: 'center', border: '1px solid #ccffcc' }}>{message}</div>}
 
                         <form className="Signup-form" onSubmit={handleSignup}>
                             <div className="form-group">
@@ -178,7 +207,7 @@ const Signup: React.FC = () => {
                                 <span>OR CONTINUE WITH</span>
                             </div>
 
-                            <button type="button" className="google-Signup-btn">
+                            <button type="button" className="google-Signup-btn" onClick={() => googleLogin()}>
                                 <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" />
                                 <span className="google-letter g-red">G</span>
                             </button>

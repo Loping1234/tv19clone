@@ -26,8 +26,16 @@ import BusinessPage from './pages/components/BUSINESS/BusinessPage.tsx'
 import EducationPage from './pages/components/EDUCATION/EducationPage.tsx'
 import DynamicSectionPage from './pages/components/DYNAMIC/DynamicSectionPage.tsx'
 import ArticlePage from './pages/components/Article/ArticlePage.tsx'
+import ForgotPassword from './pages/components/Login/ForgotPassword.tsx'
+import ResetPassword from './pages/components/Login/ResetPassword.tsx'
+import SavedArticles from './pages/components/SavedArticles/SavedArticles.tsx'
+import ForYouFeed from './pages/components/ForYou/ForYouFeed.tsx'
 
 import { getSiteConfig, applySiteConfig } from './services/siteConfigService'
+import { AuthProvider } from './services/AuthContext.tsx'
+import { GoogleOAuthProvider } from '@react-oauth/google'
+
+const GOOGLE_CLIENT_ID = "YOUR_GOOGLE_CLIENT_ID"; // We can replace this with env variable later
 
 // Fetch site config and apply favicon + title on startup
 getSiteConfig()
@@ -36,8 +44,10 @@ getSiteConfig()
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <BrowserRouter>
-      <App />
+    <GoogleOAuthProvider clientId={GOOGLE_CLIENT_ID}>
+      <AuthProvider>
+        <BrowserRouter>
+          <App />
       <Routes>
         <Route path="/" element={<Home />} />
         <Route path="/article/:id" element={<ArticlePage />} />
@@ -49,6 +59,10 @@ createRoot(document.getElementById('root')!).render(
         <Route path="/advertise" element={<Advertise />} />
         <Route path="/login" element={<Login />} />
         <Route path="/signup" element={<Signup />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password/:token" element={<ResetPassword />} />
+        <Route path="/saved" element={<SavedArticles />} />
+        <Route path="/for-you" element={<ForYouFeed />} />
         <Route path="/state" element={<StatePage />} />
         <Route path="/india" element={<IndiaPage />} />
         <Route path="/world" element={<WorldPage />} />
@@ -76,5 +90,7 @@ createRoot(document.getElementById('root')!).render(
       </Routes>
       <Footer />
     </BrowserRouter>
+      </AuthProvider>
+    </GoogleOAuthProvider>
   </StrictMode>,
 )

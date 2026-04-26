@@ -6,11 +6,15 @@ import { getTopHeadlines, searchNews, type Article } from './services/newsServic
 import { getWeatherByCity, type WeatherResponse } from "./services/weatherService";
 import { getSiteConfig, applySiteConfig, type SiteConfig } from './services/siteConfigService';
 import {
-    UilSearch,
-    UilSignInAlt,
+  UilSearch,
+  UilSignInAlt,
+  UilUserCircle,
+  UilSignOutAlt
 } from '@iconscout/react-unicons';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 import logoImg from './assets/Image_Logo.png';
+import { useAuth } from './services/AuthContext';
+import PreferencesModal from './pages/components/Preferences/PreferencesModal';
 
 interface BreakingNewsProps {
   category?: 'top' | 'entertainment' | 'sports' | 'technology' | 'business' | 'health' | 'science';
@@ -29,6 +33,11 @@ const Navbar: React.FC<BreakingNewsProps> = ({
   const [data, setData] = useState<WeatherResponse | null>(null);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  // Auth state
+  const { user, logout } = useAuth();
+  const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
+  const [isPrefsOpen, setIsPrefsOpen] = useState(false);
 
   // Breaking news state
   const [articles, setArticles] = useState<Article[]>([]);
@@ -78,7 +87,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
 
     updateOffset();
     window.addEventListener('resize', updateOffset);
-    
+
     // Smoothly update offset when navbar shrinks/grows during scroll
     const resizeObserver = new ResizeObserver(() => {
       updateOffset();
@@ -185,18 +194,28 @@ const Navbar: React.FC<BreakingNewsProps> = ({
     return `${day}, ${month} ${dateNum}, ${hours}:${mins} ${ampm}`;
   };
 
+  const [dynamicNav, setDynamicNav] = useState<any[]>([]);
+
+  // Fetch dynamic navigation
+  useEffect(() => {
+    fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/navbar`)
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) {
+          setDynamicNav(data);
+        }
+      })
+      .catch(err => console.error('Failed to fetch navbar:', err));
+  }, []);
+
   const navItems = [
-    { label: 'Home', to: '/', isLink: true },
-    { label: 'State', to: '/state', isLink: true },
-    { label: 'India', to: '/india', isLink: true },
-    { label: 'World', to: '/world', isLink: true },
-    { label: 'Entertainment', to: '/entertainment', isLink: true },
-    { label: 'Sports', to: '/sports', isLink: true },
-    { label: 'Politics', to: '/politics', isLink: true },
-    { label: 'Technology', to: '/technology', isLink: true },
-    { label: 'Lifestyle', to: '/lifestyle', isLink: true },
-    { label: 'Business', to: '/business', isLink: true },
-    { label: 'Education', to: '/education', isLink: true },
+    { label: 'HOME', to: '/', isLink: true, isHome: true },
+    ...dynamicNav.map(item => ({
+      label: item.name.toUpperCase(),
+      to: `/${item.slug}`,
+      isLink: true,
+      subheadings: item.subheadings
+    }))
   ];
 
   return (
@@ -247,21 +266,34 @@ const Navbar: React.FC<BreakingNewsProps> = ({
 
       <nav ref={navbarRef} className='navbar'>
         <ul className='navbar-list'>
-          {navItems.map((item) => {
+          {navItems.map((item: any) => {
             const isActive = item.isLink
               ? (item.to === '/' ? location.pathname === '/' : location.pathname.startsWith(item.to!))
               : false;
+            
+            const hasSubheadings = item.subheadings && item.subheadings.length > 0;
+
             return (
-              <li key={item.label}>
-                {item.isLink ? (
-                  <Link to={item.to!} className={`navbar-link ${isActive ? 'active' : ''}`} style={{ position: 'relative' }}>
-                    {item.label}
-                    {item.label === 'Sports' && (
-                      <span className="pulse-badge">IPL 2026</span>
-                    )}
-                  </Link>
-                ) : (
-                  <a href={(item as React.AnchorHTMLAttributes<HTMLAnchorElement>).href} className='navbar-link'>{item.label}</a>
+              <li key={item.label} className={`${item.isHome ? 'nav-home-tab' : ''} ${hasSubheadings ? 'dropdown' : ''}`}>
+                <Link 
+                  to={item.to!} 
+                  className={`navbar-link ${isActive && !item.isHome ? 'active' : ''} ${item.isHotTopic ? 'hot-topic' : ''} ${hasSubheadings ? 'dropdown-toggle' : ''}`}
+                >
+                  {item.isHotTopic && <span className="hot-icon">🔥</span>}
+                  {item.label}
+                  {hasSubheadings && <span className="dropdown-arrow"> ▾</span>}
+                </Link>
+
+                {hasSubheadings && (
+                  <ul className="dropdown-menu">
+                    {item.subheadings.map((sub: any) => (
+                      <li key={sub.slug}>
+                        <Link to={`/category/${item.label.toLowerCase()}/${sub.slug}`} className="navbar-link">
+                          {sub.label}
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
                 )}
               </li>
             );
@@ -283,14 +315,45 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           </li>
         </ul>
 
-        {/* Login / Sign Up buttons */}
+        {/* Login / Sign Up buttons or Profile */}
         <div className="navbar-auth">
-          <Link to="/login" className="btn-login">
-            <UilSignInAlt size={16} /> Login
-          </Link>
-          <a href="/signup" className="btn-signup">
-            SIGN UP
-          </a>
+          {user ? (
+            <div className="user-profile-menu" 
+                 onMouseEnter={() => setIsProfileMenuOpen(true)}
+                 onMouseLeave={() => setIsProfileMenuOpen(false)}>
+              <div className="user-avatar-btn">
+                {user.imageUrl ? (
+                  <img src={user.imageUrl} alt="Profile" className="user-avatar-img" />
+                ) : (
+                  <UilUserCircle size={24} />
+                )}
+                <span className="user-name-short">{user.name.split(' ')[0]}</span>
+              </div>
+              
+              {isProfileMenuOpen && (
+                <ul className="profile-dropdown">
+                  <li className="profile-dropdown-header">
+                    <strong>{user.name}</strong>
+                    <small>{user.email}</small>
+                  </li>
+                  <li><Link to="/for-you" className="dropdown-link"><i className="fas fa-newspaper"></i> For You</Link></li>
+                  <li><Link to="/saved" className="dropdown-link"><i className="far fa-bookmark"></i> Saved Articles</Link></li>
+                  <li><button onClick={() => { setIsPrefsOpen(true); setIsProfileMenuOpen(false); }} className="dropdown-link"><i className="fas fa-sliders-h"></i> Preferences</button></li>
+                  <li className="dropdown-divider"></li>
+                  <li><button onClick={logout} className="logout-btn"><UilSignOutAlt size={16}/> Logout</button></li>
+                </ul>
+              )}
+            </div>
+          ) : (
+            <>
+              <Link to="/login" className="btn-login">
+                <UilSignInAlt size={16} /> Login
+              </Link>
+              <Link to="/signup" className="btn-signup">
+                SIGN UP
+              </Link>
+            </>
+          )}
         </div>
       </nav>
 
@@ -304,7 +367,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           ) : (
             <div className="breaking-news-track">
               {articles.slice(0, 8).map((article, index) => (
-                <Link key={index} to={`/article/${article._id}`}   className="breaking-card">
+                <Link key={index} to={`/article/${article._id}`} className="breaking-card">
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -320,7 +383,7 @@ const Navbar: React.FC<BreakingNewsProps> = ({
               ))}
               {/* Duplicate for seamless loop */}
               {articles.slice(0, 8).map((article, index) => (
-                <Link key={`dup-${index}`} to={`/article/${article._id}`}   className="breaking-card">
+                <Link key={`dup-${index}`} to={`/article/${article._id}`} className="breaking-card">
                   <div className="breaking-card-image-wrap">
                     {article.image ? (
                       <img src={article.image} alt="" className="breaking-card-image" />
@@ -348,14 +411,35 @@ const Navbar: React.FC<BreakingNewsProps> = ({
               <i className="fas fa-times"></i>
             </button>
           </div>
-          
+
           <div className="side-auth">
-            <Link to="/login" className="side-btn-login" onClick={() => setIsMenuOpen(false)}>
-              <i className="fas fa-sign-in-alt"></i> Login
-            </Link>
-            <a href="#signup" className="side-btn-signup">
-              <i className="fas fa-user-plus"></i> Sign Up
-            </a>
+            {user ? (
+              <div className="side-user-info">
+                <div className="side-user-header">
+                  {user.imageUrl ? (
+                    <img src={user.imageUrl} alt="Profile" className="side-user-avatar" />
+                  ) : (
+                    <UilUserCircle size={32} />
+                  )}
+                  <div>
+                    <div className="side-user-name">{user.name}</div>
+                    <div className="side-user-email">{user.email}</div>
+                  </div>
+                </div>
+                <button onClick={() => { logout(); setIsMenuOpen(false); }} className="side-btn-logout">
+                  <UilSignOutAlt size={16}/> Logout
+                </button>
+              </div>
+            ) : (
+              <>
+                <Link to="/login" className="side-btn-login" onClick={() => setIsMenuOpen(false)}>
+                  <i className="fas fa-sign-in-alt"></i> Login
+                </Link>
+                <Link to="/signup" className="side-btn-signup" onClick={() => setIsMenuOpen(false)}>
+                  <i className="fas fa-user-plus"></i> Sign Up
+                </Link>
+              </>
+            )}
           </div>
 
           <div className="side-menu-section">
@@ -363,8 +447,8 @@ const Navbar: React.FC<BreakingNewsProps> = ({
             <ul className="side-nav-list">
               {navItems.map((item) => (
                 <li key={item.label}>
-                  <Link 
-                    to={item.to!} 
+                  <Link
+                    to={item.to!}
                     className={`side-nav-link ${location.pathname === item.to ? 'active' : ''}`}
                     onClick={() => setIsMenuOpen(false)}
                   >
@@ -387,6 +471,9 @@ const Navbar: React.FC<BreakingNewsProps> = ({
           </div>
         </div>
       </div>
+
+      {/* Preferences Modal */}
+      <PreferencesModal isOpen={isPrefsOpen} onClose={() => setIsPrefsOpen(false)} />
     </div>
   );
 };

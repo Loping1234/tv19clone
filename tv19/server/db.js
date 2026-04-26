@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const MONGO_URI = process.env.MONGO_URI || "mongodb://localhost:27017/newsTV19";
+const MONGO_URI = process.env.MONGO_URI || process.env.MONGODB_URI || "mongodb://localhost:27017/newsTV19";
 
 // ============================================================
 //  MONGODB CONNECTION OPTIONS (P1 Performance)

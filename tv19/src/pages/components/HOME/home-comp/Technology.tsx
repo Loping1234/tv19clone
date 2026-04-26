@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Technology.css';
 import { getTechnology, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Technology: React.FC = () => {
@@ -31,16 +32,7 @@ const Technology: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchTechnology]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -63,9 +55,9 @@ const Technology: React.FC = () => {
             <section className="Technology-section">
                 <div className="Technology-section__header">
                     <h3 className="Technology-section__heading">Technology</h3>
-                    <a href="#" className="Technology-section__more">
+                    <Link to="/category/technology" className="Technology-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Technology-grid">
@@ -81,6 +73,7 @@ const Technology: React.FC = () => {
                             ) : (
                                 <div className="Technology-hero__placeholder" />
                             )}
+                            <span className="Technology-hero__badge">{heroArticle.source || 'TECHNOLOGY'}</span>
                         </div>
                         <div className="Technology-hero__body">
                             <span className="Technology-hero__category">Technology</span>

@@ -1,7 +1,49 @@
+import React, { useState } from 'react';
 import '../../css/ContactUs/ContactUs.css';
 import { UilStore, UilPhoneAlt, UilEnvelope, UilFacebook, UilTwitter, UilInstagram, UilYoutube, UilLinkedin, UilWhatsapp, UilMessage } from '@iconscout/react-unicons';
 
 export default function ContactUs() {
+  const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    reason: '',
+    message: ''
+  });
+  const [status, setStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle');
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setStatus('loading');
+    setErrorMessage('');
+
+    try {
+      const res = await fetch('http://localhost:5000/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData)
+      });
+
+      if (res.ok) {
+        setStatus('success');
+        setFormData({ firstName: '', lastName: '', email: '', phone: '', reason: '', message: '' });
+      } else {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to submit inquiry');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setStatus('error');
+      setErrorMessage(err.message || 'An error occurred');
+    }
+  };
+
   return (
     <div className="contact-page-wrapper">
       {/* Top Banner Section */}
@@ -70,33 +112,44 @@ export default function ContactUs() {
               </div>
             </div>
 
-            <form className="contact-form">
+            <form className="contact-form" onSubmit={handleSubmit}>
+              {status === 'success' && (
+                <div style={{ padding: '15px', background: '#d4edda', color: '#155724', borderRadius: '5px', marginBottom: '15px' }}>
+                  Thank you! Your message has been sent successfully. Please check your email for a copy of your inquiry.
+                </div>
+              )}
+              {status === 'error' && (
+                <div style={{ padding: '15px', background: '#f8d7da', color: '#721c24', borderRadius: '5px', marginBottom: '15px' }}>
+                  {errorMessage}
+                </div>
+              )}
+
               <div className="form-row">
                 <div className="form-group">
                   <label>First Name <span className="required">*</span></label>
-                  <input type="text" placeholder="First Name" />
+                  <input type="text" name="firstName" value={formData.firstName} onChange={handleChange} placeholder="First Name" required />
                 </div>
                 <div className="form-group">
                   <label>Last Name <span className="required">*</span></label>
-                  <input type="text" placeholder="Last Name" />
+                  <input type="text" name="lastName" value={formData.lastName} onChange={handleChange} placeholder="Last Name" required />
                 </div>
               </div>
 
               <div className="form-row">
                 <div className="form-group">
                   <label>Email <span className="required">*</span></label>
-                  <input type="email" placeholder="Email" />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="Email" required />
                 </div>
                 <div className="form-group">
                   <label>Phone <span className="required">*</span></label>
-                  <input type="tel" placeholder="Phone" />
+                  <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="Phone" required />
                 </div>
               </div>
 
               <div className="form-group">
                 <label>Reason of Contact <span className="required">*</span></label>
                 <div className="select-wrapper">
-                  <select defaultValue="">
+                  <select name="reason" value={formData.reason} onChange={handleChange} required>
                     <option value="" disabled>Select</option>
                     <option value="feedback">General Feedback</option>
                     <option value="support">Technical Support</option>
@@ -108,11 +161,11 @@ export default function ContactUs() {
 
               <div className="form-group">
                 <label>Your Message <span className="required">*</span></label>
-                <textarea placeholder="Write here" rows={5}></textarea>
+                <textarea name="message" value={formData.message} onChange={handleChange} placeholder="Write here" rows={5} required></textarea>
               </div>
 
-              <button type="button" className="btn-send-message">
-                <UilMessage size={18} /> SEND MESSAGE
+              <button type="submit" className="btn-send-message" disabled={status === 'loading'} style={{ opacity: status === 'loading' ? 0.7 : 1 }}>
+                <UilMessage size={18} /> {status === 'loading' ? 'SENDING...' : 'SEND MESSAGE'}
               </button>
             </form>
           </div>

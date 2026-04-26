@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Opinion.css';
 import { getOpinion, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Opinion: React.FC = () => {
@@ -31,16 +32,7 @@ const Opinion: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchOpinion]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -63,9 +55,9 @@ const Opinion: React.FC = () => {
             <section className="Opinion-section">
                 <div className="Opinion-section__header">
                     <h3 className="Opinion-section__heading">Opinion</h3>
-                    <a href="#" className="Opinion-section__more">
+                    <Link to="/category/opinion" className="Opinion-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Opinion-grid">
@@ -81,6 +73,7 @@ const Opinion: React.FC = () => {
                             ) : (
                                 <div className="Opinion-hero__placeholder" />
                             )}
+                            <span className="Opinion-hero__badge">{heroArticle.source || 'OPINION'}</span>
                         </div>
                         <div className="Opinion-hero__body">
                             <span className="Opinion-hero__category">Opinion</span>

@@ -1,14 +1,20 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { getArticleById, recordArticleView, getRelatedArticles, type Article } from '../../../services/newsService';
+import { addBookmark, removeBookmark, getBookmarks } from '../../../services/userService';
+import { useAuth } from '../../../services/AuthContext';
 import ShareButtons from '../shared/ShareButtons';
+import CommentSection from './CommentSection';
 import '../../css/Article/ArticlePage.css';
 
 const ArticlePage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const { user, token } = useAuth();
   const [article, setArticle] = useState<Article | null>(null);
   const [related, setRelated] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isBookmarked, setIsBookmarked] = useState(false);
+  const [bookmarkLoading, setBookmarkLoading] = useState(false);
 
   useEffect(() => {
     if (id) {
@@ -28,6 +34,36 @@ const ArticlePage: React.FC = () => {
         .finally(() => setLoading(false));
     }
   }, [id]);
+
+  // Check if article is bookmarked
+  useEffect(() => {
+    if (token && id) {
+      getBookmarks()
+        .then((articles) => {
+          const ids = articles.map((a: any) => a._id);
+          setIsBookmarked(ids.includes(id));
+        })
+        .catch(() => setIsBookmarked(false));
+    }
+  }, [token, id]);
+
+  const handleBookmarkToggle = async () => {
+    if (!token || !id) return;
+    setBookmarkLoading(true);
+    try {
+      if (isBookmarked) {
+        await removeBookmark(id);
+        setIsBookmarked(false);
+      } else {
+        await addBookmark(id);
+        setIsBookmarked(true);
+      }
+    } catch (err) {
+      console.error("Bookmark error:", err);
+    } finally {
+      setBookmarkLoading(false);
+    }
+  };
 
   if (loading) {
     return <div className="article-page-container"><div style={{ padding: '100px', textAlign: 'center' }}>Loading article...</div></div>;
@@ -64,7 +100,20 @@ const ArticlePage: React.FC = () => {
           </div>
         </div>
 
-        <ShareButtons url={url} title={article.title} />
+        <div className="article-actions">
+          <ShareButtons url={url} title={article.title} />
+          {user && (
+            <button
+              className={`bookmark-btn ${isBookmarked ? 'bookmarked' : ''}`}
+              onClick={handleBookmarkToggle}
+              disabled={bookmarkLoading}
+              title={isBookmarked ? 'Remove bookmark' : 'Save for later'}
+            >
+              <i className={`fa${isBookmarked ? 's' : 'r'} fa-bookmark`}></i>
+              {isBookmarked ? ' Saved' : ' Save'}
+            </button>
+          )}
+        </div>
       </div>
 
       <div className="article-layout">
@@ -83,6 +132,9 @@ const ArticlePage: React.FC = () => {
               <p>No content available for this article.</p>
             )}
           </div>
+
+          {/* Comments Section */}
+          {id && <CommentSection articleId={id} />}
         </main>
 
         <aside className="article-sidebar">

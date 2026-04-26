@@ -1,64 +1,67 @@
 import React, { useState, useEffect } from 'react';
 import './PollWidget.css';
 
+const API = 'http://localhost:5000';
+
 interface PollOption {
-  id: string;
-  label: string;
+  _id: string;
+  text: string;
   votes: number;
 }
 
-interface PollState {
-  hasVoted: boolean;
-  selectedOptionId: string | null;
+interface Poll {
+  _id: string;
+  question: string;
   options: PollOption[];
+  totalVotes: number;
+  status: boolean;
 }
 
-const DEFAULT_OPTIONS: PollOption[] = [
-  { id: '1', label: 'Yes', votes: 1450 },
-  { id: '2', label: 'No', votes: 820 },
-  { id: '3', label: "Can't Say", votes: 340 }
-];
-
 const PollWidget: React.FC = () => {
-  const [poll, setPoll] = useState<PollState>({
-    hasVoted: false,
-    selectedOptionId: null,
-    options: DEFAULT_OPTIONS
-  });
+  const [poll, setPoll] = useState<Poll | null>(null);
+  const [selectedOptionId, setSelectedOptionId] = useState<string | null>(null);
+  const [hasVoted, setHasVoted] = useState(false);
+  const [loading, setLoading] = useState(true);
 
-  // Load from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('tv19_poll_voted');
-    if (saved) {
-      const data = JSON.parse(saved);
-      setPoll(prev => ({
-        ...prev,
-        hasVoted: true,
-        selectedOptionId: data.selectedId,
-        options: prev.options.map(opt => 
-          opt.id === data.selectedId ? { ...opt, votes: opt.votes + 1 } : opt
-        )
-      }));
-    }
+    fetch(`${API}/api/polls/active`)
+      .then(res => res.ok ? res.json() : null)
+      .then((data: Poll | null) => {
+        if (!data) return;
+        setPoll(data);
+        // Check if user already voted on this poll
+        const voted = localStorage.getItem(`tv19_poll_${data._id}`);
+        if (voted) {
+          setHasVoted(true);
+          setSelectedOptionId(voted);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
-  const totalVotes = poll.options.reduce((sum, opt) => sum + opt.votes, 0);
+  const handleVote = async (optionId: string) => {
+    if (hasVoted || !poll) return;
 
-  const handleVote = (optionId: string) => {
-    if (poll.hasVoted) return;
-
-    // Save vote to local storage
-    localStorage.setItem('tv19_poll_voted', JSON.stringify({ selectedId: optionId }));
-
-    // Update state to show results
-    setPoll(prev => ({
-      hasVoted: true,
-      selectedOptionId: optionId,
-      options: prev.options.map(opt => 
-        opt.id === optionId ? { ...opt, votes: opt.votes + 1 } : opt
-      )
-    }));
+    try {
+      const res = await fetch(`${API}/api/polls/${poll._id}/vote`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ optionId }),
+      });
+      if (!res.ok) return;
+      const updated: Poll = await res.json();
+      setPoll(updated);
+      setSelectedOptionId(optionId);
+      setHasVoted(true);
+      localStorage.setItem(`tv19_poll_${poll._id}`, optionId);
+    } catch {}
   };
+
+  if (loading) return null;
+  if (!poll) return null;
+
+  const totalVotes = poll.totalVotes || poll.options.reduce((s, o) => s + o.votes, 0);
 
   return (
     <div className="poll-widget-container">
@@ -66,37 +69,32 @@ const PollWidget: React.FC = () => {
         <i className="fas fa-poll-h"></i>
         <h3>TV19 POLL OF THE DAY</h3>
       </div>
-      
-      <div className="poll-question">
-        Do you think the new National Education Policy will drastically improve employment rates?
-      </div>
+
+      <div className="poll-question">{poll.question}</div>
 
       <div className="poll-options">
         {poll.options.map(option => {
           const percent = totalVotes === 0 ? 0 : Math.round((option.votes / totalVotes) * 100);
-          
+
           return (
-            <div 
-              key={option.id} 
-              className={`poll-option ${poll.hasVoted ? 'voted-mode' : ''} ${poll.selectedOptionId === option.id ? 'selected' : ''}`}
-              onClick={() => handleVote(option.id)}
+            <div
+              key={option._id}
+              className={`poll-option ${hasVoted ? 'voted-mode' : ''} ${selectedOptionId === option._id ? 'selected' : ''}`}
+              onClick={() => handleVote(option._id)}
             >
-              {!poll.hasVoted ? (
+              {!hasVoted ? (
                 <>
                   <div className="poll-radio-outer">
                     <div className="poll-radio-inner"></div>
                   </div>
-                  <span className="poll-label">{option.label}</span>
+                  <span className="poll-label">{option.text}</span>
                 </>
               ) : (
                 <div className="poll-result-bar-wrapper">
-                  <div 
-                    className="poll-result-bar" 
-                    style={{ width: `${percent}%` }}
-                  ></div>
+                  <div className="poll-result-bar" style={{ width: `${percent}%` }}></div>
                   <div className="poll-result-content">
                     <span className="poll-label">
-                      {option.label} {poll.selectedOptionId === option.id && <i className="fas fa-check-circle"></i>}
+                      {option.text} {selectedOptionId === option._id && <i className="fas fa-check-circle"></i>}
                     </span>
                     <span className="poll-percent">{percent}%</span>
                   </div>
@@ -107,7 +105,7 @@ const PollWidget: React.FC = () => {
         })}
       </div>
 
-      {poll.hasVoted && (
+      {hasVoted && (
         <div className="poll-total-votes">
           Total Votes: {totalVotes.toLocaleString()}
         </div>

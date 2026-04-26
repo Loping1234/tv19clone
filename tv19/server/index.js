@@ -1,7 +1,11 @@
 import "dotenv/config";
+import Job from "./models/Job.js";
+import JobApplicant from "./models/JobApplicant.js";
+import AdInquiry from "./models/AdInquiry.js";
 import express from "express";
 import cors from "cors";
 import Parser from "rss-parser";
+
 import { fileURLToPath } from "url";
 import path from "path";
 import multer from "multer";
@@ -16,6 +20,14 @@ import AdminProfile, { getProfile, updateProfile } from "./models/AdminProfile.j
 import News from "./models/News.js";
 import Newsletter from "./models/Newsletter.js";
 import RssFeed from "./models/RssFeed.js";
+import Subheading from "./models/Subheading.js";
+import Poll from "./models/Poll.js";
+import TeamMember from "./models/TeamMember.js";
+import Category from "./models/Category.js";
+import ContactInquiry from "./models/ContactInquiry.js";
+import User from "./models/User.js";
+import Comment from "./models/Comment.js";
+import { OAuth2Client } from "google-auth-library";
 import nodemailer from "nodemailer";
 import crypto from "crypto";
 
@@ -34,6 +46,8 @@ const EMAIL_PASS = process.env.EMAIL_PASS;
 const BACKEND_URL = process.env.BACKEND_URL || "http://localhost:5000";
 const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:5173";
 const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS?.split(",") || ["http://localhost:5173", "http://localhost:5174", "http://localhost:5175"];
+const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID";
+const googleClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 // Nodemailer Transporter
 const transporter = nodemailer.createTransport({
@@ -99,15 +113,6 @@ app.use(cors({
   credentials: true,
 }));
 
-const parser = new Parser({
-  customFields: {
-    item: [
-      ["media:content", "mediaContent", { keepArray: false }],
-      ["media:thumbnail", "mediaThumbnail", { keepArray: false }],
-      ["media:group", "mediaGroup", { keepArray: false }],
-    ],
-  },
-});
 
 app.use(express.json());
 
@@ -229,6 +234,16 @@ app.get("/api/admin/me", authenticateToken, async (req, res) => {
   }
 });
 
+// GET /api/admin/list - Get all registered admins
+app.get("/api/admin/list", authenticateToken, async (req, res) => {
+  try {
+    const admins = await AdminProfile.find().select('-password').sort({ createdAt: -1 });
+    res.json(admins);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch admin users" });
+  }
+});
+
 // PUT /api/admin/reset-password
 app.put("/api/admin/reset-password", authenticateToken, async (req, res) => {
   try {
@@ -254,6 +269,473 @@ app.put("/api/admin/reset-password", authenticateToken, async (req, res) => {
   } catch (err) {
     console.error("Reset password error:", err.message);
     res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
+// ============================================================
+//  Reader Auth Routes (/api/user/*)
+// ============================================================
+
+// POST /api/user/signup - Reader signup
+app.post("/api/user/signup", authLimiter, async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+    
+    let user = await User.findOne({ email });
+    if (user) {
+      if (user.isVerified) {
+        return res.status(400).json({ error: "Email is already registered. Please login." });
+      }
+      // If unverified, we could resend the token, but for now we just update it
+    } else {
+      user = new User({ name, email, password });
+    }
+
+    const verificationToken = crypto.randomBytes(32).toString("hex");
+    user.verificationToken = verificationToken;
+    user.isVerified = false;
+    await user.save();
+
+    const verificationLink = `${BACKEND_URL}/api/user/verify/${verificationToken}`;
+
+    const mailOptions = {
+      from: EMAIL_USER,
+      to: email,
+      subject: "Verify Your TV19 News Account",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #e8380d; text-align: center;">Welcome to TV19 NEWS</h2>
+          <p>Hello ${name},</p>
+          <p>Thank you for creating an account. Please click the button below to verify your email address and activate your account:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${verificationLink}" style="background-color: #e8380d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Verify Email Address</a>
+          </div>
+          <p>If the button doesn't work, copy and paste this link into your browser:</p>
+          <p><a href="${verificationLink}">${verificationLink}</a></p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+
+    res.json({ message: "Signup successful. Please check your email to verify your account." });
+  } catch (err) {
+    console.error("User Signup error:", err.message);
+    res.status(500).json({ error: err.message });
+  }
+});
+
+// GET /api/user/verify/:token
+app.get("/api/user/verify/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const user = await User.findOne({ verificationToken: token });
+
+    if (!user) {
+      return res.status(404).send("<h1>Verification failed</h1><p>Invalid or expired token.</p>");
+    }
+
+    user.isVerified = true;
+    user.verificationToken = undefined;
+    await user.save();
+
+    res.redirect(`${FRONTEND_URL}/login?verified=true`);
+  } catch (err) {
+    console.error("Verification error:", err.message);
+    res.status(500).send("<h1>Server Error</h1><p>Failed to verify account.</p>");
+  }
+});
+
+// POST /api/user/login
+app.post("/api/user/login", authLimiter, async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ error: "Invalid email or password" });
+    }
+
+    if (!user.isVerified) {
+      return res.status(403).json({ error: "Please verify your email before logging in." });
+    }
+
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, imageUrl: user.imageUrl } });
+  } catch (err) {
+    console.error("User Login error:", err.message);
+    res.status(500).json({ error: "Login failed" });
+  }
+});
+
+// GET /api/user/me
+app.get("/api/user/me", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select('-password -verificationToken -resetPasswordToken -resetPasswordExpires');
+    if (!user) return res.status(404).json({ error: "User not found" });
+    // Make sure we only return reader users (just a safety check, though ID shouldn't overlap with AdminProfile)
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch user info" });
+  }
+});
+
+// POST /api/user/google
+app.post("/api/user/google", authLimiter, async (req, res) => {
+  try {
+    const { access_token } = req.body;
+    if (!access_token) return res.status(400).json({ error: "No access_token provided" });
+
+    // Fetch user info from Google
+    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${access_token}` }
+    });
+    if (!response.ok) {
+        return res.status(400).json({ error: "Invalid Google access token" });
+    }
+    const payload = await response.json();
+
+    const { email, name, picture, sub } = payload;
+
+    let user = await User.findOne({ email });
+    if (!user) {
+      // Auto-verify google users
+      user = new User({
+        email,
+        name,
+        imageUrl: picture,
+        googleId: sub,
+        isVerified: true
+      });
+      await user.save();
+    } else {
+      // Update googleId and verify if not already
+      user.googleId = sub;
+      user.isVerified = true;
+      if (!user.imageUrl) user.imageUrl = picture;
+      await user.save();
+    }
+
+    const token = jwt.sign({ id: user._id, email: user.email }, JWT_SECRET, { expiresIn: '7d' });
+    res.json({ token, user: { id: user._id, name: user.name, email: user.email, imageUrl: user.imageUrl } });
+  } catch (err) {
+    console.error("Google Auth error:", err.message);
+    res.status(500).json({ error: "Google authentication failed" });
+  }
+});
+
+// POST /api/user/forgot-password
+app.post("/api/user/forgot-password", authLimiter, async (req, res) => {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+
+    if (!user) {
+      // Return 200 even if user not found to prevent email enumeration
+      return res.json({ message: "If your email is registered, a password reset link has been sent." });
+    }
+
+    const resetToken = crypto.randomBytes(32).toString("hex");
+    user.resetPasswordToken = resetToken;
+    user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
+    await user.save();
+
+    const resetLink = `${FRONTEND_URL}/reset-password/${resetToken}`;
+
+    const mailOptions = {
+      from: EMAIL_USER,
+      to: email,
+      subject: "Password Reset Request - TV19 News",
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
+          <h2 style="color: #e8380d; text-align: center;">TV19 NEWS</h2>
+          <p>Hello ${user.name},</p>
+          <p>You requested a password reset. Please click the button below to set a new password:</p>
+          <div style="text-align: center; margin: 30px 0;">
+            <a href="${resetLink}" style="background-color: #e8380d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Reset Password</a>
+          </div>
+          <p>This link is valid for 1 hour. If you didn't request a password reset, you can safely ignore this email.</p>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+    res.json({ message: "If your email is registered, a password reset link has been sent." });
+  } catch (err) {
+    console.error("Forgot password error:", err.message);
+    res.status(500).json({ error: "Failed to process request" });
+  }
+});
+
+// POST /api/user/reset-password
+app.post("/api/user/reset-password", authLimiter, async (req, res) => {
+  try {
+    const { token, password } = req.body;
+    
+    const user = await User.findOne({
+      resetPasswordToken: token,
+      resetPasswordExpires: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ error: "Password reset token is invalid or has expired." });
+    }
+
+    user.password = password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+
+    res.json({ message: "Password has been successfully reset. You can now login." });
+  } catch (err) {
+    console.error("Reset password error:", err.message);
+    res.status(500).json({ error: "Failed to reset password" });
+  }
+});
+
+// ============================================================
+//  Reader Feature Routes — Bookmarks, Comments, Preferences, Notifications
+// ============================================================
+
+// --- BOOKMARKS (Save & Read Later) ---
+
+// POST /api/user/bookmarks/:articleId — Save an article
+app.post("/api/user/bookmarks/:articleId", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const articleId = req.params.articleId;
+    if (user.savedArticles.includes(articleId)) {
+      return res.status(400).json({ error: "Article already bookmarked" });
+    }
+
+    user.savedArticles.push(articleId);
+    await user.save();
+    res.json({ message: "Article saved", savedArticles: user.savedArticles });
+  } catch (err) {
+    console.error("Bookmark save error:", err.message);
+    res.status(500).json({ error: "Failed to save article" });
+  }
+});
+
+// DELETE /api/user/bookmarks/:articleId — Remove a bookmark
+app.delete("/api/user/bookmarks/:articleId", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.savedArticles = user.savedArticles.filter(
+      (id) => id.toString() !== req.params.articleId
+    );
+    await user.save();
+    res.json({ message: "Bookmark removed", savedArticles: user.savedArticles });
+  } catch (err) {
+    console.error("Bookmark remove error:", err.message);
+    res.status(500).json({ error: "Failed to remove bookmark" });
+  }
+});
+
+// GET /api/user/bookmarks — Get all saved articles (populated)
+app.get("/api/user/bookmarks", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate({
+      path: "savedArticles",
+      select: "title description image source category publishedAt views url",
+      options: { sort: { publishedAt: -1 } },
+    });
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json({ articles: user.savedArticles });
+  } catch (err) {
+    console.error("Bookmark fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch bookmarks" });
+  }
+});
+
+// --- COMMENTS (Join the Conversation) ---
+
+// POST /api/comments — Post a new comment
+app.post("/api/comments", authenticateToken, async (req, res) => {
+  try {
+    const { articleId, content, parentComment } = req.body;
+    if (!articleId || !content) {
+      return res.status(400).json({ error: "articleId and content are required" });
+    }
+    if (content.length > 2000) {
+      return res.status(400).json({ error: "Comment must be under 2000 characters" });
+    }
+
+    const comment = new Comment({
+      articleId,
+      userId: req.user.id,
+      content,
+      parentComment: parentComment || null,
+    });
+    await comment.save();
+
+    // Populate user info for the response
+    const populated = await Comment.findById(comment._id)
+      .populate("userId", "name imageUrl");
+    res.status(201).json(populated);
+  } catch (err) {
+    console.error("Comment post error:", err.message);
+    res.status(500).json({ error: "Failed to post comment" });
+  }
+});
+
+// GET /api/comments/:articleId — Get all comments for an article (public)
+app.get("/api/comments/:articleId", async (req, res) => {
+  try {
+    const comments = await Comment.find({ articleId: req.params.articleId })
+      .populate("userId", "name imageUrl")
+      .sort({ createdAt: -1 });
+    res.json({ comments });
+  } catch (err) {
+    console.error("Comment fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch comments" });
+  }
+});
+
+// DELETE /api/comments/:commentId — Delete own comment
+app.delete("/api/comments/:commentId", authenticateToken, async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+    if (comment.userId.toString() !== req.user.id) {
+      return res.status(403).json({ error: "You can only delete your own comments" });
+    }
+
+    // Also delete any replies to this comment
+    await Comment.deleteMany({ parentComment: comment._id });
+    await Comment.findByIdAndDelete(comment._id);
+    res.json({ message: "Comment deleted" });
+  } catch (err) {
+    console.error("Comment delete error:", err.message);
+    res.status(500).json({ error: "Failed to delete comment" });
+  }
+});
+
+// POST /api/comments/:commentId/like — Like/unlike a comment
+app.post("/api/comments/:commentId/like", authenticateToken, async (req, res) => {
+  try {
+    const comment = await Comment.findById(req.params.commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    const userId = req.user.id;
+    const alreadyLiked = comment.likes.includes(userId);
+
+    if (alreadyLiked) {
+      comment.likes = comment.likes.filter((id) => id.toString() !== userId);
+    } else {
+      comment.likes.push(userId);
+    }
+    await comment.save();
+    res.json({ likes: comment.likes.length, liked: !alreadyLiked });
+  } catch (err) {
+    console.error("Comment like error:", err.message);
+    res.status(500).json({ error: "Failed to like comment" });
+  }
+});
+
+// --- PREFERENCES (Personalized Feed) ---
+
+// GET /api/user/preferences — Get user's category preferences
+app.get("/api/user/preferences", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("preferences");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user.preferences || { categories: [] });
+  } catch (err) {
+    console.error("Preferences fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch preferences" });
+  }
+});
+
+// PUT /api/user/preferences — Save/update category preferences
+app.put("/api/user/preferences", authenticateToken, async (req, res) => {
+  try {
+    const { categories } = req.body;
+    if (!Array.isArray(categories)) {
+      return res.status(400).json({ error: "categories must be an array" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.preferences = { categories };
+    await user.save();
+    res.json({ message: "Preferences updated", preferences: user.preferences });
+  } catch (err) {
+    console.error("Preferences update error:", err.message);
+    res.status(500).json({ error: "Failed to update preferences" });
+  }
+});
+
+// GET /api/user/feed — Personalized feed based on user preferences
+app.get("/api/user/feed", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("preferences");
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    const categories = user.preferences?.categories || [];
+    const size = parseInt(req.query.size) || 30;
+    const skip = parseInt(req.query.skip) || 0;
+
+    let query;
+    if (categories.length > 0) {
+      // Fetch articles from user's preferred categories
+      query = News.find({
+        category: { $in: categories },
+        status: true,
+      });
+    } else {
+      // Fallback: trending/top articles
+      query = News.find({ status: true });
+    }
+
+    const articles = await query
+      .sort({ publishedAt: -1 })
+      .skip(skip)
+      .limit(size)
+      .lean();
+
+    res.json({ totalResults: articles.length, articles });
+  } catch (err) {
+    console.error("Feed fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch personalized feed" });
+  }
+});
+
+// --- NOTIFICATIONS (Breaking News Alerts) ---
+
+// GET /api/user/notifications — Get notification preferences
+app.get("/api/user/notifications", authenticateToken, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("notifications");
+    if (!user) return res.status(404).json({ error: "User not found" });
+    res.json(user.notifications || { breakingNews: false });
+  } catch (err) {
+    console.error("Notification fetch error:", err.message);
+    res.status(500).json({ error: "Failed to fetch notification settings" });
+  }
+});
+
+// PUT /api/user/notifications — Toggle breaking news alerts
+app.put("/api/user/notifications", authenticateToken, async (req, res) => {
+  try {
+    const { breakingNews } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.notifications = {
+      ...user.notifications,
+      breakingNews: !!breakingNews,
+    };
+    await user.save();
+    res.json({ message: "Notification settings updated", notifications: user.notifications });
+  } catch (err) {
+    console.error("Notification update error:", err.message);
+    res.status(500).json({ error: "Failed to update notification settings" });
   }
 });
 
@@ -287,7 +769,7 @@ const upload = multer({
 //  In-memory TTL cache for hot /api/news queries
 // ============================================================
 const newsCache = new Map();
-const CACHE_TTL = 2 * 60 * 1000; // 2 minutes
+const CACHE_TTL = 30 * 1000; // 30 seconds for very hot queries
 
 function getCached(key) {
   const entry = newsCache.get(key);
@@ -312,17 +794,51 @@ function invalidateCache(category) {
 //  Allowed domains for SSRF protection in fetchOgImage
 // ============================================================
 const ALLOWED_SCRAPE_DOMAINS = [
+  // Major Indian news sources
   "timesofindia.indiatimes.com",
   "economictimes.indiatimes.com",
-  "feeds.bbci.co.uk",
-  "www.bbc.com",
-  "www.thehindu.com",
-  "news.google.com",
-  "rss.nytimes.com",
-  "www.nytimes.com",
   "indianexpress.com",
+  "www.indianexpress.com",
   "www.ndtv.com",
   "www.hindustantimes.com",
+  "www.thehindu.com",
+  "www.business-standard.com",
+  "www.livemint.com",
+  "www.firstpost.com",
+  "www.news18.com",
+  "www.aninews.in",
+  "www.pib.gov.in",
+  "www.devdiscourse.com",
+  "www.telegraphindia.com",
+  "www.tribuneindia.com",
+  "www.outlookindia.com",
+  "www.deccanherald.com",
+  "www.newindianexpress.com",
+  "www.thenewsminute.com",
+  "scroll.in",
+  "thewire.in",
+  "www.thequint.com",
+  "www.moneycontrol.com",
+  "www.cnbctv18.com",
+  "www.zeebiz.com",
+  "www.republicworld.com",
+  "www.indiatoday.in",
+  "www.aajtak.in",
+  "www.abplive.com",
+  // International sources
+  "feeds.bbci.co.uk",
+  "www.bbc.com",
+  "www.bbc.co.uk",
+  "rss.nytimes.com",
+  "www.nytimes.com",
+  "news.google.com",
+  // Weather sources
+  "www.imd.gov.in",
+  "weather.com",
+  "www.accuweather.com",
+  // Aggregators (redirect to real sources)
+  "www.google.com",
+  "news.yahoo.com",
 ];
 
 function isAllowedUrl(urlStr) {
@@ -361,6 +877,82 @@ app.get("/api/counts/categories", async (_req, res) => {
   }
 });
 
+// POST /api/contact - Handle contact form submissions
+app.post("/api/contact", async (req, res) => {
+  try {
+    const { firstName, lastName, email, phone, reason, message } = req.body;
+    if (!firstName || !lastName || !email || !phone || !reason || !message) {
+      return res.status(400).json({ error: "All fields are required" });
+    }
+
+    // Save to database
+    const inquiry = new ContactInquiry({
+      firstName, lastName, email, phone, reason, message
+    });
+    await inquiry.save();
+
+    const userName = `${firstName} ${lastName}`;
+    const year = new Date().getFullYear();
+
+    // The user specifically corrected their instructions to say:
+    // "This screenshot of response is in the email template of contact us... it should go as an auto-responder to the person who filled out the form."
+    // Let's create the HTML matching the exact screenshot but addressed to the user.
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; color: #333;">
+        <div style="text-align: center; margin-bottom: 30px;">
+          <h1 style="font-size: 24px; font-weight: 800; display: flex; align-items: center; justify-content: center; gap: 10px;">
+            <div style="background: #fbbf24; color: #fff; width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 16px;">TV</div>
+            <span style="font-size: 18px;">19</span> 
+            <span style="font-size: 28px; font-weight: 900;">NEWS</span>
+          </h1>
+        </div>
+
+        <h2 style="color: #1f2937; font-size: 22px; margin-bottom: 20px;">New Contact Us Submission</h2>
+        
+        <p style="color: #4b5563; font-size: 16px; margin-bottom: 30px;">
+          Thank you for contacting TV19. Here is a copy of your inquiry:
+        </p>
+
+        <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 25px; margin-bottom: 30px;">
+          <h3 style="font-size: 18px; margin-top: 0; margin-bottom: 20px; color: #111827;">Contact Details</h3>
+          
+          <p style="margin: 0 0 15px 0;"><strong>Name:</strong> ${userName}</p>
+          <p style="margin: 0 0 15px 0;"><strong>Email:</strong> ${email}</p>
+          <p style="margin: 0 0 15px 0;"><strong>Phone:</strong> ${phone}</p>
+          <p style="margin: 0 0 5px 0;"><strong>Message:</strong></p>
+          <p style="margin: 0; color: #4b5563; white-space: pre-wrap;">${message}</p>
+        </div>
+
+        <p style="color: #4b5563; font-size: 16px; margin-bottom: 30px;">
+          We will respond to this inquiry at our earliest convenience.
+        </p>
+
+        <p style="color: #4b5563; margin-bottom: 0;">Thanks,</p>
+        <p style="color: #111827; font-weight: bold; margin-top: 5px;">TV19News Support Team</p>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <div style="text-align: center; color: #9ca3af; font-size: 14px;">
+          &copy; ${year} TV19News. All rights reserved.
+        </div>
+      </div>
+    `;
+
+    // Send email to the user (auto-responder)
+    await transporter.sendMail({
+      from: `"TV19News Support" <${EMAIL_USER}>`,
+      to: email, // Send to the person who filled out the form
+      subject: "Thank you for contacting TV19News",
+      html: emailHtml,
+    });
+
+    res.json({ message: "Inquiry submitted successfully", id: inquiry._id });
+  } catch (err) {
+    console.error("Contact Form Error:", err);
+    res.status(500).json({ error: "Failed to process inquiry" });
+  }
+});
+
 // POST /api/newsletter/subscribe — add user email to newsletter list
 app.post("/api/newsletter/subscribe", async (req, res) => {
   try {
@@ -391,6 +983,338 @@ app.post("/api/newsletter/subscribe", async (req, res) => {
   }
 });
 
+// ============================================================
+//  Team Members Routes
+// ============================================================
+
+app.get("/api/team-members", async (req, res) => {
+  try {
+    const members = await TeamMember.find().sort({ createdAt: -1 });
+    res.json({ members });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch team members" });
+  }
+});
+
+app.post("/api/team-members", authenticateToken, async (req, res) => {
+  try {
+    const { name, role, description, status } = req.body;
+    if (!name || !role) return res.status(400).json({ error: "Name and role are required" });
+    
+    const newMember = new TeamMember({ name, role, description, status });
+    await newMember.save();
+    res.status(201).json(newMember);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create team member" });
+  }
+});
+
+app.put("/api/team-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, role, description, status } = req.body;
+    
+    const updated = await TeamMember.findByIdAndUpdate(id, { name, role, description, status }, { new: true });
+    if (!updated) return res.status(404).json({ error: "Team member not found" });
+    
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update team member" });
+  }
+});
+
+app.delete("/api/team-members/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await TeamMember.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Team member not found" });
+    
+    res.json({ message: "Team member deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete team member" });
+  }
+});
+
+app.post("/api/team-members/:id/upload-image", authenticateToken, (req, res, next) => {
+  upload.single("memberImage")(req, res, (err) => {
+    if (err) {
+      console.error("🚀 Multer Error:", err);
+      return res.status(400).json({ error: err.message });
+    }
+    next();
+  });
+}, async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: "No image file provided" });
+    }
+    
+    const { id } = req.params;
+    const imageUrl = `/uploads/${req.file.filename}`;
+    
+    const updated = await TeamMember.findByIdAndUpdate(id, { imageUrl }, { new: true });
+    if (!updated) return res.status(404).json({ error: "Team member not found" });
+    
+    res.json(updated);
+  } catch (err) {
+    console.error("🚀 DB Error:", err);
+    res.status(500).json({ error: "Failed to upload image: " + err.message });
+  }
+});
+
+// ============================================================
+// ============================================================
+//  Advertising Inquiry Routes
+// ============================================================
+
+app.get("/api/ad-inquiries", authenticateToken, async (req, res) => {
+  try {
+    const inquiries = await AdInquiry.find().sort({ date: -1 });
+    res.json(inquiries);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch ad inquiries" });
+  }
+});
+
+app.post("/api/ad-inquiries", async (req, res) => {
+  try {
+    const inquiry = new AdInquiry(req.body);
+    await inquiry.save();
+    res.status(201).json(inquiry);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to submit inquiry" });
+  }
+});
+
+app.put("/api/ad-inquiries/:id", authenticateToken, async (req, res) => {
+  try {
+    const updated = await AdInquiry.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update inquiry" });
+  }
+});
+
+app.delete("/api/ad-inquiries/:id", authenticateToken, async (req, res) => {
+  try {
+    await AdInquiry.findByIdAndDelete(req.params.id);
+    res.json({ message: "Inquiry deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete inquiry" });
+  }
+});
+
+// ============================================================
+//  Job Board Routes (Jobs & Applicants)
+// ============================================================
+
+// Jobs
+app.get("/api/jobs", async (req, res) => {
+  try {
+    const jobs = await Job.find().sort({ postingDate: -1 });
+    res.json(jobs);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch jobs" });
+  }
+});
+
+app.post("/api/jobs", authenticateToken, async (req, res) => {
+  try {
+    const job = new Job(req.body);
+    await job.save();
+    res.status(201).json(job);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create job" });
+  }
+});
+
+app.put("/api/jobs/:id", authenticateToken, async (req, res) => {
+  try {
+    const updated = await Job.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update job" });
+  }
+});
+
+app.delete("/api/jobs/:id", authenticateToken, async (req, res) => {
+  try {
+    const id = req.params.id;
+    await Job.findByIdAndDelete(id);
+    await JobApplicant.deleteMany({ jobId: id });
+    res.json({ message: "Job and associated applicants deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete job" });
+  }
+});
+
+// Job Applicants
+app.get("/api/job-applicants", authenticateToken, async (req, res) => {
+  try {
+    const applicants = await JobApplicant.find().populate("jobId", "title").sort({ appliedOn: -1 });
+    res.json(applicants);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch applicants" });
+  }
+});
+
+app.post("/api/job-applicants", async (req, res) => {
+  try {
+    const applicant = new JobApplicant(req.body);
+    await applicant.save();
+    res.status(201).json(applicant);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to submit application" });
+  }
+});
+
+app.put("/api/job-applicants/:id", authenticateToken, async (req, res) => {
+  try {
+    const updated = await JobApplicant.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update applicant" });
+  }
+});
+
+app.delete("/api/job-applicants/:id", authenticateToken, async (req, res) => {
+  try {
+    await JobApplicant.findByIdAndDelete(req.params.id);
+    res.json({ message: "Applicant deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete applicant" });
+  }
+});
+
+//  Category Management Routes
+// ============================================================
+
+app.get("/api/categories", async (req, res) => {
+  try {
+    const categories = await Category.find().sort({ order: 1, name: 1 });
+    res.json({ categories });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
+});
+
+// Dynamic Navigation Hierarchy for Navbar
+app.get("/api/navbar", async (req, res) => {
+  try {
+    const categories = await Category.find({ status: true }).sort({ order: 1 });
+    const subheadings = await Subheading.find({ status: true }).sort({ order: 1 });
+
+    const navbar = categories.map(cat => {
+      const children = subheadings.filter(sub => sub.category === cat.slug);
+      return {
+        ...cat.toObject(),
+        subheadings: children
+      };
+    });
+
+    res.json(navbar);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to build navigation" });
+  }
+});
+
+app.post("/api/categories", authenticateToken, async (req, res) => {
+  try {
+    const { name, slug, description, metaKeyword, metaDescription, status, order, rssUrls } = req.body;
+    if (!name || !slug) return res.status(400).json({ error: "Name and Slug are required" });
+
+    const category = new Category({ name, slug, description, metaKeyword, metaDescription, status, order, rssUrls });
+    await category.save();
+    res.status(201).json(category);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create category: " + err.message });
+  }
+});
+
+app.put("/api/categories/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const body = req.body;
+    const updated = await Category.findByIdAndUpdate(id, body, { new: true });
+    if (!updated) return res.status(404).json({ error: "Category not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update category" });
+  }
+});
+
+// Subheading Management Routes
+app.get("/api/subheadings", async (req, res) => {
+  try {
+    const subheadings = await Subheading.find().sort({ order: 1, label: 1 });
+    res.json({ subheadings });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch subheadings" });
+  }
+});
+
+app.post("/api/subheadings", authenticateToken, async (req, res) => {
+  try {
+    const { category, label, slug, order, status, rssUrls } = req.body;
+    if (!category || !label) return res.status(400).json({ error: "Category and Label are required" });
+
+    const subheading = new Subheading({ 
+      category, 
+      label, 
+      slug: slug || label.toLowerCase().replace(/\s+/g, '-'), 
+      order, 
+      status, 
+      rssUrls 
+    });
+    await subheading.save();
+    res.status(201).json(subheading);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create subheading: " + err.message });
+  }
+});
+
+app.put("/api/subheadings/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updated = await Subheading.findByIdAndUpdate(id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ error: "Subheading not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update subheading" });
+  }
+});
+
+app.delete("/api/subheadings/:id", authenticateToken, async (req, res) => {
+  try {
+    await Subheading.findByIdAndDelete(req.params.id);
+    res.json({ message: "Subheading deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete subheading" });
+  }
+});
+
+app.delete("/api/categories/:id", authenticateToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deleted = await Category.findByIdAndDelete(id);
+    if (!deleted) return res.status(404).json({ error: "Category not found" });
+    res.json({ message: "Category deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete category" });
+  }
+});
+
+app.post("/api/categories/bulk-delete", authenticateToken, async (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) return res.status(400).json({ error: "Invalid IDs" });
+    await Category.deleteMany({ _id: { $in: ids } });
+    res.json({ message: "Categories deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete common categories" });
+  }
+});
+
 // Global error handlers to prevent silent exits
 process.on("uncaughtException", (err) => {
   console.error("UNCAUGHT EXCEPTION:", err);
@@ -400,467 +1324,339 @@ process.on("unhandledRejection", (reason) => {
   console.error("UNHANDLED REJECTION:", reason);
 });
 
-// RSS feed URLs mapped by category (Times of India + BBC + supplementary)
-const RSS_FEEDS = {
-  // ═══════════════════════════════════════════
-  //  MAIN CATEGORIES
-  // ═══════════════════════════════════════════
-  top: [
-    "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://www.thehindu.com/news/feeder/default.rss",
-  ],
-  india: [
-    "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
-    "https://feeds.bbci.co.uk/news/world/asia/india/rss.xml",
-    "https://www.thehindu.com/news/national/feeder/default.rss",
-  ],
-  business: [
-    "https://timesofindia.indiatimes.com/rssfeeds/1898055.cms",
-    "https://feeds.bbci.co.uk/news/business/rss.xml",
-    "https://economictimes.indiatimes.com/rssfeedstopstories.cms",
-    "https://www.thehindu.com/business/feeder/default.rss",
-  ],
-  finance: [
-    "https://economictimes.indiatimes.com/wealth/rssfeeds/837555174.cms",
-    "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
-    "https://news.google.com/rss/search?q=finance+India&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  markets: [
-    "https://economictimes.indiatimes.com/markets/rssfeeds/1977021501.cms",
-    "https://economictimes.indiatimes.com/markets/stocks/rssfeeds/2146842.cms",
-  ],
-  entertainment: [
-    "https://timesofindia.indiatimes.com/rssfeeds/1081479906.cms",
-    "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
-    "https://www.thehindu.com/entertainment/feeder/default.rss",
-  ],
-  health: [
-    "https://timesofindia.indiatimes.com/rssfeeds/3908999.cms",
-    "https://feeds.bbci.co.uk/news/health/rss.xml",
-    "https://www.thehindu.com/sci-tech/health/feeder/default.rss",
-  ],
-  science: [
-    "https://timesofindia.indiatimes.com/rssfeeds/4719161.cms",
-    "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-    "https://www.thehindu.com/sci-tech/science/feeder/default.rss",
-  ],
-  sports: [
-    "https://timesofindia.indiatimes.com/rssfeeds/4719148.cms",
-    "https://feeds.bbci.co.uk/sport/rss.xml",
-    "https://www.thehindu.com/sport/feeder/default.rss",
-  ],
-  technology: [
-    "https://timesofindia.indiatimes.com/rssfeeds/66949542.cms",
-    "https://feeds.bbci.co.uk/news/technology/rss.xml",
-    "https://www.thehindu.com/sci-tech/technology/feeder/default.rss",
-  ],
-  world: [
-    "https://timesofindia.indiatimes.com/rssfeeds/296589292.cms",
-    "https://feeds.bbci.co.uk/news/world/rss.xml",
-    "https://www.thehindu.com/news/international/feeder/default.rss",
-  ],
-  politics: [
-    "https://timesofindia.indiatimes.com/rssfeeds/7503091.cms",
-    "https://feeds.bbci.co.uk/news/politics/rss.xml",
-    "https://www.thehindu.com/news/national/feeder/default.rss",
-    "https://news.google.com/rss/search?q=India+politics+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  environment: [
-    "https://timesofindia.indiatimes.com/rssfeeds/2647163.cms",
-    "https://feeds.bbci.co.uk/news/science_and_environment/rss.xml",
-  ],
-  lifestyle: [
-    "https://timesofindia.indiatimes.com/rssfeeds/2886704.cms",
-    "https://feeds.bbci.co.uk/news/magazine/rss.xml",
-    "https://www.thehindu.com/life-and-style/feeder/default.rss",
-  ],
-  education: [
-    "https://timesofindia.indiatimes.com/rssfeeds/913168846.cms",
-    "https://feeds.bbci.co.uk/news/education/rss.xml",
-    "https://www.thehindu.com/education/feeder/default.rss",
-  ],
-  crime: [
-    "https://news.google.com/rss/search?q=crime+news+india&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2950623.cms",
-  ],
-  astrology: [
-    "https://timesofindia.indiatimes.com/rssfeeds/6547154.cms",
-    "https://news.google.com/rss/search?q=horoscope+astrology+India&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  opinion: [
-    "https://timesofindia.indiatimes.com/rssfeeds/784865811.cms",
-    "https://www.thehindu.com/opinion/feeder/default.rss",
-  ],
-  art: [
-    "https://feeds.bbci.co.uk/news/entertainment_and_arts/rss.xml",
-    "https://www.thehindu.com/entertainment/art/feeder/default.rss",
-    "https://news.google.com/rss/search?q=art+culture+India&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  weather: [
-    "https://news.google.com/rss/search?q=weather+India+forecast&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://news.google.com/rss/search?q=IMD+weather+alert&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  // key uses hyphen to match frontend route /green-future
-  "green-future": [
-    "https://news.google.com/rss/search?q=green+energy+sustainability+india&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://news.google.com/rss/search?q=renewable+energy+India&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  trending: [
-    "https://timesofindia.indiatimes.com/rssfeedstopstories.cms",
-    "https://feeds.bbci.co.uk/news/rss.xml",
-    "https://news.google.com/rss?hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  manufacturing: [
-    "https://news.google.com/rss/search?q=manufacturing+industry+india&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://economictimes.indiatimes.com/industry/indl-goods/svs/rssfeeds/13352651.cms",
-  ],
+// ============================================================
+//  NEW RSS ENGINE v2 — Fresh, Reliable, Image-Rich
+// ============================================================
 
-  // ═══════════════════════════════════════════
-  //  INDIAN STATES
-  // ═══════════════════════════════════════════
-  "rajasthan": [
-    "https://news.google.com/rss/search?q=Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-  ],
-  "uttar pradesh": [
-    "https://news.google.com/rss/search?q=Uttar+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/3947060.cms",
-  ],
-  "maharashtra": [
-    "https://news.google.com/rss/search?q=Maharashtra+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/-2128817995.cms",
-  ],
-  "madhya pradesh": [
-    "https://news.google.com/rss/search?q=Madhya+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "gujarat": [
-    "https://news.google.com/rss/search?q=Gujarat+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/4021545.cms",
-  ],
-  "bihar": [
-    "https://news.google.com/rss/search?q=Bihar+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2128929.cms",
-  ],
-  "west bengal": [
-    "https://news.google.com/rss/search?q=West+Bengal+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/4118235.cms",
-  ],
-  "karnataka": [
-    "https://news.google.com/rss/search?q=Karnataka+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/-2128816011.cms",
-  ],
-  "tamil nadu": [
-    "https://news.google.com/rss/search?q=Tamil+Nadu+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/-2128936835.cms",
-  ],
-  "andhra pradesh": [
-    "https://news.google.com/rss/search?q=Andhra+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "telangana": [
-    "https://news.google.com/rss/search?q=Telangana+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "kerala": [
-    "https://news.google.com/rss/search?q=Kerala+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://www.thehindu.com/news/national/kerala/feeder/default.rss",
-  ],
-  "punjab": [
-    "https://news.google.com/rss/search?q=Punjab+news+India&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "haryana": [
-    "https://news.google.com/rss/search?q=Haryana+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jharkhand": [
-    "https://news.google.com/rss/search?q=Jharkhand+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "odisha": [
-    "https://news.google.com/rss/search?q=Odisha+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "chhattisgarh": [
-    "https://news.google.com/rss/search?q=Chhattisgarh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "uttarakhand": [
-    "https://news.google.com/rss/search?q=Uttarakhand+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "himachal pradesh": [
-    "https://news.google.com/rss/search?q=Himachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "assam": [
-    "https://news.google.com/rss/search?q=Assam+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "goa": [
-    "https://news.google.com/rss/search?q=Goa+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "manipur": [
-    "https://news.google.com/rss/search?q=Manipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "meghalaya": [
-    "https://news.google.com/rss/search?q=Meghalaya+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "mizoram": [
-    "https://news.google.com/rss/search?q=Mizoram+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "nagaland": [
-    "https://news.google.com/rss/search?q=Nagaland+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "tripura": [
-    "https://news.google.com/rss/search?q=Tripura+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "arunachal pradesh": [
-    "https://news.google.com/rss/search?q=Arunachal+Pradesh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "sikkim": [
-    "https://news.google.com/rss/search?q=Sikkim+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
+// RSS Parser — configured to extract media fields from feeds
+const rssParser = new Parser({
+  customFields: {
+    item: [
+      ["media:content", "mediaContent", { keepArray: false }],
+      ["media:thumbnail", "mediaThumbnail", { keepArray: false }],
+    ],
+  },
+});
 
-  // ═══════════════════════════════════════════
-  //  UNION TERRITORIES
-  // ═══════════════════════════════════════════
-  "delhi": [
-    "https://news.google.com/rss/search?q=Delhi+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-    "https://www.thehindu.com/news/cities/Delhi/feeder/default.rss",
-  ],
-  "jammu kashmir": [
-    "https://news.google.com/rss/search?q=Jammu+Kashmir+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "ladakh": [
-    "https://news.google.com/rss/search?q=Ladakh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "puducherry": [
-    "https://news.google.com/rss/search?q=Puducherry+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "chandigarh": [
-    "https://news.google.com/rss/search?q=Chandigarh+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "andaman nicobar": [
-    "https://news.google.com/rss/search?q=Andaman+Nicobar+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "lakshadweep": [
-    "https://news.google.com/rss/search?q=Lakshadweep+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "dadra daman diu": [
-    "https://news.google.com/rss/search?q=Dadra+Nagar+Haveli+Daman+Diu+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
+// ── RSS Configuration ──────────────────────────────────────
+// Now managed dynamically via Categories and Subheadings in MongoDB.
+// Hardcoded fallbacks are handled within buildFeedUrls().
+const FEED_MAP = {}; 
 
-  // ═══════════════════════════════════════════
-  //  RAJASTHAN CITY-SPECIFIC FEEDS
-  // ═══════════════════════════════════════════
-  "ajmer": [
-    "https://news.google.com/rss/search?q=Ajmer+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "alwar": [
-    "https://news.google.com/rss/search?q=Alwar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bagru": [
-    "https://news.google.com/rss/search?q=Bagru+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "banswara": [
-    "https://news.google.com/rss/search?q=Banswara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "barmer": [
-    "https://news.google.com/rss/search?q=Barmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bassi": [
-    "https://news.google.com/rss/search?q=Bassi+Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "beawer": [
-    "https://news.google.com/rss/search?q=Beawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bharatpur": [
-    "https://news.google.com/rss/search?q=Bharatpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bhilwara": [
-    "https://news.google.com/rss/search?q=Bhilwara+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bhiwadi": [
-    "https://news.google.com/rss/search?q=Bhiwadi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "bikaner": [
-    "https://news.google.com/rss/search?q=Bikaner+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "chittorgarh": [
-    "https://news.google.com/rss/search?q=Chittorgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "churu": [
-    "https://news.google.com/rss/search?q=Churu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "dausa": [
-    "https://news.google.com/rss/search?q=Dausa+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "dholpur": [
-    "https://news.google.com/rss/search?q=Dholpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "dungarpur": [
-    "https://news.google.com/rss/search?q=Dungarpur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "hanumangarh": [
-    "https://news.google.com/rss/search?q=Hanumangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jaipur": [
-    "https://news.google.com/rss/search?q=Jaipur+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://timesofindia.indiatimes.com/rssfeeds/2148496.cms",
-  ],
-  "jaisalmer": [
-    "https://news.google.com/rss/search?q=Jaisalmer+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jalore": [
-    "https://news.google.com/rss/search?q=Jalore+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jhalawar": [
-    "https://news.google.com/rss/search?q=Jhalawar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jhunjhunu": [
-    "https://news.google.com/rss/search?q=Jhunjhunu+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "jodhpur": [
-    "https://news.google.com/rss/search?q=Jodhpur+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "karauli": [
-    "https://news.google.com/rss/search?q=Karauli+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "kishangarh": [
-    "https://news.google.com/rss/search?q=Kishangarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "kota": [
-    "https://news.google.com/rss/search?q=Kota+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "nagaur": [
-    "https://news.google.com/rss/search?q=Nagaur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "pali": [
-    "https://news.google.com/rss/search?q=Pali+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "pratapgarh": [
-    "https://news.google.com/rss/search?q=Pratapgarh+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "rajsamand": [
-    "https://news.google.com/rss/search?q=Rajsamand+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "sawai madhopur": [
-    "https://news.google.com/rss/search?q=Sawai+Madhopur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "sikar": [
-    "https://news.google.com/rss/search?q=Sikar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "sirohi": [
-    "https://news.google.com/rss/search?q=Sirohi+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "sri ganganagar": [
-    "https://news.google.com/rss/search?q=Sri+Ganganagar+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "tonk": [
-    "https://news.google.com/rss/search?q=Tonk+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
-  "udaipur": [
-    "https://news.google.com/rss/search?q=Udaipur+Rajasthan+news&hl=en-IN&gl=IN&ceid=IN:en",
-  ],
+// Build URLs from the feed config (DB or Hardcoded Map)
+function buildFeedUrls(config, categoryKey) {
+  const urls = [];
+  if (config) {
+    // 1. Custom URLs from DB
+    if (config.rssUrls && config.rssUrls.length > 0) urls.push(...config.rssUrls);
+    if (config.custom) urls.push(...config.custom);
+    
+    // 2. Hardcoded Provider Logic (Backward Compatibility)
+    if (config.topic) urls.push(config.topic);
+    if (config.gq) {
+      const q = encodeURIComponent(config.gq);
+      urls.push(`https://news.google.com/rss/search?q=${q}&hl=en-IN&gl=IN&ceid=IN:en`);
+    }
+    if (config.bbc) {
+      urls.push(`https://feeds.bbci.co.uk/${config.bbc}`);
+    }
+  } 
+  
+  // 3. Absolute Fallback: if no URLs found, do a generic Google Search
+  if (urls.length === 0) {
+    const query = encodeURIComponent(categoryKey + " news today");
+    urls.push(`https://news.google.com/rss/search?q=${query}&hl=en-IN&gl=IN&ceid=IN:en`);
+  }
+  return [...new Set(urls)]; // Deduplicate URLs
+}
 
-  // ═══════════════════════════════════════════
-  //  WORLD REGIONS
-  // ═══════════════════════════════════════════
-  "africa": [
-    "https://news.google.com/rss/search?q=Africa+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/africa/rss.xml",
-  ],
-  "america": [
-    "https://news.google.com/rss/search?q=America+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Americas.xml",
-  ],
-  "asia pacific": [
-    "https://news.google.com/rss/search?q=Asia+Pacific+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/asia/rss.xml",
-  ],
-  "europe": [
-    "https://news.google.com/rss/search?q=Europe+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/europe/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/Europe.xml",
-  ],
-  "middle east": [
-    "https://news.google.com/rss/search?q=Middle+East+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/middle_east/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/MiddleEast.xml",
-  ],
-  "new york": [
-    "https://news.google.com/rss/search?q=New+York+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://rss.nytimes.com/services/xml/rss/nyt/NYRegion.xml",
-  ],
-  "pakistan": [
-    "https://news.google.com/rss/search?q=Pakistan+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/south_asia/rss.xml",
-  ],
-  "uk": [
-    "https://news.google.com/rss/search?q=UK+United+Kingdom+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/uk/rss.xml",
-  ],
-  "us": [
-    "https://news.google.com/rss/search?q=United+States+news&hl=en-IN&gl=IN&ceid=IN:en",
-    "https://feeds.bbci.co.uk/news/world/us_and_canada/rss.xml",
-    "https://rss.nytimes.com/services/xml/rss/nyt/US.xml",
-  ],
-};
-
-// Images that are known to be generic/broken and should be skipped
-const GENERIC_IMAGE_PATTERNS = [
-  "imgsize-.cms",
-  "toiedit-logo",
-  "toilogo",
-  "toiblogs/photo/blogs/wp-content/uploads/2019/01/toiedit-logo",
-  "toiblogs/photo/blogs/wp-content/uploads/2014/07/toilogo",
-  "placeholder",
-  "default-image",
-  "no-image",
-  "noimage",
-];
-
-// Map a single RSS item → normalized article object
-function mapItem(item, feedTitle) {
-  let image = extractImage(item);
-
-  // Reject known bad/generic images
-  if (image && GENERIC_IMAGE_PATTERNS.some((pat) => image.includes(pat))) {
-    image = null;
+// ── Article Normalizer ──────────────────────────────────────
+// Takes a raw rss-parser item and returns a clean article object
+function normalizeArticle(item, feedTitle) {
+  // 1. Title — strip Google News suffix "Headline - Source"
+  let title = (item.title || "").trim();
+  let source = feedTitle || "Unknown";
+  if (feedTitle && (feedTitle === "Google News" || feedTitle.includes("Google News") || feedTitle.includes("google.com"))) {
+    const dashIdx = title.lastIndexOf(" - ");
+    if (dashIdx > 0) {
+      source = title.substring(dashIdx + 3).trim();
+      title = title.substring(0, dashIdx).trim();
+    }
   }
 
-  // Strip Google News title suffix "Headline - Source"
-  let title = item.title || "";
-  let source = feedTitle || "Unknown";
-  const dashIdx = title.lastIndexOf(" - ");
-  if (feedTitle === "Google News" && dashIdx > 0) {
-    source = title.substring(dashIdx + 3).trim();
-    title = title.substring(0, dashIdx).trim();
+  // 2. Image — ordered priority, stop at first hit
+  let image = null;
+  // a) media:thumbnail (BBC primary)
+  if (item.mediaThumbnail) {
+    if (typeof item.mediaThumbnail === "string") image = item.mediaThumbnail;
+    else if (item.mediaThumbnail.$?.url) image = item.mediaThumbnail.$.url;
+    else if (item.mediaThumbnail.url) image = item.mediaThumbnail.url;
+  }
+  // b) media:content (image type)
+  if (!image && item.mediaContent) {
+    const mc = item.mediaContent;
+    const url = mc.$?.url || mc.url;
+    const medium = mc.$?.medium || mc.medium || mc.$?.type || "";
+    if (url && (!medium || medium === "image" || medium.startsWith("image"))) {
+      image = url;
+    }
+  }
+  // c) enclosure
+  if (!image && item.enclosure?.url) {
+    const type = item.enclosure.type || "";
+    if (type.startsWith("image") || !type) {
+      image = item.enclosure.url;
+    }
+  }
+  // d) Inline <img> in content/description (Aggressive multi-pattern)
+  if (!image) {
+    const htmlContent = item["content:encoded"] || item.content || item.description || "";
+    if (typeof htmlContent === "string") {
+      const imgMatch = 
+        htmlContent.match(/<img.*?src=["']([^"']+)["']/i) ||
+        htmlContent.match(/&lt;img.*?src=["']([^"']+)["']/i) ||
+        htmlContent.match(/src=["']([^"']+\.(?:jpg|jpeg|png|webp|gif)[^"']*)["']/i) ||
+        htmlContent.match(/https?:\/\/[^"'\s]+\.(?:jpg|jpeg|png|webp|gif)/i);
+      
+      if (imgMatch) image = imgMatch[1] || imgMatch[0];
+    }
+  }
+
+  // 3. Description — plain text
+  let description = item.contentSnippet || "";
+  if (!description && item.content) {
+    // Strip HTML tags for a clean snippet
+    description = item.content.replace(/<[^>]+>/g, "").trim().substring(0, 300);
+  }
+
+  // 4. Published date — validate it's not in the future
+  let publishedAt = item.isoDate ? new Date(item.isoDate) : new Date();
+  if (isNaN(publishedAt.getTime()) || publishedAt > new Date(Date.now() + 3600000)) {
+    publishedAt = new Date();
   }
 
   return {
-    source,
-    author: item.creator || item["dc:creator"] || null,
     title,
-    description: item.contentSnippet || item.content || null,
+    description,
     url: item.link || "",
     image,
-    publishedAt: item.isoDate || item.pubDate || new Date().toISOString(),
-    content: item.content || null,
+    source,
+    publishedAt,
+    content: item.content || "",
   };
 }
 
-// Fetch and parse multiple feed URLs, return merged articles array
-async function fetchFeeds(feedUrls, label) {
-  const results = await Promise.allSettled(
-    feedUrls.map((url) => parser.parseURL(url))
-  );
+// ── Single Feed Fetcher ─────────────────────────────────────
+async function fetchSingleFeed(url, label) {
+  try {
+    // Add small random jitter (0-1.5s) to avoid "thundering herd" patterns
+    await new Promise(r => setTimeout(r, Math.random() * 1500));
+    
+    const feed = await rssParser.parseURL(url);
+    
+    if (!feed || !feed.items) return [];
+    return feed.items.map((item) => normalizeArticle(item, feed.title));
+  } catch (err) {
+    console.warn(`  ⚠️ Feed failed [${label}]: ${err.message}`);
+    return [];
+  }
+}
 
-  const articles = [];
-  for (const result of results) {
-    if (result.status === "fulfilled") {
-      const feed = result.value;
-      articles.push(...feed.items.map((item) => mapItem(item, feed.title)));
-    } else if (label) {
-      console.warn(`Feed fetch failed [${label}]:`, result.reason?.message);
+// Lock to prevent concurrent RSS refresh jobs
+let isRssRefreshing = false;
+
+// ── Main Refresh Engine ─────────────────────────────────────
+async function refreshAllFeeds() {
+  if (isRssRefreshing) {
+    console.log("⚠️ RSS refresh already in progress, skipping...");
+    return { success: false, error: "Already in progress" };
+  }
+
+  isRssRefreshing = true;
+  console.log("🔄 Starting RSS fetch job...");
+  const startTime = Date.now();
+  let totalProcessed = 0;
+  const allNewArticles = []; // Track articles for background image enrichment
+
+  try {
+    // 1. Fetch all active Categories and Subheadings from DB
+    const activeCategories = await Category.find({ status: true });
+    const activeSubheadings = await Subheading.find({ status: true });
+
+    // 2. Create a unified list of fetch jobs
+    const fetchJobs = [];
+    
+    // Add Main Categories
+    activeCategories.forEach(cat => {
+        fetchJobs.push({ 
+            key: cat.slug, 
+            config: { ...cat.toObject(), ... (FEED_MAP[cat.slug] || {}) } 
+        });
+    });
+
+    // Add Subheadings (Cities/Regions)
+    activeSubheadings.forEach(sub => {
+        fetchJobs.push({ 
+            key: sub.slug, 
+            config: { ...sub.toObject(), ... (FEED_MAP[sub.slug] || {}) } 
+        });
+    });
+
+    const BATCH_SIZE = 1; 
+    for (let i = 0; i < fetchJobs.length; i += BATCH_SIZE) {
+      const batch = fetchJobs.slice(i, i + BATCH_SIZE);
+
+      await Promise.allSettled(
+        batch.map(async (job) => {
+          const urls = buildFeedUrls(job.config, job.key);
+          console.log(`  📡 Fetching: ${job.key} (${urls.length} source${urls.length > 1 ? "s" : ""})`);
+
+          const results = await Promise.allSettled(
+            urls.map((url) => fetchSingleFeed(url, job.key))
+          );
+
+          let articles = [];
+          for (const r of results) {
+            if (r.status === "fulfilled") articles.push(...r.value);
+          }
+
+          // Deduplicate
+          articles = deduplicateByTitle(articles);
+          if (articles.length === 0) return;
+
+          // Upsert into MongoDB
+          const saveOps = articles.map((article) =>
+            News.findOneAndUpdate(
+              { url: article.url },
+              {
+                $set: {
+                  title: article.title,
+                  description: article.description,
+                  // Only update image if the new value is non-null
+                  ...(article.image ? { image: article.image } : {}),
+                  source: article.source,
+                  category,
+                  publishedAt: article.publishedAt,
+                  content: article.content,
+                },
+                $setOnInsert: { status: true },
+              },
+              { upsert: true }
+            )
+          );
+          await Promise.allSettled(saveOps);
+          totalProcessed += articles.length;
+          allNewArticles.push(...articles.filter((a) => !a.image));
+        })
+      );
+
+      // Staggered delay: 8 seconds between categories
+      if (i + BATCH_SIZE < categoryKeys.length) {
+        await new Promise((r) => setTimeout(r, 8000));
+      }
+    }
+
+    const elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+    console.log(`✅ RSS fetch complete. ${totalProcessed} articles across ${categoryKeys.length} categories in ${elapsed}s`);
+
+    // Phase 2: Background image enrichment for articles missing images
+    if (allNewArticles.length > 0) {
+      console.log(`🖼️ Starting background image enrichment for ${Math.min(allNewArticles.length, 100)} articles...`);
+      enrichMissingImages().catch((err) => console.error("Image enrichment error:", err.message));
+    }
+
+    return { success: true, totalProcessed };
+  } catch (error) {
+    console.error("❌ RSS fetch error:", error.message);
+    return { success: false, error: error.message };
+  } finally {
+    isRssRefreshing = false;
+  }
+}
+
+async function enrichMissingImages(category = null, limit = 50) {
+  const query = {
+    image: { $in: [null, ""] },
+    publishedAt: { $gte: new Date(Date.now() - 24 * 60 * 60 * 1000) },
+  };
+  if (category) query.category = category;
+
+  const articlesWithoutImages = await News.find(query)
+    .sort({ publishedAt: -1 })
+    .limit(limit)
+    .lean();
+
+  if (articlesWithoutImages.length === 0) return;
+
+  const MICRO_BATCH = 3;
+  for (let i = 0; i < articlesWithoutImages.length; i += MICRO_BATCH) {
+    const batch = articlesWithoutImages.slice(i, i + MICRO_BATCH);
+
+    await Promise.allSettled(
+      batch.map(async (article) => {
+        if (!article.url) return;
+        const ogImage = await fetchOgImage(article.url);
+        if (ogImage) {
+          await News.updateOne(
+            { _id: article._id },
+            { $set: { image: ogImage } }
+          );
+        }
+      })
+    );
+
+    // 1-second pause between micro-batches
+    if (i + MICRO_BATCH < articlesWithoutImages.length) {
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
-  return articles;
+  console.log("✅ Background image enrichment complete.");
 }
+
+// ── Category Sync ───────────────────────────────────────────
+async function syncCategories() {
+  try {
+    const categoryKeys = Object.keys(FEED_MAP);
+    for (const key of categoryKeys) {
+      const slug = key.toLowerCase().replace(/\s+/g, "-");
+      const name = key.charAt(0).toUpperCase() + key.slice(1);
+      const exists = await Category.findOne({ slug });
+      if (!exists) {
+        await new Category({ name, slug, status: true }).save();
+        console.log(`  ✅ Auto-synced category: ${name}`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Category sync error:", err.message);
+  }
+}
+
+async function identifySubheadings() {
+  try {
+    const feedsWithLabels = await RssFeed.find({ subheading: { $exists: true, $ne: "" } });
+    if (feedsWithLabels.length === 0) return;
+    for (const feed of feedsWithLabels) {
+      if (!feed.category || !feed.subheading) continue;
+      const exists = await Subheading.findOne({ category: feed.category.toLowerCase().trim() });
+      if (!exists) {
+        await new Subheading({
+          category: feed.category.toLowerCase().trim(),
+          label: feed.subheading.trim(),
+        }).save();
+        console.log(`  🏷️ Synced subheading: [${feed.category}] -> ${feed.subheading}`);
+      }
+    }
+  } catch (err) {
+    console.error("❌ Subheading sync error:", err.message);
+  }
+}
+
+// Startup sync (delayed to let DB connect)
+setTimeout(async () => {
+  await syncCategories();
+  await identifySubheadings();
+}, 5000);
+
 
 // GET /api/news?category=top&size=10&imagesOnly=true
 app.get("/api/news", async (req, res) => {
@@ -869,10 +1665,6 @@ app.get("/api/news", async (req, res) => {
     const size = Math.min(Math.max(parseInt(req.query.size) || 20, 1), 50);
     const skip = Math.max(parseInt(req.query.skip) || 0, 0);
     const imagesOnly = req.query.imagesOnly === "true";
-
-    const cacheKey = `${categoryQuery}:${size}:${skip}:${imagesOnly}`;
-    const cached = getCached(cacheKey);
-    if (cached) return res.json(cached);
 
     const dbQuery = { status: true };
 
@@ -889,9 +1681,7 @@ app.get("/api/news", async (req, res) => {
       .skip(skip)
       .limit(size);
 
-    const result = { totalResults: articles.length, articles };
-    setCache(cacheKey, result);
-    res.json(result);
+    res.json({ totalResults: articles.length, articles });
   } catch (err) {
     console.error("News fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch news from database" });
@@ -899,6 +1689,7 @@ app.get("/api/news", async (req, res) => {
 });
 
 // GET /api/news/state?state=Rajasthan&size=15&skip=0
+// Dynamic: if DB is empty or stale for this category, fetches live from Google News RSS
 app.get("/api/news/state", async (req, res) => {
   try {
     const stateName = (req.query.state || req.query.category || "Rajasthan").toString().trim();
@@ -910,95 +1701,92 @@ app.get("/api/news/state", async (req, res) => {
       return res.status(400).json({ error: "Query parameter 'state' is required" });
     }
 
-    // Tier 1: Look in MongoDB for articles under this city's category
-    let articles = await News.find({ 
-      status: true, 
-      category: categoryKey 
-    })
+    // Step 1: Check what we have in the database
+    let articles = await News.find({ status: true, category: categoryKey })
       .sort({ publishedAt: -1 })
       .skip(skip)
       .limit(size);
 
-    let needsRefresh = false;
+    // Step 2: If empty or stale (>4 hours), do a live RSS fetch
+    let needsLiveFetch = false;
     if (skip === 0) {
-      if (articles.length < 5) {
-        needsRefresh = true;
-      } else if (articles.length > 0) {
-        // Sort first before checking staleness so articles[0] is actually the latest
-        const sorted = [...articles].sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt));
-        const latestArticleDate = new Date(sorted[0].publishedAt || sorted[0].createdAt);
-        const fourHoursAgo = new Date(Date.now() - 4 * 60 * 60 * 1000);
-        if (latestArticleDate < fourHoursAgo) {
-          needsRefresh = true;
-        }
+      if (articles.length < 3) {
+        needsLiveFetch = true;
+      } else {
+        const latestDate = new Date(articles[0].publishedAt);
+        const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+        if (latestDate < thirtyMinsAgo) needsLiveFetch = true;
       }
     }
 
-    if (articles.length > 0 && !needsRefresh) {
-      articles = sortArticlesForCover(articles);
-    }
-
-    // Tier 2: Live fetch from Google News RSS for this city
-    let tier2Executed = false;
-    if (needsRefresh && skip === 0) {
-      const liveUrls = RSS_FEEDS[categoryKey] || [
-        `https://news.google.com/rss/search?q=${encodeURIComponent(stateName + " news")}&hl=en-IN&gl=IN&ceid=IN:en`
-      ];
-
+    if (needsLiveFetch && skip === 0) {
       try {
-        const mapped = deduplicateByTitle(await fetchFeeds(liveUrls, categoryKey));
-        const prioritizedMapped = sortArticlesForCover(mapped).slice(0, size * 3);
+        // Fetch config from DB (Category or Subheading)
+        const catConfig = await Category.findOne({ slug: categoryKey });
+        const subConfig = await Subheading.findOne({ slug: categoryKey });
+        const mergedConfig = {
+          ...(catConfig ? catConfig.toObject() : {}),
+          ...(subConfig ? subConfig.toObject() : {}),
+          ...(FEED_MAP[categoryKey] || {})
+        };
 
-        // Map and bulk fire the MongoDB Upserts for TEXT immediately so the user doesn't wait
-        const saveOps = prioritizedMapped.map(article => 
-          News.findOneAndUpdate(
-            { url: article.url },
-            {
-              $set: {
-                title: article.title,
-                description: article.description,
-                image: article.image, // Could be null, perfectly fine
-                source: article.source,
-                category: categoryKey,
-                publishedAt: article.publishedAt,
-                content: article.content,
-              },
-              $setOnInsert: { status: true } // Must be true so they appear natively on next page view
-            },
-            { upsert: true }
-          )
+        const urls = buildFeedUrls(mergedConfig, categoryKey);
+        const results = await Promise.allSettled(
+          urls.map((url) => fetchSingleFeed(url, categoryKey))
         );
-        await Promise.allSettled(saveOps);
 
-        // Return the prioritised mapped articles immediately for the first load
-        articles = prioritizedMapped.slice(0, size);
-        tier2Executed = true;
+        let liveArticles = [];
+        for (const r of results) {
+          if (r.status === "fulfilled") liveArticles.push(...r.value);
+        }
+        liveArticles = deduplicateByTitle(liveArticles)
+          .sort((a, b) => new Date(b.publishedAt) - new Date(a.publishedAt))
+          .slice(0, size * 2);
 
-      } catch (feedErr) {
-        console.warn(`Live RSS fetch failed for ${stateName}:`, feedErr.message);
+        if (liveArticles.length > 0) {
+          // Save to DB
+          const saveOps = liveArticles.map((article) =>
+            News.findOneAndUpdate(
+              { url: article.url },
+              {
+                $set: {
+                  title: article.title,
+                  description: article.description,
+                  ...(article.image ? { image: article.image } : {}),
+                  source: article.source,
+                  category: categoryKey,
+                  publishedAt: article.publishedAt,
+                  content: article.content,
+                },
+                $setOnInsert: { status: true },
+              },
+              { upsert: true }
+            )
+          );
+          await Promise.allSettled(saveOps);
+
+          // Proactively enrich missing images for this state
+          // We await a small batch (top 5) so the user gets images on the FIRST load
+          await enrichMissingImages(categoryKey, 5).catch((err) =>
+            console.error(`Quick enrichment error for ${categoryKey}:`, err.message)
+          );
+
+          // Then continue background enrichment for the rest
+          enrichMissingImages(categoryKey, 45).catch((err) =>
+            console.error(`Background enrichment error for ${categoryKey}:`, err.message)
+          );
+
+          // Re-fetch from DB to get clean, saved articles
+          articles = await News.find({ status: true, category: categoryKey })
+            .sort({ publishedAt: -1 })
+            .limit(size);
+        }
+      } catch (liveErr) {
+        console.warn(`Live fetch failed for ${stateName}:`, liveErr.message);
       }
     }
 
-    // Tier 3: Strict text search — fallback (Only if no articles found natively AND Tier 2 didn't yield anything)
-    if (articles.length === 0 && !tier2Executed && skip === 0) {
-      articles = await News.find({
-        status: true,
-        $or: [
-          { title: { $regex: stateName, $options: "i" } },
-          { description: { $regex: stateName, $options: "i" } },
-        ]
-      })
-        .sort({ publishedAt: -1 })
-        .limit(size);
-
-      if (articles.length > 0) {
-        articles = sortArticlesForCover(articles);
-      }
-    }
-
-    // Return the subset of articles found
     res.json({ totalResults: articles.length, articles });
-
   } catch (err) {
     console.error("State fetch error:", err.message);
     res.status(500).json({ error: "Failed to fetch state news from database" });
@@ -1016,14 +1804,9 @@ app.get("/api/news/scrape-image", scrapeLimiter, async (req, res) => {
       return res.status(400).json({ error: "Query parameter 'url' is required" });
     }
 
-    // SSRF protection: only allow known news domains
-    if (!isAllowedUrl(articleUrl)) {
-      return res.status(400).json({ error: "URL not allowed" });
-    }
-
     const scrapedImage = await fetchOgImage(articleUrl);
 
-    if (scrapedImage && scrapedImage !== brokenImage && !GENERIC_IMAGE_PATTERNS.some(pat => scrapedImage.includes(pat))) {
+    if (scrapedImage && scrapedImage !== brokenImage) {
       await News.updateOne(
         { url: articleUrl },
         { $set: { image: scrapedImage } }
@@ -1075,9 +1858,13 @@ app.get("/api/news/search", async (req, res) => {
 });
 
 // GET /api/news/categories — returns list of all supported categories
-// MUST be before /:id to avoid Express matching "categories" as an id param
-app.get("/api/news/categories", (_req, res) => {
-  res.json({ categories: Object.keys(RSS_FEEDS) });
+app.get("/api/news/categories", async (_req, res) => {
+  try {
+    const categories = await Category.find({ status: true }).distinct("slug");
+    res.json({ categories });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch categories" });
+  }
 });
 
 // GET /api/news/:id - Fetch single article
@@ -1110,6 +1897,64 @@ app.post("/api/news/:id/view", async (req, res, next) => {
 });
 
 
+
+// ============================================================
+//  Subheadings API
+// ============================================================
+
+// GET /api/subheadings — all subheadings (public, used by frontend)
+app.get("/api/subheadings", async (_req, res) => {
+  try {
+    const subheadings = await Subheading.find().sort({ category: 1 });
+    res.json({ subheadings });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch subheadings" });
+  }
+});
+
+// POST /api/subheadings — create or update a subheading for a category
+app.post("/api/subheadings", authenticateToken, async (req, res) => {
+  try {
+    const { category, label } = req.body;
+    if (!category || !label) return res.status(400).json({ error: "category and label are required" });
+    const subheading = await Subheading.findOneAndUpdate(
+      { category: category.toLowerCase().trim() },
+      { label: label.trim() },
+      { upsert: true, new: true, runValidators: true }
+    );
+    res.json(subheading);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to save subheading" });
+  }
+});
+
+// PUT /api/subheadings/:id — update label
+app.put("/api/subheadings/:id", authenticateToken, async (req, res) => {
+  try {
+    const { label } = req.body;
+    if (!label) return res.status(400).json({ error: "label is required" });
+    const subheading = await Subheading.findByIdAndUpdate(
+      req.params.id,
+      { label: label.trim() },
+      { new: true, runValidators: true }
+    );
+    if (!subheading) return res.status(404).json({ error: "Subheading not found" });
+    res.json(subheading);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update subheading" });
+  }
+});
+
+// DELETE /api/subheadings/:id
+app.delete("/api/subheadings/:id", authenticateToken, async (req, res) => {
+  try {
+    const subheading = await Subheading.findByIdAndDelete(req.params.id);
+    if (!subheading) return res.status(404).json({ error: "Subheading not found" });
+    res.json({ message: "Subheading deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete subheading" });
+  }
+});
 
 // GET /api/rss-feeds — returns all configured RSS feed URLs with categories
 app.get("/api/rss-feeds", async (_req, res) => {
@@ -1171,6 +2016,97 @@ app.delete("/api/rss-feeds/:id", authenticateToken, async (req, res) => {
   }
 });
 
+
+// ============================================================
+//  Polls API
+// ============================================================
+
+// GET /api/polls — list all polls (admin)
+app.get("/api/polls", async (_req, res) => {
+  try {
+    const polls = await Poll.find().sort({ createdAt: -1 });
+    res.json(polls);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch polls" });
+  }
+});
+
+// GET /api/polls/active — get the currently active poll (frontend widget)
+app.get("/api/polls/active", async (_req, res) => {
+  try {
+    const poll = await Poll.findOne({ status: true }).sort({ createdAt: -1 });
+    if (!poll) return res.json(null); // Return 200 with null instead of 404
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch active poll" });
+  }
+});
+
+// POST /api/polls — create a new poll (admin)
+app.post("/api/polls", authenticateToken, async (req, res) => {
+  try {
+    const { question, options, status, featured, startDate, endDate } = req.body;
+    if (!question || !options || options.length < 2) {
+      return res.status(400).json({ error: "Question and at least 2 options are required" });
+    }
+    const poll = new Poll({
+      question,
+      options: options.map((text) => ({ text, votes: 0 })),
+      status: status !== undefined ? status : true,
+      featured,
+      startDate,
+      endDate,
+    });
+    await poll.save();
+    res.status(201).json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create poll" });
+  }
+});
+
+// PUT /api/polls/:id — update a poll (admin)
+app.put("/api/polls/:id", authenticateToken, async (req, res) => {
+  try {
+    const updated = await Poll.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    if (!updated) return res.status(404).json({ error: "Poll not found" });
+    res.json(updated);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update poll" });
+  }
+});
+
+// DELETE /api/polls/:id — delete a poll (admin)
+app.delete("/api/polls/:id", authenticateToken, async (req, res) => {
+  try {
+    const deleted = await Poll.findByIdAndDelete(req.params.id);
+    if (!deleted) return res.status(404).json({ error: "Poll not found" });
+    res.json({ message: "Poll deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete poll" });
+  }
+});
+
+// POST /api/polls/:id/vote — vote on a poll option (public)
+app.post("/api/polls/:id/vote", async (req, res) => {
+  try {
+    const { optionId } = req.body;
+    if (!optionId) return res.status(400).json({ error: "optionId is required" });
+
+    const poll = await Poll.findById(req.params.id);
+    if (!poll) return res.status(404).json({ error: "Poll not found" });
+    if (!poll.status) return res.status(400).json({ error: "Poll is no longer active" });
+
+    const option = poll.options.id(optionId);
+    if (!option) return res.status(400).json({ error: "Invalid option" });
+
+    option.votes += 1;
+    poll.totalVotes += 1;
+    await poll.save();
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to record vote" });
+  }
+});
 
 // ============================================================
 //  Site Configuration API (MongoDB)
@@ -1332,6 +2268,77 @@ app.get("/api/admin/news", authenticateToken, async (req, res) => {
     res.status(500).json({ error: "Failed to fetch Admin news" });
   }
 });
+
+
+// GET /api/polls/active - public, returns featured or latest active poll
+app.get("/api/polls/active", async (_req, res) => {
+  try {
+    const poll = await Poll.findOne({ status: true, featured: true }).sort({ publishedAt: -1 })
+      || await Poll.findOne({ status: true }).sort({ publishedAt: -1 });
+    if (!poll) return res.status(404).json({ error: "No active poll found" });
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch active poll" });
+  }
+});
+
+// POST /api/polls/:id/vote - public, submit a vote
+app.post("/api/polls/:id/vote", async (req, res) => {
+  try {
+    const { optionId } = req.body;
+    if (!optionId) return res.status(400).json({ error: "optionId is required" });
+    const poll = await Poll.findById(req.params.id);
+    if (!poll) return res.status(404).json({ error: "Poll not found" });
+    if (!poll.status) return res.status(400).json({ error: "Poll is closed" });
+    const option = poll.options.id(optionId);
+    if (!option) return res.status(404).json({ error: "Option not found" });
+    option.votes += 1;
+    poll.totalVotes += 1;
+    await poll.save();
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to record vote" });
+  }
+});
+// ============================================================
+//  Polls API (Admin)
+// ============================================================
+app.get("/api/admin/polls", authenticateToken, async (req, res) => {
+  try {
+    const polls = await Poll.find().sort({ publishedAt: -1, createdAt: -1 });
+    res.json(polls);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch polls" });
+  }
+});
+
+app.post("/api/admin/polls", authenticateToken, async (req, res) => {
+  try {
+    const poll = new Poll(req.body);
+    await poll.save();
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to create poll" });
+  }
+});
+
+app.put("/api/admin/polls/:id", authenticateToken, async (req, res) => {
+  try {
+    const poll = await Poll.findByIdAndUpdate(req.params.id, req.body, { new: true });
+    res.json(poll);
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update poll" });
+  }
+});
+
+app.delete("/api/admin/polls/:id", authenticateToken, async (req, res) => {
+  try {
+    await Poll.findByIdAndDelete(req.params.id);
+    res.json({ message: "Poll deleted" });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to delete poll" });
+  }
+});
 // --- Helpers ---
 
 function deduplicateByTitle(articles) {
@@ -1344,258 +2351,180 @@ function deduplicateByTitle(articles) {
   });
 }
 
-function sortArticlesForCover(articles) {
-  return [...articles].sort((left, right) => {
-    const leftHasImage = Boolean(left.image);
-    const rightHasImage = Boolean(right.image);
-
-    if (leftHasImage !== rightHasImage) {
-      return Number(rightHasImage) - Number(leftHasImage);
-    }
-
-    return new Date(right.publishedAt).getTime() - new Date(left.publishedAt).getTime();
-  });
-}
 
 
 
 // Scrape og:image (or twitter:image fallback) from an article URL
-async function fetchOgImage(url, timeoutMs = 6000) {
+async function fetchOgImage(url, timeoutMs = 8000) {
+  const userAgents = [
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36",
+  ];
+
+  const fetchWithRetry = async (targetUrl, retries = 2) => {
+    for (let i = 0; i < retries; i++) {
+      try {
+        const controller = new AbortController();
+        const timer = setTimeout(() => controller.abort(), timeoutMs);
+        
+        const resp = await fetch(targetUrl, {
+          signal: controller.signal,
+          headers: {
+            "User-Agent": userAgents[Math.floor(Math.random() * userAgents.length)],
+            "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
+            "Accept-Language": "en-US,en;q=0.5",
+            "Sec-Fetch-Dest": "document",
+            "Sec-Fetch-Mode": "navigate",
+            "Sec-Fetch-Site": "none",
+            "Upgrade-Insecure-Requests": "1",
+          },
+        });
+        clearTimeout(timer);
+        if (resp.ok) return await resp.text();
+        if (resp.status === 403 || resp.status === 503) {
+          // If blocked, wait 2 seconds and retry
+          await new Promise(r => setTimeout(r, 2000));
+          continue;
+        }
+        return null;
+      } catch (err) {
+        if (i === retries - 1) return null;
+        await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    return null;
+  };
+
   try {
-    // Follow Google News redirects by doing a HEAD request first
     let resolvedUrl = url;
     if (url.includes('news.google.com')) {
       try {
         const headResp = await fetch(url, {
           method: 'GET',
           redirect: 'follow',
-          signal: AbortSignal.timeout(3000),
-          headers: { 'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1)' },
+          signal: AbortSignal.timeout(5000),
+          headers: { 'User-Agent': userAgents[0] },
         });
-        resolvedUrl = headResp.url; // Get the final redirected URL
+        resolvedUrl = headResp.url;
       } catch {
-        return null; // Google News redirect failed, skip
+        return null;
       }
     }
 
-    const controller = new AbortController();
-    const timer = setTimeout(() => controller.abort(), timeoutMs);
-    const resp = await fetch(resolvedUrl, {
-      signal: controller.signal,
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-    });
-    clearTimeout(timer);
-    if (!resp.ok) return null;
+    const html = await fetchWithRetry(resolvedUrl);
+    if (!html) return null;
 
-    const reader = resp.body.getReader();
-    let html = "";
-    let done = false;
-    while (!done && html.length < 10000) {
-      const { value, done: readerDone } = await reader.read();
-      done = readerDone;
-      if (value) html += new TextDecoder().decode(value);
+    const patterns = [
+      /<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i,
+      /<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i,
+      /<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i,
+      /<link[^>]+rel=["']image_src["'][^>]+href=["']([^"']+)["']/i,
+    ];
+
+    for (const pattern of patterns) {
+      const match = html.match(pattern);
+      if (match && match[1]) {
+        let imgUrl = match[1];
+        if (imgUrl.startsWith("//")) imgUrl = "https:" + imgUrl;
+        if (imgUrl.startsWith("/")) {
+          const origin = new URL(resolvedUrl).origin;
+          imgUrl = origin + imgUrl;
+        }
+        return imgUrl;
+      }
     }
-    reader.cancel().catch(() => {});
-
-    const match =
-      html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i) ||
-      html.match(/<meta[^>]+name=["']twitter:image["'][^>]+content=["']([^"']+)["']/i) ||
-      html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']twitter:image["']/i);
-
-    return match ? match[1] : null;
+    return null;
   } catch {
     return null;
   }
 }
 
-// Extract image from RSS item fields — prioritises native RSS image fields.
-// Only falls back to inline HTML img as last resort. Never does network calls.
-function extractImage(item) {
-  // 1. media:thumbnail (BBC, TOI — highest quality, always prefer)
-  if (item.mediaThumbnail?.$?.url) return item.mediaThumbnail.$.url;
-  if (item["media:thumbnail"]?.$?.url) return item["media:thumbnail"].$.url;
-
-  // 2. media:group > media:thumbnail (YouTube-style feeds)
-  if (item.mediaGroup?.["media:thumbnail"]?.[0]?.$?.url)
-    return item.mediaGroup["media:thumbnail"][0].$.url;
-
-  // 3. media:content with type image
-  const mc = item.mediaContent || item["media:content"];
-  if (mc?.$?.url) {
-    const type = mc.$?.type || "";
-    if (!type || type.startsWith("image")) return mc.$.url;
-  }
-
-  // 4. enclosure (podcast-style image attachments)
-  if (item.enclosure?.url && item.enclosure.type?.startsWith("image"))
-    return item.enclosure.url;
-
-  // 5. Inline <img> in content:encoded — last resort, no network call needed
-  const html = item["content:encoded"] || item.content || "";
-  const imgMatch = html.match(/<img[^>]+src=["']([^"']+)["']/i);
-  if (imgMatch) return imgMatch[1];
-
-  return null;
-}
-
-// Background worker: Scrape og:images for articles missing images.
-// Only runs for articles where RSS itself provided no image.
-// Capped at MAX_SCRAPE_PER_RUN to prevent OOM on large batches.
-// Uses SSRF-safe isAllowedUrl check before any network call.
-const MAX_SCRAPE_PER_RUN = 50;
-async function enrichAndSaveRemainingImages(articles) {
-  const missingImages = articles
-    .filter(a => !a.image && a.url && isAllowedUrl(a.url))
-    .slice(0, MAX_SCRAPE_PER_RUN);
-  if (missingImages.length === 0) return;
-
-  console.log(`🖼️ Processing ${missingImages.length} missing images in background...`);
-
-  const BATCH_SIZE = 3;
-  for (let i = 0; i < missingImages.length; i += BATCH_SIZE) {
-    const batch = missingImages.slice(i, i + BATCH_SIZE);
-
-    await Promise.allSettled(batch.map(async (article) => {
-      const ogImage = await fetchOgImage(article.url);
-      if (ogImage && !GENERIC_IMAGE_PATTERNS.some(pat => ogImage.includes(pat))) {
-        article.image = ogImage;
-        await News.updateOne(
-          { url: article.url },
-          { $set: { image: ogImage } }
-        );
-      }
-    }));
-
-    if (i + BATCH_SIZE < missingImages.length) {
-      await new Promise(r => setTimeout(r, 1000));
-    }
-  }
-  console.log('✅ Background image enrichment complete.');
-}
-
-// Reusable function: Fetch all active RSS feeds and save/overwrite to MongoDB
-async function refreshAllFeeds() {
-  console.log('🔄 Starting RSS fetch job...');
-  try {
-    let totalProcessed = 0;
-    const allArticlesAcrossCategories = [];
-
-    // Read active feeds from MongoDB
-    const feeds = await RssFeed.find({ status: true });
-    const feedCategories = {};
-    for (const feed of feeds) {
-      if (!feedCategories[feed.category]) feedCategories[feed.category] = [];
-      feedCategories[feed.category].push(feed.url);
-    }
-
-    // Phase 1: FAST FETCH -> Fetch all categories in parallel batches of 5
-    const categoryEntries = Object.entries(feedCategories);
-    const FETCH_BATCH = 5;
-
-    async function fetchAndSaveCategory(category, feedUrls) {
-      console.log(`📡 Fetching category: ${category}...`);
-      const articles = deduplicateByTitle(await fetchFeeds(feedUrls, category));
-
-      const saveOps = articles.map(article =>
-        News.findOneAndUpdate(
-          { url: article.url },
-          {
-            $set: {
-              title: article.title,
-              description: article.description,
-              // Only update image if RSS provided one — never overwrite a good image with null
-              ...(article.image ? { image: article.image } : {}),
-              source: article.source,
-              category,
-              publishedAt: article.publishedAt,
-              content: article.content,
-            },
-            $setOnInsert: { status: false },
-          },
-          { upsert: true }
-        )
-      );
-
-      await Promise.allSettled(saveOps);
-      invalidateCache(category);
-      return articles;
-    }
-
-    for (let i = 0; i < categoryEntries.length; i += FETCH_BATCH) {
-      const batch = categoryEntries.slice(i, i + FETCH_BATCH);
-      const results = await Promise.allSettled(
-        batch.map(([category, feedUrls]) => fetchAndSaveCategory(category, feedUrls))
-      );
-      for (const r of results) {
-        if (r.status === "fulfilled") {
-          totalProcessed += r.value.length;
-          allArticlesAcrossCategories.push(...r.value);
-        }
-      }
-    }
-    
-    // Phase 2: BACKGROUND PASSIVE SCRAPE -> Retrieve images missing from text payload.
-    // Done entirely asynchronously in chunks to prevent Node execution lag from blocking other DB events.
-    if (allArticlesAcrossCategories.length > 0) {
-      console.log(`🖼️ Launching background image scraping core on ${allArticlesAcrossCategories.length} items...`);
-      enrichAndSaveRemainingImages(allArticlesAcrossCategories).catch(console.error);
-    }
-
-    // Update last fetch timestamp in SiteConfig
-    await updateConfig({ lastRssFetchAt: new Date() });
-
-    console.log(`✅ RSS fetch complete. Processed ${totalProcessed} articles.`);
-    return { success: true, totalProcessed };
-  } catch (error) {
-    console.error('❌ Error during RSS fetch:', error);
-    return { success: false, error: error.message };
-  }
-}
-
-// Background Job: Fetch all feeds every 30 minutes
-cron.schedule('*/30 * * * *', () => {
-  refreshAllFeeds();
-});
-
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB, then start the server
 connectDB().then(async () => {
-  // Seed initial RSS Feeds if empty or when new feed URLs are added
-  try {
-    const count = await RssFeed.countDocuments();
-    const expectedCount = Object.values(RSS_FEEDS).reduce((sum, urls) => sum + urls.length, 0);
-
-    if (count < expectedCount) {
-      console.log('🌱 New feeds detected, re-seeding RSS Feeds...');
-
-      // Insert only feeds that do not already exist
-      for (const [category, urls] of Object.entries(RSS_FEEDS)) {
-        for (const url of urls) {
-          await RssFeed.findOneAndUpdate(
-            { url },
-            { url, category, status: true },
-            { upsert: true }
-          );
-        }
-      }
-
-      console.log('✅ RSS feeds synced.');
-    }
-  } catch (e) {
-    console.error('❌ Failed to seed RSS feeds:', e);
-  }
-
   app.listen(PORT, () => {
     console.log(`📡 News RSS proxy running on http://localhost:${PORT}`);
   });
 
-  // Run initial RSS fetch on startup so MongoDB has fresh data immediately
-  console.log('🚀 Running initial RSS fetch on startup...');
+  // Run initial RSS fetch on startup so users see fresh news immediately
+  console.log("🚀 Running initial RSS fetch on startup...");
   refreshAllFeeds();
+
+  // ── Cron: Refresh all feeds every 15 minutes ──
+  cron.schedule("*/15 * * * *", () => {
+    refreshAllFeeds();
+  });
+
+  // ============================================================
+  //  Breaking News Alert Cron Job (every 30 minutes)
+  // ============================================================
+  cron.schedule('*/30 * * * *', async () => {
+    try {
+      // Find breaking articles published in the last 30 minutes
+      const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000);
+      const breakingArticles = await News.find({
+        breaking: true,
+        publishedAt: { $gte: thirtyMinsAgo },
+      }).sort({ publishedAt: -1 }).limit(10).lean();
+
+      if (breakingArticles.length === 0) return;
+
+      // Find users subscribed to breaking news alerts
+      const subscribedUsers = await User.find({
+        'notifications.breakingNews': true,
+        isVerified: true,
+      }).select('email name notifications.lastAlertSentAt').lean();
+
+      if (subscribedUsers.length === 0) return;
+
+      console.log(`🔔 Sending breaking news alerts to ${subscribedUsers.length} users for ${breakingArticles.length} articles`);
+
+      const articleListHtml = breakingArticles.map(a => `
+        <tr>
+          <td style="padding: 12px 0; border-bottom: 1px solid #f0f0f0;">
+            <a href="${FRONTEND_URL}/article/${a._id}" style="color: #1e293b; text-decoration: none; font-weight: 600; font-size: 15px;">${a.title}</a>
+            <div style="color: #94a3b8; font-size: 12px; margin-top: 4px;">${a.source || a.category} • ${new Date(a.publishedAt).toLocaleString()}</div>
+          </td>
+        </tr>
+      `).join('');
+
+      for (const user of subscribedUsers) {
+        try {
+          await transporter.sendMail({
+            from: EMAIL_USER,
+            to: user.email,
+            subject: `🚨 Breaking News Alert - TV19 News`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: auto; padding: 20px;">
+                <h2 style="color: #e8380d; text-align: center; margin-bottom: 20px;">🚨 BREAKING NEWS</h2>
+                <p style="color: #374151;">Hello ${user.name},</p>
+                <p style="color: #64748b;">Here are the latest breaking news stories:</p>
+                <table style="width: 100%; border-collapse: collapse;">${articleListHtml}</table>
+                <div style="text-align: center; margin-top: 30px;">
+                  <a href="${FRONTEND_URL}" style="background-color: #e8380d; color: white; padding: 12px 25px; text-decoration: none; border-radius: 5px; font-weight: bold;">Read More on TV19 News</a>
+                </div>
+                <p style="color: #94a3b8; font-size: 12px; margin-top: 30px; text-align: center;">
+                  You received this because you enabled Breaking News Alerts. 
+                  <a href="${FRONTEND_URL}/login" style="color: #e8380d;">Manage preferences</a>
+                </p>
+              </div>
+            `,
+          });
+
+          // Update lastAlertSentAt
+          await User.findByIdAndUpdate(user._id, {
+            'notifications.lastAlertSentAt': new Date(),
+          });
+        } catch (emailErr) {
+          console.error(`Failed to send alert to ${user.email}:`, emailErr.message);
+        }
+      }
+      console.log('✅ Breaking news alerts sent.');
+    } catch (err) {
+      console.error('❌ Breaking news cron error:', err.message);
+    }
+  });
 });

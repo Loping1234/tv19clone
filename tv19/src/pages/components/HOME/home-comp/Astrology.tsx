@@ -2,6 +2,7 @@ import { Link } from 'react-router-dom';
 import React, { useState, useEffect, useCallback } from 'react';
 import '../../../css/HOME/home-comp/Astrology.css';
 import { getAstrology, type Article } from '../../../../services/newsService';
+import { timeAgo } from '../../../../utils/timeAgo';
 import '@fortawesome/fontawesome-free/css/all.min.css';
 
 const Astrology: React.FC = () => {
@@ -31,16 +32,7 @@ const Astrology: React.FC = () => {
         return () => clearInterval(interval);
     }, [fetchAstrology]);
 
-    const timeAgo = (dateStr: string): string => {
-        const diff = Date.now() - new Date(dateStr).getTime();
-        const mins = Math.floor(diff / 60000);
-        if (mins < 1) return 'Just now';
-        if (mins < 60) return `${mins} min ago`;
-        const hours = Math.floor(mins / 60);
-        if (hours < 24) return `${hours} hours ago`;
-        const days = Math.floor(hours / 24);
-        return `${days} days ago`;
-    };
+
 
     if (loading) {
         return (
@@ -63,9 +55,9 @@ const Astrology: React.FC = () => {
             <section className="Astrology-section">
                 <div className="Astrology-section__header">
                     <h3 className="Astrology-section__heading">Astrology</h3>
-                    <a href="#" className="Astrology-section__more">
+                    <Link to="/category/astrology" className="Astrology-section__more">
                         MORE <i className="fas fa-arrow-right"></i>
-                    </a>
+                    </Link>
                 </div>
 
                 <div className="Astrology-grid">
@@ -81,6 +73,7 @@ const Astrology: React.FC = () => {
                             ) : (
                                 <div className="Astrology-hero__placeholder" />
                             )}
+                            <span className="Astrology-hero__badge">{heroArticle.source || 'ASTROLOGY'}</span>
                         </div>
                         <div className="Astrology-hero__body">
                             <span className="Astrology-hero__category">Astrology</span>

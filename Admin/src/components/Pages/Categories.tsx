@@ -1,335 +1,420 @@
-import React, { useState } from 'react';
-import { PlusCircle, MinusCircle, Trash2, Eye, Edit, FileText, AlignLeft, ArrowLeft } from 'react-feather';
-import './Categories.css';
+import { useState, useEffect } from 'react';
+import { Edit, Eye } from 'react-feather';
+import Pagination from '../Pagination';
 
-// Mock data to match the screenshot provided
-const mockCategories = [
-    { id: 1, name: 'World', createdOn: 'Oct 13, 2025 02:49 PM', status: true, metaKeyword: 'global news updates', metaDescription: 'Stay updated with world news today featuring global politics, international affairs, economy, conflicts and major events on TV19 News.' },
-    { id: 2, name: 'Technology', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'latest tech updates', metaDescription: 'Read technology news today with updates on gadgets, smartphones, AI, startups, apps, digital trends and innovation stories on TV19 News.' },
-    { id: 3, name: 'State', createdOn: 'Nov 18, 2025 04:03 PM', status: true, metaKeyword: 'state news local', metaDescription: 'Local and state news coverage.' },
-    { id: 4, name: 'Opinion', createdOn: 'Jan 28, 2026 02:10 PM', status: true, metaKeyword: 'expert opinions', metaDescription: 'Editorials and expert opinions.' },
-    { id: 5, name: 'Green Future', createdOn: 'Dec 18, 2025 08:00 PM', status: true, metaKeyword: 'climate change green', metaDescription: 'Environmental and climate change news.' },
-    { id: 6, name: 'Finance', createdOn: 'Nov 14, 2025 04:33 PM', status: true, metaKeyword: 'finance markets', metaDescription: 'Financial markets and economy news.' },
-    { id: 7, name: 'Entertainment', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'entertainment movies', metaDescription: 'Entertainment and pop culture.' },
-    { id: 8, name: 'Education', createdOn: 'Jan 19, 2026 04:48 PM', status: true, metaKeyword: 'education learning', metaDescription: 'Education sector updates.' },
-    { id: 9, name: 'Weather', createdOn: 'Oct 27, 2025 05:29 PM', status: true, metaKeyword: 'weather forecast', metaDescription: 'Daily weather forecasts.' },
-    { id: 10, name: 'Sports', createdOn: 'Oct 13, 2025 02:48 PM', status: true, metaKeyword: 'sports scores', metaDescription: 'Live sports scores and news.' },
-];
+const API_BASE = 'http://localhost:5000';
+
+function getToken() {
+    return localStorage.getItem('adminToken') || '';
+}
+
+function authHeaders(contentType?: string) {
+    const headers: Record<string, string> = { 'Authorization': `Bearer ${getToken()}` };
+    if (contentType) headers['Content-Type'] = contentType;
+    return headers;
+}
+
+interface Category {
+    _id: string;
+    name: string;
+    slug: string;
+    description: string;
+    metaKeyword: string;
+    metaDescription: string;
+    status: boolean;
+    order: number;
+    rssUrls: string[];
+    createdAt: string;
+}
 
 const Categories = () => {
-    const [entries, setEntries] = useState(10);
+    const [categories, setCategories] = useState<Category[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [toast, setToast] = useState<{ type: 'success' | 'error'; msg: string } | null>(null);
+    const [selectedItems, setSelectedItems] = useState<string[]>([]);
+    const [expandedRows, setExpandedRows] = useState<string[]>([]);
+    const [editingCategory, setEditingCategory] = useState<Partial<Category> | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
-    const [categories, setCategories] = useState(mockCategories);
-    const [selectedItems, setSelectedItems] = useState<number[]>([]);
-    const [expandedRows, setExpandedRows] = useState<number[]>([]);
+    const [entriesPerPage, setEntriesPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
-    const [editingCategory, setEditingCategory] = useState<typeof mockCategories[0] | null>(null);
-    const [viewingCategory, setViewingCategory] = useState<typeof mockCategories[0] | null>(null);
+    useEffect(() => { fetchCategories(); }, []);
 
-    const toggleRow = (id: number) => {
-        if (expandedRows.includes(id)) {
-            setExpandedRows(expandedRows.filter(rowId => rowId !== id));
-        } else {
-            setExpandedRows([...expandedRows, id]);
+    useEffect(() => {
+        if (toast) {
+            const t = setTimeout(() => setToast(null), 3000);
+            return () => clearTimeout(t);
+        }
+    }, [toast]);
+
+    const fetchCategories = async () => {
+        try {
+            const res = await fetch(`${API_BASE}/api/categories`);
+            if (res.ok) {
+                const data = await res.json();
+                setCategories(data.categories || []);
+            }
+        } catch (error) {
+            console.error('Failed to fetch categories', error);
+            setToast({ type: 'error', msg: 'Failed to load categories' });
+        } finally {
+            setLoading(false);
         }
     };
 
-    const toggleStatus = (id: number) => {
-        setCategories(categories.map(cat =>
-            cat.id === id ? { ...cat, status: !cat.status } : cat
-        ));
+    const handleDelete = async () => {
+        if (selectedItems.length === 0) {
+            setToast({ type: 'error', msg: 'Please select at least one category' });
+            return;
+        }
+        if (!confirm('Are you sure you want to delete selected categories?')) return;
+        try {
+            const res = await fetch(`${API_BASE}/api/categories/bulk-delete`, {
+                method: 'POST',
+                headers: authHeaders('application/json'),
+                body: JSON.stringify({ ids: selectedItems })
+            });
+            if (!res.ok) throw new Error('Delete failed');
+            setToast({ type: 'success', msg: 'Categories deleted successfully' });
+            setSelectedItems([]);
+            fetchCategories();
+        } catch {
+            setToast({ type: 'error', msg: 'Failed to delete categories' });
+        }
+    };
+
+    const handleSave = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!editingCategory) return;
+        try {
+            const method = editingCategory._id ? 'PUT' : 'POST';
+            const url = editingCategory._id ? `${API_BASE}/api/categories/${editingCategory._id}` : `${API_BASE}/api/categories`;
+            const res = await fetch(url, { method, headers: authHeaders('application/json'), body: JSON.stringify(editingCategory) });
+            if (!res.ok) throw new Error('Save failed');
+            setToast({ type: 'success', msg: `Category ${editingCategory._id ? 'updated' : 'added'} successfully` });
+            setEditingCategory(null);
+            fetchCategories();
+        } catch {
+            setToast({ type: 'error', msg: 'Failed to save category' });
+        }
+    };
+
+    const toggleStatus = async (id: string, currentStatus: boolean) => {
+        try {
+            const res = await fetch(`${API_BASE}/api/categories/${id}`, { 
+                method: 'PUT', 
+                headers: authHeaders('application/json'), 
+                body: JSON.stringify({ status: !currentStatus }) 
+            });
+            if (!res.ok) throw new Error('Update failed');
+            setCategories(prev => prev.map(c => c._id === id ? { ...c, status: !currentStatus } : c));
+        } catch {
+            setToast({ type: 'error', msg: 'Failed to update status' });
+        }
+    };
+
+    const toggleRow = (id: string) => {
+        setExpandedRows(prev => prev.includes(id) ? prev.filter(r => r !== id) : [...prev, id]);
     };
 
     const handleSelectAll = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.checked) {
-            setSelectedItems(categories.map(cat => cat.id));
-        } else {
-            setSelectedItems([]);
-        }
+        setSelectedItems(e.target.checked ? paginatedCategories.map(c => c._id) : []);
     };
 
-    const handleSelectItem = (id: number) => {
-        if (selectedItems.includes(id)) {
-            setSelectedItems(selectedItems.filter(itemId => itemId !== id));
-        } else {
-            setSelectedItems([...selectedItems, id]);
-        }
+    const handleSelectItem = (id: string) => {
+        setSelectedItems(prev => prev.includes(id) ? prev.filter(i => i !== id) : [...prev, id]);
     };
 
-    const handleEditFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        if (!editingCategory) return;
-        setEditingCategory({ ...editingCategory, [e.target.name]: e.target.value });
-    };
-
-    const handleUpdateCategory = (e: React.FormEvent) => {
-        e.preventDefault();
-        if (!editingCategory) return;
-        setCategories(categories.map(cat => cat.id === editingCategory.id ? editingCategory : cat));
-        setEditingCategory(null);
-    };
+    const filteredCategories = categories.filter(c =>
+        !searchTerm || c.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+    const totalPages = Math.ceil(filteredCategories.length / entriesPerPage);
+    const startIdx = (currentPage - 1) * entriesPerPage;
+    const paginatedCategories = filteredCategories.slice(startIdx, startIdx + entriesPerPage);
 
     return (
-        <div className="categories-page">
-            <div className="cat-header-container">
-                <h1 className="cat-page-title">
-                    {editingCategory ? 'EDIT CATEGORY' : viewingCategory ? 'CATEGORY INFORMATION' : 'CATEGORY LIST'}
-                </h1>
-                <div className="cat-breadcrumb">
-                    <span>Categories</span> <span className="cat-bc-sep">›</span> 
-                    <span>{editingCategory ? 'Edit Category' : viewingCategory ? 'Category Information' : 'Category List'}</span>
+        <div className="rss-page">
+            {toast && (
+                <div className={`users-toast ${toast.type}`} style={{ position: 'fixed', top: 20, right: 20, zIndex: 9999 }}>
+                    {toast.msg}
                 </div>
-            </div>
+            )}
 
-            <div className="cat-card">
-                {editingCategory ? (
-                    <div className="cat-edit-container">
-                        <form className="cat-edit-form" onSubmit={handleUpdateCategory}>
-                            <div className="cat-form-group">
-                                <label className="cat-form-label">Category Name (recommended 10 characters)</label>
-                                <input 
-                                    type="text" 
-                                    className="cat-form-input" 
-                                    name="name"
-                                    value={editingCategory.name} 
-                                    onChange={handleEditFormChange} 
+            {editingCategory ? (
+                <>
+                    <div className="rss-page-header">
+                        <h1 className="rss-page-title">{editingCategory._id ? 'EDIT CATEGORY' : 'ADD CATEGORY'}</h1>
+                        <nav className="rss-breadcrumb">
+                            <span className="rss-bc-item">Categories</span>
+                            <span className="rss-bc-sep">›</span>
+                            <span className="rss-bc-active">{editingCategory._id ? 'Edit Category' : 'Add Category'}</span>
+                        </nav>
+                    </div>
+
+                    <div className="rss-edit-card">
+                        <form onSubmit={handleSave} className="rss-edit-form">
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Category Name *</label>
+                                <input
+                                    type="text"
+                                    className="rss-form-input"
+                                    placeholder="Enter category name"
+                                    value={editingCategory.name || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, name: e.target.value})}
+                                    required
                                 />
                             </div>
-
-                            <div className="cat-form-group">
-                                <label className="cat-form-label">Meta Keyword (recommended 50 characters)</label>
-                                <input 
-                                    type="text" 
-                                    className="cat-form-input" 
-                                    name="metaKeyword"
-                                    value={editingCategory.metaKeyword} 
-                                    onChange={handleEditFormChange} 
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Slug *</label>
+                                <input
+                                    type="text"
+                                    className="rss-form-input"
+                                    placeholder="Enter slug"
+                                    value={editingCategory.slug || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, slug: e.target.value})}
+                                    required
                                 />
                             </div>
-
-                            <div className="cat-form-group">
-                                <label className="cat-form-label">Meta Title (recommended 50 characters)</label>
-                                <input 
-                                    type="text" 
-                                    className="cat-form-input" 
-                                    name="metaTitle"
-                                    defaultValue={`${editingCategory.name} News Today - TV19 News | Global Updates`}
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Order (Lower numbers appear first)</label>
+                                <input
+                                    type="number"
+                                    className="rss-form-input"
+                                    placeholder="e.g. 1"
+                                    value={editingCategory.order || 0}
+                                    onChange={e => setEditingCategory({...editingCategory, order: parseInt(e.target.value)})}
                                 />
                             </div>
-
-                            <div className="cat-form-group">
-                                <label className="cat-form-label">Meta Description (recommended 150 characters)</label>
-                                <textarea 
-                                    className="cat-form-textarea" 
-                                    name="metaDescription"
-                                    value={editingCategory.metaDescription} 
-                                    onChange={handleEditFormChange} 
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">RSS URLs (Comma-separated)</label>
+                                <textarea
+                                    className="rss-form-input"
+                                    placeholder="Enter RSS URLs, one per line or separated by commas"
+                                    value={editingCategory.rssUrls?.join(', ') || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, rssUrls: e.target.value.split(',').map(s => s.trim()).filter(s => s)})}
+                                    rows={3}
                                 />
                             </div>
-
-                            <div className="cat-form-group" style={{marginTop: '10px'}}>
-                                <label className="cat-form-label">Status</label>
-                                <div className="cat-form-status">
-                                    <label className="cat-radio-label">
-                                        <input 
-                                            type="radio" 
-                                            name="status" 
-                                            checked={editingCategory.status === true}
-                                            onChange={() => setEditingCategory({ ...editingCategory, status: true })}
-                                        /> Active
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Meta Keyword</label>
+                                <input
+                                    type="text"
+                                    className="rss-form-input"
+                                    placeholder="Enter meta keywords"
+                                    value={editingCategory.metaKeyword || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, metaKeyword: e.target.value})}
+                                />
+                            </div>
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Meta Description</label>
+                                <textarea
+                                    className="rss-form-input"
+                                    placeholder="Enter meta description"
+                                    value={editingCategory.metaDescription || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, metaDescription: e.target.value})}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Category Description</label>
+                                <textarea
+                                    className="rss-form-input"
+                                    placeholder="Enter category description"
+                                    value={editingCategory.description || ''}
+                                    onChange={e => setEditingCategory({...editingCategory, description: e.target.value})}
+                                    rows={3}
+                                />
+                            </div>
+                            <div className="rss-form-group">
+                                <label className="rss-form-label">Status</label>
+                                <div className="rss-radio-group">
+                                    <label className="rss-radio-label">
+                                        <input
+                                            type="radio"
+                                            name="status"
+                                            checked={editingCategory.status !== false}
+                                            onChange={() => setEditingCategory({...editingCategory, status: true})}
+                                        />
+                                        <span className="rss-radio-custom orange"></span>
+                                        Active
                                     </label>
-                                    <label className="cat-radio-label">
-                                        <input 
-                                            type="radio" 
-                                            name="status" 
+                                    <label className="rss-radio-label">
+                                        <input
+                                            type="radio"
+                                            name="status"
                                             checked={editingCategory.status === false}
-                                            onChange={() => setEditingCategory({ ...editingCategory, status: false })}
-                                        /> Inactive
+                                            onChange={() => setEditingCategory({...editingCategory, status: false})}
+                                        />
+                                        <span className="rss-radio-custom grey"></span>
+                                        Inactive
                                     </label>
                                 </div>
                             </div>
-
-                            <div className="cat-form-actions" style={{justifyContent: 'center', marginTop: '30px'}}>
-                                <button type="submit" className="cat-btn-update">Update Category</button>
-                                <button type="button" className="cat-btn-back-text" onClick={() => setEditingCategory(null)}>Back</button>
+                            <div className="rss-form-actions-centered">
+                                <button type="submit" className="rss-btn-submit-gradient">
+                                    {editingCategory._id ? 'Update Category' : 'Add Category'}
+                                </button>
+                                <button type="button" className="rss-btn-back-link" onClick={() => setEditingCategory(null)}>
+                                    Back
+                                </button>
                             </div>
                         </form>
                     </div>
-                ) : viewingCategory ? (
-                    <div className="cat-details-container">
-                        <div className="cat-details-card">
-                            <h2 className="cat-details-card-title">CATEGORY DETAILS</h2>
-                            
-                            <div className="cat-detail-row">
-                                <div className="cat-detail-label">Category Name:</div>
-                                <div className="cat-detail-value">{viewingCategory.name}</div>
-                            </div>
+                </>
+            ) : (
+                <>
+                    <div className="rss-page-header">
+                        <h1 className="rss-page-title">CATEGORY LIST</h1>
+                        <nav className="rss-breadcrumb">
+                            <span className="rss-bc-item">Categories</span>
+                            <span className="rss-bc-sep">›</span>
+                            <span className="rss-bc-active">Category List</span>
+                        </nav>
+                    </div>
 
-                            <div className="cat-detail-row">
-                                <div className="cat-detail-label">Meta Keyword:</div>
-                                <div className="cat-detail-value">{viewingCategory.metaKeyword}</div>
-                            </div>
+                    <div className="rss-actions-final">
+                        <button className="rss-btn-delete-final" onClick={handleDelete}>
+                            <span className="rss-btn-icon-v2">🗑️</span> Delete Category
+                        </button>
+                        <button className="rss-btn-add-final" onClick={() => setEditingCategory({ name: '', slug: '', status: true })}>
+                            <span className="rss-btn-icon-v2">⊕</span> Add Category
+                        </button>
+                    </div>
 
-                            <div className="cat-detail-row">
-                                <div className="cat-detail-label">Meta Description:</div>
-                                <div className="cat-detail-value">{viewingCategory.metaDescription}</div>
-                            </div>
-
-                            <div className="cat-detail-row">
-                                <div className="cat-detail-label">Created On:</div>
-                                <div className="cat-detail-value">{viewingCategory.createdOn}</div>
-                            </div>
-
-                            <div className="cat-detail-row" style={{alignItems: 'center'}}>
-                                <div className="cat-detail-label">Status:</div>
-                                <div className="cat-detail-value">
-                                    <span className={viewingCategory.status ? 'cat-badge-active' : 'cat-badge-inactive'}>
-                                        {viewingCategory.status ? 'Active' : 'Inactive'}
-                                    </span>
-                                </div>
-                            </div>
-
-                            <div className="cat-detail-actions">
-                                <button className="cat-btn-back-orange" onClick={() => setViewingCategory(null)}>
-                                    <ArrowLeft size={16} /> Back to Categories
-                                </button>
-                            </div>
+                    <div className="rss-controls">
+                        <div className="rss-entries-control">
+                            Show
+                            <select
+                                value={entriesPerPage}
+                                onChange={(e) => setEntriesPerPage(Number(e.target.value))}
+                                className="rss-select"
+                            >
+                                <option value={10}>10</option>
+                                <option value={25}>25</option>
+                                <option value={50}>50</option>
+                                <option value={100}>100</option>
+                            </select>
+                            entries
+                        </div>
+                        <div className="rss-search-control">
+                            Search:
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="rss-search-input"
+                                placeholder="Search categories..."
+                            />
                         </div>
                     </div>
-                ) : (
-                    <>
-                        <div className="cat-actions-row">
-                            <button className="cat-btn-add">
-                                <PlusCircle size={16} /> Add Category
-                            </button>
-                            <button className="cat-btn-delete">
-                                <Trash2 size={16} /> Delete Category
-                            </button>
-                        </div>
 
-                        <div className="cat-controls-row">
-                            <div className="cat-show-entries">
-                                <span>Show</span>
-                                <select value={entries} onChange={(e) => setEntries(Number(e.target.value))}>
-                                    <option value={10}>10</option>
-                                    <option value={25}>25</option>
-                                    <option value={50}>50</option>
-                                </select>
-                                <span>entries</span>
-                            </div>
-                            <div className="cat-search">
-                                <span>Search:</span>
-                                <input
-                                    type="text"
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="cat-table-responsive">
-                            <table className="cat-table">
-                                <thead>
+                    <div className="rss-table-wrap">
+                        <table className="rss-table">
+                            <thead>
+                                <tr>
+                                    <th className="rss-th-num"># S No.</th>
+                                    <th className="rss-th-check">
+                                        <input
+                                            type="checkbox"
+                                            onChange={handleSelectAll}
+                                            checked={paginatedCategories.length > 0 && selectedItems.length === paginatedCategories.length}
+                                        />
+                                    </th>
+                                    <th className="rss-th-cat">📁 Name <span className="sort-icon">⇅</span></th>
+                                    <th className="rss-th-order">🔢 Order</th>
+                                    <th className="rss-th-date">📅 Created On <span className="sort-icon">⇅</span></th>
+                                    <th className="rss-th-status">⚡ Status</th>
+                                    <th className="rss-th-action">⚙️ Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
                                     <tr>
-                                        <th style={{ width: '80px' }}># S No.</th>
-                                        <th style={{ width: '40px' }}>
-                                            <input
-                                                type="checkbox"
-                                                onChange={handleSelectAll}
-                                                checked={selectedItems.length === categories.length && categories.length > 0}
-                                            />
-                                        </th>
-                                        <th><span className="th-content"><FileText size={14} /> Name <span className="sort-icon">⇅</span></span></th>
-                                        <th><span className="th-content"><FileText size={14} /> Created On <span className="sort-icon">⇅</span></span></th>
-                                        <th><span className="th-content">Status</span></th>
-                                        <th><span className="th-content">Action</span></th>
+                                        <td colSpan={6} className="rss-loading-cell">
+                                            <div className="rss-spinner" />
+                                            Loading categories...
+                                        </td>
                                     </tr>
-                                </thead>
-                                <tbody>
-                                    {categories.map((cat, index) => {
-                                        const isExpanded = expandedRows.includes(cat.id);
-                                        return (
-                                            <React.Fragment key={cat.id}>
-                                                <tr className={isExpanded ? 'expanded-parent-row' : ''}>
-                                                    <td>
-                                                        <div className="sno-cell">
-                                                            <div className="expand-icon" onClick={() => toggleRow(cat.id)}>
-                                                                {isExpanded ? <MinusCircle size={16} /> : <PlusCircle size={16} />}
-                                                            </div>
-                                                            {index + 1}
-                                                        </div>
-                                                    </td>
-                                                    <td>
-                                                        <input
-                                                            type="checkbox"
-                                                            checked={selectedItems.includes(cat.id)}
-                                                            onChange={() => handleSelectItem(cat.id)}
-                                                        />
-                                                    </td>
-                                                    <td>{cat.name}</td>
-                                                    <td>{cat.createdOn}</td>
-                                                    <td>
-                                                        <label className="cat-switch">
-                                                            <input
-                                                                type="checkbox"
-                                                                checked={cat.status}
-                                                                onChange={() => toggleStatus(cat.id)}
-                                                            />
-                                                            <span className="cat-slider cat-round">
-                                                                <span className="cat-switch-text">{cat.status ? 'On' : 'Off'}</span>
-                                                            </span>
-                                                        </label>
-                                                    </td>
-                                                    <td>
-                                                        <div className="cat-action-btns">
-                                                            <button className="cat-action-btn view-btn" onClick={() => setViewingCategory(cat)}>
-                                                                <Eye size={14} />
-                                                            </button>
-                                                            <button className="cat-action-btn edit-btn" onClick={() => setEditingCategory(cat)}>
-                                                                <Edit size={14} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                {isExpanded && (
-                                                    <tr className="expanded-details-row">
-                                                        <td colSpan={6} style={{ padding: 0 }}>
-                                                            <div className="expanded-details-container">
-                                                                <div className="meta-section">
-                                                                    <strong><FileText size={14} className="meta-icon" /> Meta Keyword</strong>
-                                                                    <p>{cat.metaKeyword}</p>
-                                                                </div>
-                                                                <div className="meta-section">
-                                                                    <strong><AlignLeft size={14} className="meta-icon" /> Meta Description</strong>
-                                                                    <p>{cat.metaDescription}</p>
-                                                                </div>
-                                                            </div>
-                                                        </td>
-                                                    </tr>
-                                                )}
-                                            </React.Fragment>
-                                        );
-                                    })}
-                                </tbody>
-                            </table>
-                        </div>
+                                ) : paginatedCategories.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={6} className="rss-empty-cell">
+                                            No categories found.
+                                        </td>
+                                    </tr>
+                                ) : (
+                                    paginatedCategories.map((cat, idx) => (
+                                        <tr key={cat._id} className="rss-row">
+                                            <td className="rss-cell-num">
+                                                {startIdx + idx + 1}
+                                            </td>
+                                            <td className="rss-cell-check">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={selectedItems.includes(cat._id)}
+                                                    onChange={() => handleSelectItem(cat._id)}
+                                                />
+                                            </td>
+                                            <td className="rss-cell-cat">
+                                                <span className="rss-cat-badge">{cat.name}</span>
+                                            </td>
+                                            <td className="rss-cell-order">
+                                                {cat.order || 0}
+                                            </td>
+                                            <td className="rss-cell-date">
+                                                {new Date(cat.createdAt).toLocaleDateString('en-US', {
+                                                    month: 'short', day: '2-digit', year: 'numeric',
+                                                    hour: '2-digit', minute: '2-digit', hour12: true
+                                                })}
+                                            </td>
+                                            <td className="rss-cell-status">
+                                                <div
+                                                    className={`rss-toggle ${cat.status ? 'active' : ''}`}
+                                                    onClick={() => toggleStatus(cat._id, cat.status)}
+                                                >
+                                                    <div className="rss-toggle-label">{cat.status ? 'On' : 'Off'}</div>
+                                                    <div className="rss-toggle-handle"></div>
+                                                </div>
+                                            </td>
+                                            <td className="rss-cell-action">
+                                                <div className="rss-action-btns">
+                                                    <button
+                                                        className="rss-edit-btn-new"
+                                                        title="Edit"
+                                                        onClick={() => setEditingCategory(cat)}
+                                                    >
+                                                        📝
+                                                    </button>
+                                                    <button
+                                                        className="rss-delete-btn-new"
+                                                        title="Delete"
+                                                        onClick={() => {
+                                                            setSelectedItems([cat._id]);
+                                                            handleDelete();
+                                                        }}
+                                                    >
+                                                        🗑️
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
 
-                        <div className="cat-pagination-row">
-                            <div className="cat-pagination">
-                                <button className="cat-page-btn default">First</button>
-                                <button className="cat-page-btn default">Previous</button>
-                                <button className="cat-page-btn active">1</button>
-                                <button className="cat-page-btn">2</button>
-                                <button className="cat-page-btn default">Next</button>
-                                <button className="cat-page-btn default">Last</button>
-                            </div>
-                        </div>
-                    </>
-                )}
-            </div>
-
-            <footer className="profile-footer" style={{ marginTop: '20px' }}>
-                2026 © TV19.
-            </footer>
+                    {!loading && (
+                        <Pagination
+                            currentPage={currentPage}
+                            totalPages={totalPages}
+                            totalItems={filteredCategories.length}
+                            itemsPerPage={entriesPerPage}
+                            startIdx={startIdx}
+                            onPageChange={setCurrentPage}
+                        />
+                    )}
+                </>
+            )}
         </div>
     );
 };
