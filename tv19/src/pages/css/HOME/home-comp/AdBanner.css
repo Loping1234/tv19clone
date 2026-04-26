@@ -1,0 +1,72 @@
+/* ===== Ad Banner Placeholder ===== */
+.ad-banner {
+    width: 100%;
+    padding: 0 16px;
+    margin: 10px 0;
+}
+
+.ad-banner__inner {
+    background: #fff;
+    border: 1px dashed #d0d0d0;
+    border-radius: 6px;
+    overflow: hidden;
+    position: relative;
+}
+
+.ad-banner__label {
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #bbb;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    z-index: 2;
+}
+
+.ad-banner__placeholder {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 24px 16px;
+}
+
+.ad-banner--horizontal .ad-banner__placeholder {
+    min-height: 100px;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+}
+
+.ad-banner--square .ad-banner__placeholder {
+    min-height: 250px;
+    background: linear-gradient(135deg, #f8f8f8 0%, #f0f0f0 100%);
+}
+
+.ad-banner__icon {
+    font-size: 28px;
+    color: #ccc;
+}
+
+.ad-banner__text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #999;
+    letter-spacing: 0.5px;
+}
+
+.ad-banner__subtext {
+    font-size: 11px;
+    color: #bbb;
+}
+
+/* Hover effect */
+.ad-banner__inner:hover {
+    border-color: var(--tv19-orange, #E63900);
+    border-style: solid;
+}
+
+.ad-banner__inner:hover .ad-banner__icon {
+    color: var(--tv19-orange, #E63900);
+}

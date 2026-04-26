@@ -38,7 +38,7 @@
 
 .raj-more {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: #e8380d;
     text-decoration: none;
     display: flex;
@@ -136,7 +136,7 @@
     font-weight: 800;
     color: #111;
     margin: 0;
-    line-height: 1.35;
+    line-height: 1.25;
     display: -webkit-box;
     -webkit-line-clamp: 4;
     line-clamp: 4;
@@ -206,9 +206,9 @@
 
 .raj-mid__title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: #1a1a1a;
-    line-height: 1.4;
+    line-height: 1.3;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;
@@ -275,9 +275,9 @@
 
 .raj-right__title {
     font-size: 13px;
-    font-weight: 600;
+    font-weight: 700;
     color: #1a1a1a;
-    line-height: 1.4;
+    line-height: 1.3;
     margin: 0;
     display: -webkit-box;
     -webkit-line-clamp: 3;

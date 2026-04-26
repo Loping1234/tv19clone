@@ -27,17 +27,18 @@ adminProfileSchema.methods.comparePassword = async function (candidatePassword) 
 const AdminProfile = mongoose.model('AdminProfile', adminProfileSchema);
 
 /**
- * Get the single admin profile document.
+ * Get the admin profile document by ID or find the first one.
  */
-export async function getProfile() {
+export async function getProfile(id) {
+    if (id) return await AdminProfile.findById(id);
     return await AdminProfile.findOne();
 }
 
 /**
- * Update admin profile fields.
+ * Update admin profile fields by ID or find the first one.
  */
-export async function updateProfile(data) {
-    let profile = await AdminProfile.findOne();
+export async function updateProfile(data, id) {
+    let profile = id ? await AdminProfile.findById(id) : await AdminProfile.findOne();
     if (profile) {
         Object.assign(profile, data);
         await profile.save();

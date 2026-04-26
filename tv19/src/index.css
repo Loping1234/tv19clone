@@ -1,14 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap');
 
 :root {
+  /* ── Brand palette ── */
+  --tv19-orange: #E63900;
+  --tv19-orange-hover: #cc3200;
+  --tv19-dark: #1e2227;
+  --tv19-text: #1a1a1a;
+  --tv19-text-secondary: #555;
+  --tv19-text-muted: #888;
+  --tv19-border: #e8e8e8;
+  --tv19-bg: #f4f4f4;
+  --tv19-card-bg: #ffffff;
+
+  /* ── Typography ── */
   --font-body: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
   --font-head: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
-  --bg-body: #f4f4f4;
+  --bg-body: var(--tv19-bg);
 
   font-family: var(--font-body);
-  line-height: 1.5;
+  line-height: 1.45;
   font-weight: 400;
-  color: #1a1a1a;
+  color: var(--tv19-text);
   background-color: var(--bg-body);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -27,7 +39,7 @@ a {
 }
 
 a:hover {
-  color: #ff4500;
+  color: var(--tv19-orange);
 }
 
 body {
@@ -35,18 +47,26 @@ body {
   min-width: 320px;
   min-height: 100vh;
   background-color: var(--bg-body);
-  color: #1a1a1a;
+  color: var(--tv19-text);
   font-family: var(--font-body);
   overflow-x: hidden;
 }
 
-/* Base styles for global headings to use the target's precise bold style */
+/* Tighter heading styles — professional news sites use tight leading */
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-head);
   font-weight: 800;
-  letter-spacing: -0.5px;
+  letter-spacing: -0.3px;
+  line-height: 1.2;
   margin: 0;
 }
+
+h1 { font-size: 28px; }
+h2 { font-size: 22px; }
+h3 { font-size: 18px; }
+h4 { font-size: 15px; }
+h5 { font-size: 14px; }
+h6 { font-size: 13px; }
 
 button {
   border-radius: 8px;
@@ -61,12 +81,12 @@ button {
 }
 
 button:hover {
-  border-color: #ff4500;
+  border-color: var(--tv19-orange);
 }
 
 button:focus,
 button:focus-visible {
-  outline: 2px solid #ff4500;
+  outline: 2px solid var(--tv19-orange);
   outline-offset: 2px;
 }
 
